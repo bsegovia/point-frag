@@ -1,0 +1,272 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+BVH4	bvh4.h	/^    BVH4 () : root(int(emptyNode)), modified(true), bvhSAH(0.0f), numNodes(0), numPrims(0) {}$/;"	f	class:embree::BVH4	access:public	signature:()
+BVH4	bvh4.h	/^    class BVH4 : public RefCount$/;"	c	namespace:embree	inherits:RefCount
+BVH4Builder	bvh4_builder.cpp	/^  BVH4Builder::BVH4Builder(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)$/;"	f	class:embree::BVH4Builder	signature:(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)
+BVH4Builder	bvh4_builder.h	/^    BVH4Builder(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh);$/;"	p	class:embree::BVH4Builder	access:public	signature:(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)
+BVH4Builder	bvh4_builder.h	/^  class BVH4Builder : private Builder$/;"	c	namespace:embree	inherits:Builder
+BVH4Traverser	bvh4_traverser.h	/^    BVH4Traverser (const Ref<BVH4<Triangle4> >& bvh) : bvh(bvh) {}$/;"	f	class:embree::BVH4Traverser	access:public	signature:(const Ref<BVH4<Triangle4> >& bvh)
+BVH4Traverser	bvh4_traverser.h	/^  class BVH4Traverser : public Intersector$/;"	c	namespace:embree	inherits:Intersector
+BuildTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::BuildTask::BuildTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+BuildTask	bvh4_builder.h	/^      BuildTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+BuildTask	bvh4_builder.h	/^    class BuildTask {$/;"	c	class:embree::BVH4Builder	access:public
+Ng	triangle4.h	/^    sse3f Ng;      \/\/!< Geometry normal of the triangles.$/;"	m	struct:embree::Triangle4	access:public
+Node	bvh4.h	/^    struct Node$/;"	s	class:embree::BVH4	access:public
+ParallelSplitTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::ParallelSplitTask::ParallelSplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)
+ParallelSplitTask	bvh4_builder.h	/^      ParallelSplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job);$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)
+ParallelSplitTask	bvh4_builder.h	/^    class ParallelSplitTask {$/;"	c	class:embree::BVH4Builder	access:public
+SplitTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::SplitTask::SplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::SplitTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+SplitTask	bvh4_builder.h	/^      SplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::SplitTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+SplitTask	bvh4_builder.h	/^    class SplitTask {$/;"	c	class:embree::BVH4Builder	access:public
+Triangle	bvh4.h	/^    typedef T Triangle;$/;"	t	class:embree::BVH4	access:public
+Triangle4	triangle4.h	/^    INLINE Triangle4 () {}$/;"	f	struct:embree::Triangle4	access:public	signature:()
+Triangle4	triangle4.h	/^    INLINE Triangle4 (const sse3f& v0, const sse3f& v1, const sse3f& v2, const ssei& id0, const ssei& id1)$/;"	f	struct:embree::Triangle4	access:public	signature:(const sse3f& v0, const sse3f& v1, const sse3f& v2, const ssei& id0, const ssei& id1)
+Triangle4	triangle4.h	/^  struct Triangle4$/;"	s	namespace:embree
+__EMBREE_ACCEL_TRIANGLE4_H__	triangle4.h	18;"	d
+__EMBREE_BVH4_BUILDER_H__	bvh4_builder.h	18;"	d
+__EMBREE_BVH4_H__	bvh4.h	18;"	d
+__EMBREE_BVH4_TRAVERSER_H__	bvh4_traverser.h	18;"	d
+_split	bvh4_builder.h	/^      void split(); static void _split(size_t tid, SplitTask* This, size_t elts) { This->split(); }$/;"	f	class:embree::BVH4Builder::SplitTask	access:public	signature:(size_t tid, SplitTask* This, size_t elts)
+_stage0	bvh4_builder.h	/^      void stage0(size_t tid); static void _stage0(size_t tid, ParallelSplitTask* This) { This->stage0(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+_stage1	bvh4_builder.h	/^      void stage1(size_t tid); static void _stage1(size_t tid, ParallelSplitTask* This) { This->stage1(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+_stage2	bvh4_builder.h	/^      void stage2(size_t tid); static void _stage2(size_t tid, ParallelSplitTask* This) { This->stage2(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+_stage3	bvh4_builder.h	/^      void stage3(size_t tid); static void _stage3(size_t tid, ParallelSplitTask* This) { This->stage3(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+bestChild	bvh4_builder.h	/^      index_t bestChild;                    \/\/!< Child with best cost to split next.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+blocks	bvh4_builder.h	/^    static INLINE size_t blocks(size_t x) { return (x+3)\/4; }$/;"	f	class:embree::BVH4Builder	access:public	signature:(size_t x)
+build	bvh4_builder.cpp	/^  Ref<BVH4<Triangle4> > BVH4Builder::build(const BuildTriangle* triangles, size_t numTriangles)$/;"	f	class:embree::BVH4Builder	signature:(const BuildTriangle* triangles, size_t numTriangles)
+build	bvh4_builder.h	/^    static Ref<BVH4<Triangle4> > build(const BuildTriangle* triangles, size_t numTriangles);$/;"	p	class:embree::BVH4Builder	access:public	signature:(const BuildTriangle* triangles, size_t numTriangles)
+bvh	bvh4_builder.h	/^    Ref<BVH4<Triangle4> > bvh;          \/\/!< BVH to overwrite$/;"	m	class:embree::BVH4Builder	access:public
+bvh	bvh4_traverser.h	/^    Ref<BVH4<Triangle4> > bvh; \/\/!< BVH to traverse$/;"	m	class:embree::BVH4Traverser	access:private
+bvh4.cpp	bvh4.cpp	1;"	F
+bvh4.h	bvh4.h	1;"	F
+bvh4_builder.cpp	bvh4_builder.cpp	1;"	F
+bvh4_builder.h	bvh4_builder.h	1;"	F
+bvh4_traverser.cpp	bvh4_traverser.cpp	1;"	F
+bvh4_traverser.h	bvh4_traverser.h	1;"	F
+bvhSAH	bvh4.h	/^    float bvhSAH;                      \/\/!< SAH cost of the BVH.$/;"	m	class:embree::BVH4	access:private
+child	bvh4.h	/^      int32 child[4];         \/\/!< Offset to the 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+children	bvh4_builder.h	/^      ObjectBinningParallel<2> children[4]; \/\/!< Parallel Binners for the children.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+clear	bvh4.h	/^      INLINE Node& clear()  {$/;"	f	struct:embree::BVH4::Node	access:public	signature:()
+computeStatistics	bvh4.cpp	/^  float BVH4<T>::computeStatistics(int nodeID, float ap)$/;"	f	class:embree::BVH4	signature:(int nodeID, float ap)
+computeStatistics	bvh4.cpp	/^  void BVH4<T>::computeStatistics()$/;"	f	class:embree::BVH4	signature:()
+computeStatistics	bvh4.h	/^    float computeStatistics(int nodeID, float area);$/;"	p	class:embree::BVH4	access:private	signature:(int nodeID, float area)
+computeStatistics	bvh4.h	/^    void computeStatistics();$/;"	p	class:embree::BVH4	access:private	signature:()
+createLeaf	bvh4.cpp	/^  int BVH4<T>::createLeaf(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)$/;"	f	class:embree::BVH4	signature:(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)
+createLeaf	bvh4.h	/^    int createLeaf(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N);$/;"	p	class:embree::BVH4	access:private	signature:(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)
+depth	bvh4_builder.h	/^      size_t       depth;                   \/\/!< Recursion depth of this node.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+depth	bvh4_builder.h	/^      size_t       depth;    \/\/!< Recursion depth of the root of this subtree.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+depth	bvh4_builder.h	/^      size_t       depth;    \/\/!< Recursion depth of this node.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+e1	triangle4.h	/^    sse3f e1;      \/\/!< 1st edge of the triangles (v0-v1).$/;"	m	struct:embree::Triangle4	access:public
+e2	triangle4.h	/^    sse3f e2;      \/\/!< 2nd edge of the triangles (v2-v0).$/;"	m	struct:embree::Triangle4	access:public
+embree	bvh4.cpp	/^namespace embree$/;"	n	file:
+embree	bvh4.h	/^namespace embree$/;"	n
+embree	bvh4_builder.cpp	/^namespace embree$/;"	n	file:
+embree	bvh4_builder.h	/^namespace embree$/;"	n
+embree	bvh4_traverser.cpp	/^namespace embree$/;"	n	file:
+embree	bvh4_traverser.h	/^namespace embree$/;"	n
+embree	triangle4.h	/^namespace embree$/;"	n
+embree::BVH4	bvh4.h	/^    class BVH4 : public RefCount$/;"	c	namespace:embree	inherits:RefCount
+embree::BVH4::BVH4	bvh4.h	/^    BVH4 () : root(int(emptyNode)), modified(true), bvhSAH(0.0f), numNodes(0), numPrims(0) {}$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::Node	bvh4.h	/^    struct Node$/;"	s	class:embree::BVH4	access:public
+embree::BVH4::Node::child	bvh4.h	/^      int32 child[4];         \/\/!< Offset to the 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::clear	bvh4.h	/^      INLINE Node& clear()  {$/;"	f	struct:embree::BVH4::Node	access:public	signature:()
+embree::BVH4::Node::lower_x	bvh4.h	/^      ssef lower_x;           \/\/!< X dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::lower_y	bvh4.h	/^      ssef lower_y;           \/\/!< Y dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::lower_z	bvh4.h	/^      ssef lower_z;           \/\/!< Z dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::set	bvh4.h	/^      INLINE void set(size_t i, const Box& bounds, int32 childID) {$/;"	f	struct:embree::BVH4::Node	access:public	signature:(size_t i, const Box& bounds, int32 childID)
+embree::BVH4::Node::upper_x	bvh4.h	/^      ssef upper_x;           \/\/!< X dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::upper_y	bvh4.h	/^      ssef upper_y;           \/\/!< Y dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Node::upper_z	bvh4.h	/^      ssef upper_z;           \/\/!< Z dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+embree::BVH4::Triangle	bvh4.h	/^    typedef T Triangle;$/;"	t	class:embree::BVH4	access:public
+embree::BVH4::bvhSAH	bvh4.h	/^    float bvhSAH;                      \/\/!< SAH cost of the BVH.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::computeStatistics	bvh4.cpp	/^  float BVH4<T>::computeStatistics(int nodeID, float ap)$/;"	f	class:embree::BVH4	signature:(int nodeID, float ap)
+embree::BVH4::computeStatistics	bvh4.cpp	/^  void BVH4<T>::computeStatistics()$/;"	f	class:embree::BVH4	signature:()
+embree::BVH4::computeStatistics	bvh4.h	/^    float computeStatistics(int nodeID, float area);$/;"	p	class:embree::BVH4	access:private	signature:(int nodeID, float area)
+embree::BVH4::computeStatistics	bvh4.h	/^    void computeStatistics();$/;"	p	class:embree::BVH4	access:private	signature:()
+embree::BVH4::createLeaf	bvh4.cpp	/^  int BVH4<T>::createLeaf(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)$/;"	f	class:embree::BVH4	signature:(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)
+embree::BVH4::createLeaf	bvh4.h	/^    int createLeaf(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N);$/;"	p	class:embree::BVH4	access:private	signature:(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)
+embree::BVH4::emptyNode	bvh4.h	/^      emptyNode = 0x80000000   \/\/!< ID of an empty node.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::getNumLeaves	bvh4.h	/^    size_t getNumLeaves() { computeStatistics(); return numLeaves; }$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::getNumNodes	bvh4.h	/^    size_t getNumNodes() { computeStatistics(); return numNodes; }$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::getNumPrimBlocks	bvh4.h	/^    size_t getNumPrimBlocks() { computeStatistics(); return numPrimBlocks; }$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::getNumPrims	bvh4.h	/^    size_t getNumPrims() { computeStatistics(); return numPrims; }$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::getSAH	bvh4.h	/^    float getSAH()       { computeStatistics(); return bvhSAH; }$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4::id2offset	bvh4.h	/^    static INLINE int id2offset(int id) {$/;"	f	class:embree::BVH4	access:private	signature:(int id)
+embree::BVH4::intCost	bvh4.h	/^      intCost      =  1,       \/\/!< Cost of one primitive intersection.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::maxDepth	bvh4.h	/^      maxDepth     = 24,       \/\/!< Maximal depth of the BVH.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::maxLeafSize	bvh4.h	/^      maxLeafSize  = 31,       \/\/!< Maximal possible size of a leaf.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::modified	bvh4.h	/^    bool modified;                     \/\/!< True if statistics are invalid.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::node	bvh4.h	/^    INLINE       Node& node(                   size_t ofs)       { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:( size_t ofs)
+embree::BVH4::node	bvh4.h	/^    INLINE const Node& node(                   size_t ofs) const { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:( size_t ofs) const
+embree::BVH4::node	bvh4.h	/^    INLINE const Node& node(const Node* nodes, size_t ofs) const { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:(const Node* nodes, size_t ofs) const
+embree::BVH4::nodes	bvh4.h	/^    Node* nodes;                       \/\/!< Pointer to array of nodes.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::numLeaves	bvh4.h	/^    size_t numLeaves;                  \/\/!< Number of leaf nodes.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::numNodes	bvh4.h	/^    size_t numNodes;                   \/\/!< Number of internal nodes.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::numPrimBlocks	bvh4.h	/^    size_t numPrimBlocks;              \/\/!< Number of primitive blocks.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::numPrims	bvh4.h	/^    size_t numPrims;                   \/\/!< Number of primitives.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::offsetFactor	bvh4.h	/^      offsetFactor =  8,       \/\/!< Factor to compute byte offset from offsets stored in nodes.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::root	bvh4.h	/^    int root;                          \/\/!< Root node ID (can also be a leaf).$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::rotate	bvh4.cpp	/^  void BVH4<T>::rotate(int nodeID, int maxDepth)$/;"	f	class:embree::BVH4	signature:(int nodeID, int maxDepth)
+embree::BVH4::rotate	bvh4.h	/^    void rotate(int nodeID, int maxDepth);$/;"	p	class:embree::BVH4	access:private	signature:(int nodeID, int maxDepth)
+embree::BVH4::travCost	bvh4.h	/^      travCost     =  1,       \/\/!< Cost of one traversal step.$/;"	e	enum:embree::BVH4::__anon1
+embree::BVH4::triangles	bvh4.h	/^    Triangle* triangles;               \/\/!< Pointer to array of triangles.$/;"	m	class:embree::BVH4	access:private
+embree::BVH4::~BVH4	bvh4.h	/^    ~BVH4 () {$/;"	f	class:embree::BVH4	access:public	signature:()
+embree::BVH4Builder	bvh4_builder.h	/^  class BVH4Builder : private Builder$/;"	c	namespace:embree	inherits:Builder
+embree::BVH4Builder::BVH4Builder	bvh4_builder.cpp	/^  BVH4Builder::BVH4Builder(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)$/;"	f	class:embree::BVH4Builder	signature:(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)
+embree::BVH4Builder::BVH4Builder	bvh4_builder.h	/^    BVH4Builder(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh);$/;"	p	class:embree::BVH4Builder	access:public	signature:(const BuildTriangle* triangles, size_t numTriangles, Ref<BVH4<Triangle4> > bvh)
+embree::BVH4Builder::BuildTask	bvh4_builder.h	/^    class BuildTask {$/;"	c	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::BuildTask::BuildTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::BuildTask::BuildTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::BuildTask::BuildTask	bvh4_builder.h	/^      BuildTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::BuildTask::depth	bvh4_builder.h	/^      size_t       depth;    \/\/!< Recursion depth of the root of this subtree.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+embree::BVH4Builder::BuildTask::job	bvh4_builder.h	/^      ObjectBinning<2> job;  \/\/!< Binner for performing splits.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+embree::BVH4Builder::BuildTask::nodeID	bvh4_builder.h	/^      int&         nodeID;   \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+embree::BVH4Builder::BuildTask::parent	bvh4_builder.h	/^      BVH4Builder* parent;   \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+embree::BVH4Builder::BuildTask::recurse	bvh4_builder.cpp	/^  int BVH4Builder::BuildTask::recurse(size_t depth, ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(size_t depth, ObjectBinning<2>& job)
+embree::BVH4Builder::BuildTask::recurse	bvh4_builder.h	/^      int recurse(size_t depth, ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(size_t depth, ObjectBinning<2>& job)
+embree::BVH4Builder::BuildTask::run	bvh4_builder.cpp	/^  void BVH4Builder::BuildTask::run(size_t tid, BuildTask* This, size_t elts)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(size_t tid, BuildTask* This, size_t elts)
+embree::BVH4Builder::BuildTask::run	bvh4_builder.h	/^      static void run(size_t tid, BuildTask* This, size_t elts);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(size_t tid, BuildTask* This, size_t elts)
+embree::BVH4Builder::BuildTask::tid	bvh4_builder.h	/^      size_t       tid;      \/\/!< Task ID for fast thread local storage.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+embree::BVH4Builder::ParallelSplitTask	bvh4_builder.h	/^    class ParallelSplitTask {$/;"	c	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::ParallelSplitTask::ParallelSplitTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::ParallelSplitTask::ParallelSplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)
+embree::BVH4Builder::ParallelSplitTask::ParallelSplitTask	bvh4_builder.h	/^      ParallelSplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job);$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const BuildRange& job)
+embree::BVH4Builder::ParallelSplitTask::_stage0	bvh4_builder.h	/^      void stage0(size_t tid); static void _stage0(size_t tid, ParallelSplitTask* This) { This->stage0(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+embree::BVH4Builder::ParallelSplitTask::_stage1	bvh4_builder.h	/^      void stage1(size_t tid); static void _stage1(size_t tid, ParallelSplitTask* This) { This->stage1(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+embree::BVH4Builder::ParallelSplitTask::_stage2	bvh4_builder.h	/^      void stage2(size_t tid); static void _stage2(size_t tid, ParallelSplitTask* This) { This->stage2(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+embree::BVH4Builder::ParallelSplitTask::_stage3	bvh4_builder.h	/^      void stage3(size_t tid); static void _stage3(size_t tid, ParallelSplitTask* This) { This->stage3(tid); }$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid, ParallelSplitTask* This)
+embree::BVH4Builder::ParallelSplitTask::bestChild	bvh4_builder.h	/^      index_t bestChild;                    \/\/!< Child with best cost to split next.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::children	bvh4_builder.h	/^      ObjectBinningParallel<2> children[4]; \/\/!< Parallel Binners for the children.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::depth	bvh4_builder.h	/^      size_t       depth;                   \/\/!< Recursion depth of this node.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::nodeID	bvh4_builder.h	/^      int&         nodeID;                  \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::numChildren	bvh4_builder.h	/^      size_t numChildren;                   \/\/!< Current number of children.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::parent	bvh4_builder.h	/^      BVH4Builder* parent;                  \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+embree::BVH4Builder::ParallelSplitTask::stage0	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage0(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage0	bvh4_builder.h	/^      void stage0(size_t tid); static void _stage0(size_t tid, ParallelSplitTask* This) { This->stage0(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage1	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage1(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage1	bvh4_builder.h	/^      void stage1(size_t tid); static void _stage1(size_t tid, ParallelSplitTask* This) { This->stage1(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage2	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage2(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage2	bvh4_builder.h	/^      void stage2(size_t tid); static void _stage2(size_t tid, ParallelSplitTask* This) { This->stage2(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage3	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage3(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::stage3	bvh4_builder.h	/^      void stage3(size_t tid); static void _stage3(size_t tid, ParallelSplitTask* This) { This->stage3(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+embree::BVH4Builder::ParallelSplitTask::target	bvh4_builder.h	/^      INLINE size_t target(const BuildRange& r) {$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(const BuildRange& r)
+embree::BVH4Builder::SplitTask	bvh4_builder.h	/^    class SplitTask {$/;"	c	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::SplitTask::SplitTask	bvh4_builder.cpp	/^  INLINE BVH4Builder::SplitTask::SplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::SplitTask	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::SplitTask::SplitTask	bvh4_builder.h	/^      SplitTask(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::SplitTask	access:public	signature:(BVH4Builder* parent, int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::SplitTask::_split	bvh4_builder.h	/^      void split(); static void _split(size_t tid, SplitTask* This, size_t elts) { This->split(); }$/;"	f	class:embree::BVH4Builder::SplitTask	access:public	signature:(size_t tid, SplitTask* This, size_t elts)
+embree::BVH4Builder::SplitTask::depth	bvh4_builder.h	/^      size_t       depth;    \/\/!< Recursion depth of this node.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+embree::BVH4Builder::SplitTask::job	bvh4_builder.h	/^      ObjectBinning<2> job;  \/\/!< Binner for performing splits.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+embree::BVH4Builder::SplitTask::nodeID	bvh4_builder.h	/^      int&         nodeID;   \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+embree::BVH4Builder::SplitTask::parent	bvh4_builder.h	/^      BVH4Builder* parent;   \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+embree::BVH4Builder::SplitTask::split	bvh4_builder.cpp	/^  void BVH4Builder::SplitTask::split()$/;"	f	class:embree::BVH4Builder::SplitTask	signature:()
+embree::BVH4Builder::SplitTask::split	bvh4_builder.h	/^      void split(); static void _split(size_t tid, SplitTask* This, size_t elts) { This->split(); }$/;"	p	class:embree::BVH4Builder::SplitTask	access:public	signature:()
+embree::BVH4Builder::blocks	bvh4_builder.h	/^    static INLINE size_t blocks(size_t x) { return (x+3)\/4; }$/;"	f	class:embree::BVH4Builder	access:public	signature:(size_t x)
+embree::BVH4Builder::build	bvh4_builder.cpp	/^  Ref<BVH4<Triangle4> > BVH4Builder::build(const BuildTriangle* triangles, size_t numTriangles)$/;"	f	class:embree::BVH4Builder	signature:(const BuildTriangle* triangles, size_t numTriangles)
+embree::BVH4Builder::build	bvh4_builder.h	/^    static Ref<BVH4<Triangle4> > build(const BuildTriangle* triangles, size_t numTriangles);$/;"	p	class:embree::BVH4Builder	access:public	signature:(const BuildTriangle* triangles, size_t numTriangles)
+embree::BVH4Builder::bvh	bvh4_builder.h	/^    Ref<BVH4<Triangle4> > bvh;          \/\/!< BVH to overwrite$/;"	m	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::numTriangles	bvh4_builder.h	/^    size_t numTriangles;                \/\/!< Number of triangles$/;"	m	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::prims	bvh4_builder.h	/^    Box* prims;                         \/\/!< Working array. Build tasks operate on ranges in this array. *\/$/;"	m	class:embree::BVH4Builder	access:public
+embree::BVH4Builder::recurse	bvh4_builder.cpp	/^  void BVH4Builder::recurse(int& nodeID, size_t depth, const BuildRange& job)$/;"	f	class:embree::BVH4Builder	signature:(int& nodeID, size_t depth, const BuildRange& job)
+embree::BVH4Builder::recurse	bvh4_builder.cpp	/^  void BVH4Builder::recurse(int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder	signature:(int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::recurse	bvh4_builder.h	/^    void recurse(int& nodeID, size_t depth, const BuildRange& job);$/;"	p	class:embree::BVH4Builder	access:public	signature:(int& nodeID, size_t depth, const BuildRange& job)
+embree::BVH4Builder::recurse	bvh4_builder.h	/^    void recurse(int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder	access:public	signature:(int& nodeID, size_t depth, const ObjectBinning<2>& job)
+embree::BVH4Builder::triangles	bvh4_builder.h	/^    const BuildTriangle* triangles;     \/\/!< Source triangle array$/;"	m	class:embree::BVH4Builder	access:public
+embree::BVH4Traverser	bvh4_traverser.h	/^  class BVH4Traverser : public Intersector$/;"	c	namespace:embree	inherits:Intersector
+embree::BVH4Traverser::BVH4Traverser	bvh4_traverser.h	/^    BVH4Traverser (const Ref<BVH4<Triangle4> >& bvh) : bvh(bvh) {}$/;"	f	class:embree::BVH4Traverser	access:public	signature:(const Ref<BVH4<Triangle4> >& bvh)
+embree::BVH4Traverser::bvh	bvh4_traverser.h	/^    Ref<BVH4<Triangle4> > bvh; \/\/!< BVH to traverse$/;"	m	class:embree::BVH4Traverser	access:private
+embree::BVH4Traverser::intersect	bvh4_traverser.cpp	/^  void BVH4Traverser::intersect(const Ray& ray, Hit& hit) const$/;"	f	class:embree::BVH4Traverser	signature:(const Ray& ray, Hit& hit) const
+embree::BVH4Traverser::intersect	bvh4_traverser.h	/^    void intersect(const Ray& ray, Hit& hit) const;$/;"	p	class:embree::BVH4Traverser	access:public	signature:(const Ray& ray, Hit& hit) const
+embree::BVH4Traverser::occluded	bvh4_traverser.cpp	/^  bool BVH4Traverser::occluded(const Ray& ray) const$/;"	f	class:embree::BVH4Traverser	signature:(const Ray& ray) const
+embree::BVH4Traverser::occluded	bvh4_traverser.h	/^    bool occluded (const Ray& ray) const;$/;"	p	class:embree::BVH4Traverser	access:public	signature:(const Ray& ray) const
+embree::Triangle4	triangle4.h	/^  struct Triangle4$/;"	s	namespace:embree
+embree::Triangle4::Ng	triangle4.h	/^    sse3f Ng;      \/\/!< Geometry normal of the triangles.$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::Triangle4	triangle4.h	/^    INLINE Triangle4 () {}$/;"	f	struct:embree::Triangle4	access:public	signature:()
+embree::Triangle4::Triangle4	triangle4.h	/^    INLINE Triangle4 (const sse3f& v0, const sse3f& v1, const sse3f& v2, const ssei& id0, const ssei& id1)$/;"	f	struct:embree::Triangle4	access:public	signature:(const sse3f& v0, const sse3f& v1, const sse3f& v2, const ssei& id0, const ssei& id1)
+embree::Triangle4::e1	triangle4.h	/^    sse3f e1;      \/\/!< 1st edge of the triangles (v0-v1).$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::e2	triangle4.h	/^    sse3f e2;      \/\/!< 2nd edge of the triangles (v2-v0).$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::id0	triangle4.h	/^    ssei id0;      \/\/!< 1st user ID.$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::id1	triangle4.h	/^    ssei id1;      \/\/!< 2nd user ID.$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::intersect	triangle4.h	/^    INLINE void intersect(const Ray& ray, Hit& hit) const$/;"	f	struct:embree::Triangle4	access:public	signature:(const Ray& ray, Hit& hit) const
+embree::Triangle4::occluded	triangle4.h	/^    INLINE bool occluded(const Ray& ray) const$/;"	f	struct:embree::Triangle4	access:public	signature:(const Ray& ray) const
+embree::Triangle4::size	triangle4.h	/^  INLINE size_t size() const {$/;"	f	struct:embree::Triangle4	access:public	signature:() const
+embree::Triangle4::v0	triangle4.h	/^    sse3f v0;      \/\/!< Base vertex of the triangles.$/;"	m	struct:embree::Triangle4	access:public
+embree::Triangle4::valid	triangle4.h	/^    INLINE sseb valid() const { return id0 != ssei(-1); }$/;"	f	struct:embree::Triangle4	access:public	signature:() const
+emptyNode	bvh4.h	/^      emptyNode = 0x80000000   \/\/!< ID of an empty node.$/;"	e	enum:embree::BVH4::__anon1
+getNumLeaves	bvh4.h	/^    size_t getNumLeaves() { computeStatistics(); return numLeaves; }$/;"	f	class:embree::BVH4	access:public	signature:()
+getNumNodes	bvh4.h	/^    size_t getNumNodes() { computeStatistics(); return numNodes; }$/;"	f	class:embree::BVH4	access:public	signature:()
+getNumPrimBlocks	bvh4.h	/^    size_t getNumPrimBlocks() { computeStatistics(); return numPrimBlocks; }$/;"	f	class:embree::BVH4	access:public	signature:()
+getNumPrims	bvh4.h	/^    size_t getNumPrims() { computeStatistics(); return numPrims; }$/;"	f	class:embree::BVH4	access:public	signature:()
+getSAH	bvh4.h	/^    float getSAH()       { computeStatistics(); return bvhSAH; }$/;"	f	class:embree::BVH4	access:public	signature:()
+id0	triangle4.h	/^    ssei id0;      \/\/!< 1st user ID.$/;"	m	struct:embree::Triangle4	access:public
+id1	triangle4.h	/^    ssei id1;      \/\/!< 2nd user ID.$/;"	m	struct:embree::Triangle4	access:public
+id2offset	bvh4.h	/^    static INLINE int id2offset(int id) {$/;"	f	class:embree::BVH4	access:private	signature:(int id)
+intCost	bvh4.h	/^      intCost      =  1,       \/\/!< Cost of one primitive intersection.$/;"	e	enum:embree::BVH4::__anon1
+intersect	bvh4_traverser.cpp	/^  void BVH4Traverser::intersect(const Ray& ray, Hit& hit) const$/;"	f	class:embree::BVH4Traverser	signature:(const Ray& ray, Hit& hit) const
+intersect	bvh4_traverser.h	/^    void intersect(const Ray& ray, Hit& hit) const;$/;"	p	class:embree::BVH4Traverser	access:public	signature:(const Ray& ray, Hit& hit) const
+intersect	triangle4.h	/^    INLINE void intersect(const Ray& ray, Hit& hit) const$/;"	f	struct:embree::Triangle4	access:public	signature:(const Ray& ray, Hit& hit) const
+job	bvh4_builder.h	/^      ObjectBinning<2> job;  \/\/!< Binner for performing splits.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+job	bvh4_builder.h	/^      ObjectBinning<2> job;  \/\/!< Binner for performing splits.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+lower_x	bvh4.h	/^      ssef lower_x;           \/\/!< X dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+lower_y	bvh4.h	/^      ssef lower_y;           \/\/!< Y dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+lower_z	bvh4.h	/^      ssef lower_z;           \/\/!< Z dimension of upper bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+maxDepth	bvh4.h	/^      maxDepth     = 24,       \/\/!< Maximal depth of the BVH.$/;"	e	enum:embree::BVH4::__anon1
+maxLeafSize	bvh4.h	/^      maxLeafSize  = 31,       \/\/!< Maximal possible size of a leaf.$/;"	e	enum:embree::BVH4::__anon1
+modified	bvh4.h	/^    bool modified;                     \/\/!< True if statistics are invalid.$/;"	m	class:embree::BVH4	access:private
+node	bvh4.h	/^    INLINE       Node& node(                   size_t ofs)       { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:( size_t ofs)
+node	bvh4.h	/^    INLINE const Node& node(                   size_t ofs) const { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:( size_t ofs) const
+node	bvh4.h	/^    INLINE const Node& node(const Node* nodes, size_t ofs) const { return *(Node*)((char*)nodes+offsetFactor*ofs); }$/;"	f	class:embree::BVH4	access:private	signature:(const Node* nodes, size_t ofs) const
+nodeID	bvh4_builder.h	/^      int&         nodeID;                  \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+nodeID	bvh4_builder.h	/^      int&         nodeID;   \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+nodeID	bvh4_builder.h	/^      int&         nodeID;   \/\/!< Reference to output the node ID.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+nodes	bvh4.h	/^    Node* nodes;                       \/\/!< Pointer to array of nodes.$/;"	m	class:embree::BVH4	access:private
+numChildren	bvh4_builder.h	/^      size_t numChildren;                   \/\/!< Current number of children.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+numLeaves	bvh4.h	/^    size_t numLeaves;                  \/\/!< Number of leaf nodes.$/;"	m	class:embree::BVH4	access:private
+numNodes	bvh4.h	/^    size_t numNodes;                   \/\/!< Number of internal nodes.$/;"	m	class:embree::BVH4	access:private
+numPrimBlocks	bvh4.h	/^    size_t numPrimBlocks;              \/\/!< Number of primitive blocks.$/;"	m	class:embree::BVH4	access:private
+numPrims	bvh4.h	/^    size_t numPrims;                   \/\/!< Number of primitives.$/;"	m	class:embree::BVH4	access:private
+numTriangles	bvh4_builder.h	/^    size_t numTriangles;                \/\/!< Number of triangles$/;"	m	class:embree::BVH4Builder	access:public
+occluded	bvh4_traverser.cpp	/^  bool BVH4Traverser::occluded(const Ray& ray) const$/;"	f	class:embree::BVH4Traverser	signature:(const Ray& ray) const
+occluded	bvh4_traverser.h	/^    bool occluded (const Ray& ray) const;$/;"	p	class:embree::BVH4Traverser	access:public	signature:(const Ray& ray) const
+occluded	triangle4.h	/^    INLINE bool occluded(const Ray& ray) const$/;"	f	struct:embree::Triangle4	access:public	signature:(const Ray& ray) const
+offsetFactor	bvh4.h	/^      offsetFactor =  8,       \/\/!< Factor to compute byte offset from offsets stored in nodes.$/;"	e	enum:embree::BVH4::__anon1
+parent	bvh4_builder.h	/^      BVH4Builder* parent;                  \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::ParallelSplitTask	access:private
+parent	bvh4_builder.h	/^      BVH4Builder* parent;   \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+parent	bvh4_builder.h	/^      BVH4Builder* parent;   \/\/!< Pointer to parent task.$/;"	m	class:embree::BVH4Builder::SplitTask	access:private
+prims	bvh4_builder.h	/^    Box* prims;                         \/\/!< Working array. Build tasks operate on ranges in this array. *\/$/;"	m	class:embree::BVH4Builder	access:public
+recurse	bvh4_builder.cpp	/^  int BVH4Builder::BuildTask::recurse(size_t depth, ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(size_t depth, ObjectBinning<2>& job)
+recurse	bvh4_builder.cpp	/^  void BVH4Builder::recurse(int& nodeID, size_t depth, const BuildRange& job)$/;"	f	class:embree::BVH4Builder	signature:(int& nodeID, size_t depth, const BuildRange& job)
+recurse	bvh4_builder.cpp	/^  void BVH4Builder::recurse(int& nodeID, size_t depth, const ObjectBinning<2>& job)$/;"	f	class:embree::BVH4Builder	signature:(int& nodeID, size_t depth, const ObjectBinning<2>& job)
+recurse	bvh4_builder.h	/^      int recurse(size_t depth, ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(size_t depth, ObjectBinning<2>& job)
+recurse	bvh4_builder.h	/^    void recurse(int& nodeID, size_t depth, const BuildRange& job);$/;"	p	class:embree::BVH4Builder	access:public	signature:(int& nodeID, size_t depth, const BuildRange& job)
+recurse	bvh4_builder.h	/^    void recurse(int& nodeID, size_t depth, const ObjectBinning<2>& job);$/;"	p	class:embree::BVH4Builder	access:public	signature:(int& nodeID, size_t depth, const ObjectBinning<2>& job)
+root	bvh4.h	/^    int root;                          \/\/!< Root node ID (can also be a leaf).$/;"	m	class:embree::BVH4	access:private
+rotate	bvh4.cpp	/^  void BVH4<T>::rotate(int nodeID, int maxDepth)$/;"	f	class:embree::BVH4	signature:(int nodeID, int maxDepth)
+rotate	bvh4.h	/^    void rotate(int nodeID, int maxDepth);$/;"	p	class:embree::BVH4	access:private	signature:(int nodeID, int maxDepth)
+run	bvh4_builder.cpp	/^  void BVH4Builder::BuildTask::run(size_t tid, BuildTask* This, size_t elts)$/;"	f	class:embree::BVH4Builder::BuildTask	signature:(size_t tid, BuildTask* This, size_t elts)
+run	bvh4_builder.h	/^      static void run(size_t tid, BuildTask* This, size_t elts);$/;"	p	class:embree::BVH4Builder::BuildTask	access:public	signature:(size_t tid, BuildTask* This, size_t elts)
+set	bvh4.h	/^      INLINE void set(size_t i, const Box& bounds, int32 childID) {$/;"	f	struct:embree::BVH4::Node	access:public	signature:(size_t i, const Box& bounds, int32 childID)
+size	triangle4.h	/^  INLINE size_t size() const {$/;"	f	struct:embree::Triangle4	access:public	signature:() const
+split	bvh4_builder.cpp	/^  void BVH4Builder::SplitTask::split()$/;"	f	class:embree::BVH4Builder::SplitTask	signature:()
+split	bvh4_builder.h	/^      void split(); static void _split(size_t tid, SplitTask* This, size_t elts) { This->split(); }$/;"	p	class:embree::BVH4Builder::SplitTask	access:public	signature:()
+stage0	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage0(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+stage0	bvh4_builder.h	/^      void stage0(size_t tid); static void _stage0(size_t tid, ParallelSplitTask* This) { This->stage0(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+stage1	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage1(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+stage1	bvh4_builder.h	/^      void stage1(size_t tid); static void _stage1(size_t tid, ParallelSplitTask* This) { This->stage1(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+stage2	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage2(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+stage2	bvh4_builder.h	/^      void stage2(size_t tid); static void _stage2(size_t tid, ParallelSplitTask* This) { This->stage2(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+stage3	bvh4_builder.cpp	/^  void BVH4Builder::ParallelSplitTask::stage3(size_t tid)$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	signature:(size_t tid)
+stage3	bvh4_builder.h	/^      void stage3(size_t tid); static void _stage3(size_t tid, ParallelSplitTask* This) { This->stage3(tid); }$/;"	p	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(size_t tid)
+target	bvh4_builder.h	/^      INLINE size_t target(const BuildRange& r) {$/;"	f	class:embree::BVH4Builder::ParallelSplitTask	access:public	signature:(const BuildRange& r)
+tid	bvh4_builder.h	/^      size_t       tid;      \/\/!< Task ID for fast thread local storage.$/;"	m	class:embree::BVH4Builder::BuildTask	access:private
+travCost	bvh4.h	/^      travCost     =  1,       \/\/!< Cost of one traversal step.$/;"	e	enum:embree::BVH4::__anon1
+triangle4.h	triangle4.h	1;"	F
+triangles	bvh4.h	/^    Triangle* triangles;               \/\/!< Pointer to array of triangles.$/;"	m	class:embree::BVH4	access:private
+triangles	bvh4_builder.h	/^    const BuildTriangle* triangles;     \/\/!< Source triangle array$/;"	m	class:embree::BVH4Builder	access:public
+upper_x	bvh4.h	/^      ssef upper_x;           \/\/!< X dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+upper_y	bvh4.h	/^      ssef upper_y;           \/\/!< Y dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+upper_z	bvh4.h	/^      ssef upper_z;           \/\/!< Z dimension of lower bounds of all 4 children.$/;"	m	struct:embree::BVH4::Node	access:public
+v0	triangle4.h	/^    sse3f v0;      \/\/!< Base vertex of the triangles.$/;"	m	struct:embree::Triangle4	access:public
+valid	triangle4.h	/^    INLINE sseb valid() const { return id0 != ssei(-1); }$/;"	f	struct:embree::Triangle4	access:public	signature:() const
+~BVH4	bvh4.h	/^    ~BVH4 () {$/;"	f	class:embree::BVH4	access:public	signature:()
