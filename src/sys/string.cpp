@@ -15,9 +15,10 @@
 // ======================================================================== //
 
 #include "sys/string.hpp"
+#include "sys/filename.hpp"
 
-#include <stdio.h>
-#include <ctype.h>
+#include <cstdio>
+#include <cctype>
 #include <algorithm>
 
 namespace std
@@ -33,6 +34,29 @@ namespace std
     string dst(s);
     std::transform(dst.begin(), dst.end(), dst.begin(), to_upper);
     return dst;
+  }
+}
+namespace pf
+{
+  std::string loadFile(const FileName &path)
+  {
+    std::ifstream stream(path, std::ios::in);
+    if (stream.is_open() == false)
+      return std::string();
+    std::string str = loadFile(stream);
+    stream.close();
+    return str;
+  }
+
+  std::string loadFile(std::ifstream &stream)
+  {
+    assert(stream.is_open());
+    std::string line;
+    std::stringstream text;
+    while (std::getline(stream, line))
+      text << "\n" << line;
+    stream.close();
+    return text.str();
   }
 }
 

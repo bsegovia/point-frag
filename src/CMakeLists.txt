@@ -27,7 +27,8 @@ set (SRC
   rtcore/bvh4/bvh4_traverser.cpp
   math/distribution.cpp
   models/obj.cpp
-  renderer/ogl.cpp)
+  renderer/ogl.cpp
+  renderer/renderer.cpp)
 include_directories (.)
 add_executable (app ${SRC})
 target_link_libraries(app glut pthread)

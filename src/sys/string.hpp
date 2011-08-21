@@ -18,10 +18,12 @@
 #define __PF_STRING_H__
 
 #include "sys/platform.hpp"
+#include "sys/filename.hpp"
 
 #include <cstring>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 namespace std
 {
@@ -32,5 +34,11 @@ namespace std
     stringstream s; s << v; return s.str();
   }
 }
-
+namespace pf
+{
+  /*! Load a file from its path and copies it into a string */
+  std::string loadFile(const FileName &path);
+  /*! Load a file from a stream and copies it into a string */
+  std::string loadFile(std::ifstream &stream);
+}
 #endif

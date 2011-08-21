@@ -1,16 +1,17 @@
 #include "ogl.hpp"
 #include "sys/platform.hpp"
+#include "sys/string.hpp"
 #include "GL/freeglut.h"
 
 #include <fstream>
 #include <sstream>
 #include <cassert>
-#include <cstdio> 
+#include <cstdio>
 #include <cstring>
 
 namespace pf
 {
-  ogl::ogl()
+  OGL::OGL()
   {
     // Load OpenGL 1.0 functions
     this->CullFace = (PFNGLCULLFACEPROC)glutGetProcAddress("glCullFace");
@@ -271,114 +272,55 @@ namespace pf
 #undef GET_CST
   }
 
-  ogl::~ogl() {}
+  OGL::~OGL() {}
 
-  bool ogl::saveBinary (const char *fileName, GLenum format, const std::vector<char> &data, GLint sz)
-  {
-    FILE *file = fopen(fileName, "wb");
-    if (file) {
-      fwrite(&format, sizeof(GLenum), 1, file);
-      fwrite(&sz, sizeof(sz), 1, file);
-      fwrite(&data[0], sz, 1, file);
-      fclose(file);
-      return true;
-    }
-    return false;
-  }
-
-  bool ogl::loadBinary (const char *fileName, GLenum &format, std::vector<char> &data, GLint &sz)
-  {
-    FILE* file = fopen(fileName, "rb");
-    if (file) {
-      fread(&format, sizeof(GLenum), 1, file);
-      fread(&sz, sizeof(sz), 1, file);
-      data.resize(sz);
-      fread(&data[0], sz, 1, file);
-      fclose(file);
-      return true;
-    }
-    return false;
-  }
-
-  std::string ogl::loadFile(const char *fileName)
-  {
-    std::ifstream stream(fileName, std::ios::in);
-    if (!stream.is_open())
-      return "";
-    std::string line;
-    std::stringstream text;
-    while (std::getline(stream, line))
-      text << "\n" << line;
-    stream.close();
-    return text.str();
-  }
-
-  bool ogl::checkError(const char *title)
+  bool OGL::checkError(const char *title) const
   {
     std::string errString;
     int err;
 
     if ((err = this->GetError()) == GL_NO_ERROR)
       return true;
+#define MAKE_ERR_STRING(ENUM)       \
+  case ENUM:                        \
+    errString = #ENUM;              \
+    break;
     switch (err) {
-      case GL_INVALID_ENUM:
-        errString = "GL_INVALID_ENUM";
-        break;
-      case GL_INVALID_VALUE:
-        errString = "GL_INVALID_VALUE";
-        break;
-      case GL_INVALID_OPERATION:
-        errString = "GL_INVALID_OPERATION";
-        break;
-      case GL_INVALID_FRAMEBUFFER_OPERATION:
-        errString = "GL_INVALID_FRAMEBUFFER_OPERATION";
-        break;
-      case GL_OUT_OF_MEMORY:
-        errString = "GL_OUT_OF_MEMORY";
-        break;
-      default:
-        errString = "UNKNOWN";
-        break;
+      MAKE_ERR_STRING(GL_INVALID_ENUM);
+      MAKE_ERR_STRING(GL_INVALID_VALUE);
+      MAKE_ERR_STRING(GL_INVALID_OPERATION);
+      MAKE_ERR_STRING(GL_INVALID_FRAMEBUFFER_OPERATION);
+      MAKE_ERR_STRING(GL_OUT_OF_MEMORY);
+      default: errString = "GL_UNKKNOWN";
     }
+#undef MAKE_ERR_STRING
     fprintf(stderr, "OpenGL err(%s): %s\n", errString.c_str(), title ? title : "");
     return err == GL_NO_ERROR;
   }
 
-  bool ogl::checkFramebuffer(GLuint frameBufferName)
+  bool OGL::checkFramebuffer(GLuint frameBufferName) const
   {
     GLenum status = this->CheckFramebufferStatus(GL_FRAMEBUFFER);
+#define MAKE_ERR(ENUM)                            \
+  case ENUM:                                      \
+    fprintf(stderr, "OpenGL Error(%s)\n", #ENUM); \
+    break;
     switch (status)
     {
-      case GL_FRAMEBUFFER_UNDEFINED:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_UNDEFINED");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER");
-        break;
-      case GL_FRAMEBUFFER_UNSUPPORTED:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_UNSUPPORTED");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
-        break;
-      case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-        fprintf(stderr, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS");
-        break;
+      MAKE_ERR(GL_FRAMEBUFFER_UNDEFINED);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER);
+      MAKE_ERR(GL_FRAMEBUFFER_UNSUPPORTED);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
+      MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS);
     }
-
+#undef MAKE_ERR
     return status != GL_FRAMEBUFFER_COMPLETE;
   }
 
-  bool ogl::validateProgram(GLuint programName)
+  bool OGL::validateProgram(GLuint programName) const
   {
     if(!programName)
       return false;
@@ -399,7 +341,7 @@ namespace pf
     return result == GL_TRUE;
   }
 
-  bool ogl::checkProgram(GLuint programName)
+  bool OGL::checkProgram(GLuint programName) const
   {
     int infoLogLength;
     GLint result = GL_FALSE;
@@ -417,42 +359,48 @@ namespace pf
     return result == GL_TRUE;
   }
 
-  bool ogl::checkShader(GLuint shaderName, const char *source)
+  static bool checkShader(const struct OGL *o, GLuint shaderName, const std::string &source)
   {
     GLint result = GL_FALSE;
     int infoLogLength;
 
     if (!shaderName)
       return false;
-
-    this->GetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
-    fprintf(stderr, "Compiling shader\n%s...\n", source);
-    this->GetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
-    std::vector<char> Buffer(infoLogLength);
-    this->GetShaderInfoLog(shaderName, infoLogLength, NULL, &Buffer[0]);
-    fprintf(stderr, "%s\n", &Buffer[0]);
-
+    o->GetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
+    o->GetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (result == GL_FALSE) {
+      std::vector<char> Buffer(infoLogLength);
+      o->GetShaderInfoLog(shaderName, infoLogLength, NULL, &Buffer[0]);
+      fprintf(stderr, "Compiling shader\n%s...\n", source.c_str());
+      fprintf(stderr, "%s\n", &Buffer[0]);
+    }
     return result == GL_TRUE;
   }
 
-  GLuint ogl::createShader(GLenum type, const char *source)
+  GLuint OGL::createShader(GLenum type, const FileName &path) const
   {
-    bool validated = true;
-    GLuint name = 0;
+    const std::string source = loadFile(path);
+    return this->createShader(type, source);
+  }
 
-    if (source != NULL && strlen(source) > 0) {
-      std::string sourceContent = this->loadFile(source);
-      char const * sourcePointer = sourceContent.c_str();
+  GLuint OGL::createShader(GLenum type, const std::string &source) const
+  {
+    GLuint name = 0;
+    bool validated = true;
+    if (source.empty() == true)
+      return 0;
+    else {
+      const char *sourcePointer = source.c_str();
       name = this->CreateShader(type);
       this->ShaderSource(name, 1, &sourcePointer, NULL);
       this->CompileShader(name);
-      validated = this->checkShader(name, sourcePointer);
+      validated = checkShader(this, name, source);
       FATAL_IF (validated == false, "shader not valid");
     }
 
     return name;
   }
 
-  struct ogl *ogl = NULL;
+  struct OGL *ogl = NULL;
 }
 

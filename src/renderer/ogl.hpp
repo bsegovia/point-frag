@@ -2,16 +2,19 @@
 #define __OGL_HPP__
 
 #include "sys/platform.hpp"
+#include "sys/filename.hpp"
 
 #include "GL/gl3.h"
 #include "GL/glext.h"
 #include <string>
 #include <vector>
 
-namespace pf {
-  struct ogl {
-    ogl(void);
-    ~ogl(void);
+namespace pf
+{
+  /*! We load all OGL functions explicitly */
+  struct OGL {
+    OGL(void);
+    virtual ~OGL(void);
 
     /*! OpenGL 1.0 functions */
     PFNGLCULLFACEPROC CullFace;
@@ -215,46 +218,46 @@ namespace pf {
     PFNGLVERTEXATTRIBPOINTERPROC VertexAttribPointer;
 
     /*! OpenGL 3.0 functions */
-    PFNGLBINDBUFFERBASEPROC   BindBufferBase;
-    PFNGLBINDFRAGDATALOCATIONPROC   BindFragDataLocation;
-    PFNGLGENERATEMIPMAPPROC   GenerateMipmap;
-    PFNGLDELETEVERTEXARRAYSPROC   DeleteVertexArrays;
-    PFNGLGENVERTEXARRAYSPROC   GenVertexArrays;
-    PFNGLBINDVERTEXARRAYPROC   BindVertexArray;
-    PFNGLGENFRAMEBUFFERSPROC   GenFramebuffers;
-    PFNGLBINDFRAMEBUFFERPROC   BindFramebuffer;
-    PFNGLFRAMEBUFFERTEXTURELAYERPROC   FramebufferTextureLayer;
-    PFNGLFRAMEBUFFERTEXTURE2DPROC   FramebufferTexture2D;
-    PFNGLCHECKFRAMEBUFFERSTATUSPROC   CheckFramebufferStatus;
-    PFNGLDELETEFRAMEBUFFERSPROC   DeleteFramebuffers;
-    PFNGLMAPBUFFERRANGEPROC   MapBufferRange;
-    PFNGLFLUSHMAPPEDBUFFERRANGEPROC   FlushMappedBufferRange;
-    PFNGLGENRENDERBUFFERSPROC   GenRenderbuffers;
-    PFNGLBINDRENDERBUFFERPROC   BindRenderbuffer;
-    PFNGLRENDERBUFFERSTORAGEPROC   RenderbufferStorage;
-    PFNGLFRAMEBUFFERRENDERBUFFERPROC   FramebufferRenderbuffer;
-    PFNGLBLITFRAMEBUFFERPROC   BlitFramebuffer;
-    PFNGLDELETERENDERBUFFERSPROC   DeleteRenderbuffers;
-    PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC   RenderbufferStorageMultisample;
-    PFNGLCOLORMASKIPROC   ColorMaski;
-    PFNGLGETBOOLEANI_VPROC   GetBooleani_v;
-    PFNGLGETINTEGERI_VPROC   GetIntegeri_v;
-    PFNGLENABLEIPROC   Enablei;
-    PFNGLDISABLEIPROC   Disablei;
+    PFNGLBINDBUFFERBASEPROC BindBufferBase;
+    PFNGLBINDFRAGDATALOCATIONPROC BindFragDataLocation;
+    PFNGLGENERATEMIPMAPPROC GenerateMipmap;
+    PFNGLDELETEVERTEXARRAYSPROC DeleteVertexArrays;
+    PFNGLGENVERTEXARRAYSPROC GenVertexArrays;
+    PFNGLBINDVERTEXARRAYPROC BindVertexArray;
+    PFNGLGENFRAMEBUFFERSPROC GenFramebuffers;
+    PFNGLBINDFRAMEBUFFERPROC BindFramebuffer;
+    PFNGLFRAMEBUFFERTEXTURELAYERPROC FramebufferTextureLayer;
+    PFNGLFRAMEBUFFERTEXTURE2DPROC FramebufferTexture2D;
+    PFNGLCHECKFRAMEBUFFERSTATUSPROC CheckFramebufferStatus;
+    PFNGLDELETEFRAMEBUFFERSPROC DeleteFramebuffers;
+    PFNGLMAPBUFFERRANGEPROC MapBufferRange;
+    PFNGLFLUSHMAPPEDBUFFERRANGEPROC FlushMappedBufferRange;
+    PFNGLGENRENDERBUFFERSPROC GenRenderbuffers;
+    PFNGLBINDRENDERBUFFERPROC BindRenderbuffer;
+    PFNGLRENDERBUFFERSTORAGEPROC RenderbufferStorage;
+    PFNGLFRAMEBUFFERRENDERBUFFERPROC FramebufferRenderbuffer;
+    PFNGLBLITFRAMEBUFFERPROC BlitFramebuffer;
+    PFNGLDELETERENDERBUFFERSPROC DeleteRenderbuffers;
+    PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC RenderbufferStorageMultisample;
+    PFNGLCOLORMASKIPROC ColorMaski;
+    PFNGLGETBOOLEANI_VPROC GetBooleani_v;
+    PFNGLGETINTEGERI_VPROC GetIntegeri_v;
+    PFNGLENABLEIPROC Enablei;
+    PFNGLDISABLEIPROC Disablei;
 
     /*! OpenGL 3.1 functions */
-    PFNGLBINDBUFFERRANGEPROC   BindBufferRange;
-    PFNGLDRAWARRAYSINSTANCEDPROC   DrawArraysInstanced;
-    PFNGLDRAWELEMENTSINSTANCEDPROC   DrawElementsInstanced;
-    PFNGLTEXBUFFERPROC   TexBuffer;
-    PFNGLPRIMITIVERESTARTINDEXPROC   PrimitiveRestartIndex;
-    PFNGLGETUNIFORMINDICESPROC   GetUniformIndices;
-    PFNGLGETACTIVEUNIFORMSIVPROC   GetActiveUniformsiv;
-    PFNGLGETACTIVEUNIFORMNAMEPROC   GetActiveUniformName;
-    PFNGLGETUNIFORMBLOCKINDEXPROC   GetUniformBlockIndex;
-    PFNGLGETACTIVEUNIFORMBLOCKIVPROC   GetActiveUniformBlockiv;
-    PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC   GetActiveUniformBlockName;
-    PFNGLUNIFORMBLOCKBINDINGPROC   UniformBlockBinding;
+    PFNGLBINDBUFFERRANGEPROC BindBufferRange;
+    PFNGLDRAWARRAYSINSTANCEDPROC DrawArraysInstanced;
+    PFNGLDRAWELEMENTSINSTANCEDPROC DrawElementsInstanced;
+    PFNGLTEXBUFFERPROC TexBuffer;
+    PFNGLPRIMITIVERESTARTINDEXPROC PrimitiveRestartIndex;
+    PFNGLGETUNIFORMINDICESPROC GetUniformIndices;
+    PFNGLGETACTIVEUNIFORMSIVPROC GetActiveUniformsiv;
+    PFNGLGETACTIVEUNIFORMNAMEPROC GetActiveUniformName;
+    PFNGLGETUNIFORMBLOCKINDEXPROC GetUniformBlockIndex;
+    PFNGLGETACTIVEUNIFORMBLOCKIVPROC GetActiveUniformBlockiv;
+    PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC GetActiveUniformBlockName;
+    PFNGLUNIFORMBLOCKBINDINGPROC UniformBlockBinding;
 
     /*! OpenGL 3.2 functions */
     PFNGLGETINTEGER64I_VPROC GetInteger64i_v;
@@ -262,70 +265,64 @@ namespace pf {
     PFNGLFRAMEBUFFERTEXTUREPROC FramebufferTexture;
 
     /*! OpenGL 3.3 functions */
-    PFNGLGENSAMPLERSPROC   GenSamplers;
-    PFNGLDELETESAMPLERSPROC   DeleteSamplers;
-    PFNGLISSAMPLERPROC   IsSampler;
-    PFNGLBINDSAMPLERPROC   BindSampler;
-    PFNGLSAMPLERPARAMETERIPROC   SamplerParameteri;
-    PFNGLSAMPLERPARAMETERIVPROC   SamplerParameteriv;
-    PFNGLSAMPLERPARAMETERFPROC   SamplerParameterf;
-    PFNGLSAMPLERPARAMETERFVPROC   SamplerParameterfv;
-    PFNGLSAMPLERPARAMETERIIVPROC   SamplerParameterIiv;
-    PFNGLSAMPLERPARAMETERIUIVPROC   SamplerParameterIuiv;
-    PFNGLGETSAMPLERPARAMETERIVPROC   GetSamplerParameteriv;
-    PFNGLGETSAMPLERPARAMETERIIVPROC   GetSamplerParameterIiv;
-    PFNGLGETSAMPLERPARAMETERFVPROC   GetSamplerParameterfv;
-    PFNGLGETSAMPLERPARAMETERIUIVPROC   GetSamplerParameterIuiv;
-    PFNGLVERTEXATTRIBDIVISORPROC   VertexAttribDivisor;
+    PFNGLGENSAMPLERSPROC GenSamplers;
+    PFNGLDELETESAMPLERSPROC DeleteSamplers;
+    PFNGLISSAMPLERPROC IsSampler;
+    PFNGLBINDSAMPLERPROC BindSampler;
+    PFNGLSAMPLERPARAMETERIPROC SamplerParameteri;
+    PFNGLSAMPLERPARAMETERIVPROC SamplerParameteriv;
+    PFNGLSAMPLERPARAMETERFPROC SamplerParameterf;
+    PFNGLSAMPLERPARAMETERFVPROC SamplerParameterfv;
+    PFNGLSAMPLERPARAMETERIIVPROC SamplerParameterIiv;
+    PFNGLSAMPLERPARAMETERIUIVPROC SamplerParameterIuiv;
+    PFNGLGETSAMPLERPARAMETERIVPROC GetSamplerParameteriv;
+    PFNGLGETSAMPLERPARAMETERIIVPROC GetSamplerParameterIiv;
+    PFNGLGETSAMPLERPARAMETERFVPROC GetSamplerParameterfv;
+    PFNGLGETSAMPLERPARAMETERIUIVPROC GetSamplerParameterIuiv;
+    PFNGLVERTEXATTRIBDIVISORPROC VertexAttribDivisor;
 
     /*! Driver dependent constants */
     int32_t maxColorAttachmentNum;
     int32_t maxTextureSize;
     int32_t maxTextureUnit;
 
-    /*! Check if the given extension exists */
-    void checkExtension(char const *str);
     /*! Check that no error happened */
-    bool checkError(const char *title = NULL);
+    bool checkError(const char *title = NULL) const;
     /*! Check that the frame buffer is properly setup */
-    bool checkFramebuffer(GLuint frameBufferName);
+    bool checkFramebuffer(GLuint frameBufferName) const;
     /*! Validate the program */
-    bool validateProgram(GLuint programName);
+    bool validateProgram(GLuint programName) const;
     /*! Check that the program is properly created */
-    bool checkProgram(GLuint programName);
-    /*! Create a shader from a string */
-    GLuint createShader(GLenum type, const char *source);
-
-  private:
-    /*! Save file "fileName" storing data */
-    bool saveBinary(const char *fileName, GLenum format, const std::vector<char> &data, const GLint sz);
-    /*! Load data from file "fileName" */
-    bool loadBinary(const char *fileName, GLenum &format, std::vector<char> &data, GLint &sz);
-    /*! Turns file "fileName" into the string */
-    std::string loadFile(const char *fileName);
-    /*! Check that the shader is properly setup */
-    bool checkShader(GLuint shaderName, const char *source);
+    bool checkProgram(GLuint programName) const;
+    /*! Create a shader from the path of the source */
+    GLuint createShader(GLenum type, const FileName &path) const;
+    /*! Create a shader from the source */
+    GLuint createShader(GLenum type, const std::string &source) const;
   };
-  extern struct ogl *ogl;
-}
 
-/*! Convenient way to catch all GL related errors */
+  /*! One instance is enough */
+  extern OGL *ogl;
+
+/*! Convenient way to catch all GL related errors. User defines the name of the
+ *  structure which contains all OGL functions with name OGL_NAME
+ */
 #ifndef NDEBUG
-  #define GL_CALL(NAME, ...)                                                \
-    do {                                                                    \
-      ogl->NAME(__VA_ARGS__);                                               \
-      FATAL_IF (ogl->checkError(__FUNCTION__) == false, #NAME " failed");   \
+  #define R_CALL(NAME, ...)                                                   \
+    do {                                                                      \
+      OGL_NAME->NAME(__VA_ARGS__);                                            \
+      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed");\
     } while (0)
-  #define GL_CALLR(RET, NAME, ...)                                          \
-    do {                                                                    \
-      RET = ogl->NAME(__VA_ARGS__);                                         \
-      FATAL_IF (ogl->checkError(__FUNCTION__) == false, #NAME " failed");   \
+  #define R_CALLR(RET, NAME, ...)                                             \
+    do {                                                                      \
+      RET = OGL_NAME->NAME(__VA_ARGS__);                                      \
+      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed");\
     } while (0)
 #else
-  #define GL_CALLA(NAME) do { ogl->NAME(); } while (0)
-  #define GL_CALL(NAME, ...) do { ogl->NAME(__VA_ARGS__); } while (0)
-  #define GL_CALLR(RET, NAME, ...) do { RET = ogl->NAME(__VA_ARGS__); } while (0)
+  #define R_CALL(NAME, ...) do { OGL_NAME->NAME(__VA_ARGS__); } while (0)
+  #define R_CALLR(RET, NAME, ...) do { RET = OGL_NAME->NAME(__VA_ARGS__); } while (0)
 #endif /* NDEBUG */
+
+}
 
 #endif /* __OGL_HPP__ */
 

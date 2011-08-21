@@ -6,6 +6,7 @@
 #include <cstring>
 #include <algorithm>
 
+#define OGL_NAME ogl
 namespace pf
 {
   static unsigned char *doMipmap(const unsigned char *src,
@@ -44,20 +45,16 @@ namespace pf
     }
   }
 
-  GLuint loadTexture(const char *fileName)
+  GLuint loadTexture(const FileName &fileName)
   {
     int w, h, comp, fmt = GL_RGBA;
-    unsigned char *img = stbi_load(fileName, &w, &h, &comp, 0);
+    unsigned char *img = stbi_load(std::string(fileName).c_str(), &w, &h, &comp, 0);
     if (img == NULL)
       return 0;
 
     // Revert TGA images
-    if (strlen(fileName) >= 4) {
-      const char *extTGA = ".tga";
-      const char *ext = fileName + strlen(fileName) - strlen(extTGA);
-      if (strcmp(ext, extTGA) != 0)
-        revertTGA(img, w, h, comp);
-    }
+    if (fileName.ext() == "tga")
+      revertTGA(img, w, h, comp);
     const int levelNum = (int) max(log2(w), log2(h));
     switch (comp) {
       case 3: fmt = GL_RGB; break;
@@ -67,14 +64,14 @@ namespace pf
 
     // Load the texture
     GLuint texName = 0;
-    GL_CALL (GenTextures, 1, &texName);
-    GL_CALL (ActiveTexture, GL_TEXTURE0);
-    GL_CALL (BindTexture, GL_TEXTURE_2D, texName);
-    GL_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    GL_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    R_CALL (GenTextures, 1, &texName);
+    R_CALL (ActiveTexture, GL_TEXTURE0);
+    R_CALL (BindTexture, GL_TEXTURE_2D, texName);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     int lvl = 0;
     for (;;) {
-      GL_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
+      R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
       if (lvl >= levelNum) {
         free(img);
         break;
@@ -88,8 +85,9 @@ namespace pf
       }
       ++lvl;
     }
-    GL_CALL (BindTexture, GL_TEXTURE_2D, 0);
+    R_CALL (BindTexture, GL_TEXTURE_2D, 0);
     return texName;
   }
 }
+#undef OGL_NAME
 
