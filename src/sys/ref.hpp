@@ -26,7 +26,7 @@ namespace pf
   template<typename Type> friend class Ref;
   public:
     RefCount() : refCounter(0) {}
-    virtual ~RefCount() {};
+    virtual ~RefCount() {}
   private:
     INLINE void refInc() { refCounter++; }
     INLINE bool refDec() { return !(--refCounter); }

@@ -1,5 +1,4 @@
 set (SRC
-  app/texture.cpp
   app/camera.cpp
   app/app.cpp
   sys/filename.cpp
@@ -28,6 +27,7 @@ set (SRC
   math/distribution.cpp
   models/obj.cpp
   renderer/ogl.cpp
+  renderer/texture.cpp
   renderer/renderer.cpp)
 include_directories (.)
 add_executable (app ${SRC})

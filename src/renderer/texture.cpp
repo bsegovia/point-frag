@@ -45,7 +45,11 @@ namespace pf
     }
   }
 
-  GLuint loadTexture(const FileName &fileName)
+  GLuint loadTexture(const FileName &fileName,
+                     GLuint *format,
+                     GLuint *width, GLuint *height,
+                     GLuint *minLevel, GLuint *maxLevel,
+                     bool mipmap)
   {
     int w, h, comp, fmt = GL_RGBA;
     unsigned char *img = stbi_load(std::string(fileName).c_str(), &w, &h, &comp, 0);
@@ -61,6 +65,11 @@ namespace pf
       case 4: fmt = GL_RGBA; break;
       default: FATAL("unsupported number of componenents");
     };
+    if (width) *width = w;
+    if (height) *height = h;
+    if (format) *format = fmt;
+    if (minLevel) *minLevel = 0;
+    if (maxLevel) *maxLevel = levelNum;
 
     // Load the texture
     GLuint texName = 0;
@@ -72,7 +81,7 @@ namespace pf
     int lvl = 0;
     for (;;) {
       R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
-      if (lvl >= levelNum) {
+      if (lvl >= levelNum || mipmap == false) {
         free(img);
         break;
       } else {
@@ -88,6 +97,15 @@ namespace pf
     R_CALL (BindTexture, GL_TEXTURE_2D, 0);
     return texName;
   }
+
+  Texture2D::Texture2D(const FileName &path, bool mipmap) {
+    this->handle = loadTexture(path, &this->fmt,
+                               &this->w, &this->h,
+                               &this->minLevel, &this->maxLevel,
+                               mipmap);
+  }
+  Texture2D::~Texture2D(void) { R_CALL (DeleteTextures, 1, &this->handle); }
+
 }
 #undef OGL_NAME
 

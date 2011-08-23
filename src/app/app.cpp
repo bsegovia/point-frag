@@ -1,9 +1,9 @@
 #include "camera.hpp"
-#include "texture.hpp"
 #include "models/obj.hpp"
 #include "math/vec.hpp"
 #include "math/matrix.hpp"
 #include "math/bbox.hpp"
+#include "renderer/texture.hpp"
 #include "renderer/renderer.hpp"
 
 #include <GL/freeglut.h>
@@ -45,10 +45,12 @@ static GLuint ObjElementBufferName = 0;
 static GLuint ObjVertexArrayName = 0;
 static GLuint chessTextureName = 0;
 
+#if 0
 // Framebuffer (object)
 static GLuint frameBufferName = 0;
 static GLuint bufferRGBAName = 0;
 static GLuint bufferDepthName = 0;
+#endif
 
 // Quat to display the final picture
 static GLuint quadVertexArrayName = 0;
@@ -56,6 +58,8 @@ static GLuint quadBufferName = 0;
 static GLuint quadProgramName = 0;
 static GLuint quadUniformDiffuse = 0;
 static GLuint quadUniformMVP = 0;
+
+static Renderer *renderer = NULL;
 
 struct Vertex
 {
@@ -86,52 +90,6 @@ static int mouseX = 0, mouseY = 0;
 static int mouseXRel = 0, mouseYRel = 0;
 static bool isMouseInit = false;
 static uint64_t currFrame = 0;
-
-// Create the frame buffer object we use for the splats
-static void buildFrameBufferObject(void)
-{
-  if (bufferRGBAName)
-    R_CALL (DeleteTextures, 1, &bufferRGBAName);
-  if (bufferDepthName)
-    R_CALL (DeleteTextures, 1, &bufferDepthName);
-  if (frameBufferName)
-    R_CALL (DeleteFramebuffers, 1, &frameBufferName);
-
-  // Color buffer
-  R_CALL (ActiveTexture, GL_TEXTURE0);
-  R_CALL (GenTextures, 1, &bufferRGBAName);
-  R_CALL (BindTexture, GL_TEXTURE_2D, bufferRGBAName);
-  R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  R_CALL (TexImage2D, GL_TEXTURE_2D, 
-                       0,
-                       GL_RGBA16F,
-                       w,
-                       h,
-                       0,
-                       GL_RGBA, 
-                       GL_UNSIGNED_BYTE, 
-                       NULL);
-
-  // Depth buffer
-  R_CALL (GenTextures, 1, &bufferDepthName);
-  R_CALL (BindTexture, GL_TEXTURE_2D, bufferDepthName);
-  R_CALL (TexImage2D, GL_TEXTURE_2D,
-                       0,
-                       GL_DEPTH24_STENCIL8,
-                       w,
-                       h,
-                       0,
-                       GL_DEPTH_STENCIL,
-                       GL_UNSIGNED_INT_24_8,
-                       NULL);
-
-  R_CALL (GenFramebuffers, 1, &frameBufferName);
-  R_CALL (BindFramebuffer, GL_FRAMEBUFFER, frameBufferName);
-  R_CALL (FramebufferTexture, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, bufferRGBAName, 0);
-  R_CALL (FramebufferTexture, GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, bufferDepthName, 0);
-  R_CALL (BindFramebuffer, GL_FRAMEBUFFER, 0);
-}
 
 // Returns time elapsed from the previous frame
 static double updateTime(void)
@@ -277,7 +235,7 @@ static void keyUp(unsigned char key, int x, int y) { keys[key] = false; }
 static void mouse(int Button, int State, int x, int y) { }
 static void reshape(int _w, int _h) {
   w = _w; h = _h;
-  buildFrameBufferObject();
+  //buildFrameBufferObject();
 }
 static void idle(void) { glutPostRedisplay(); }
 
@@ -429,7 +387,7 @@ int main(int argc, char **argv)
   glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
   glutCreateWindow(argv[0]);
 
-  ogl = new Renderer;
+  ogl = renderer = new Renderer;
 
   // Load OBJ file
   obj = new Obj;
@@ -440,7 +398,7 @@ int main(int argc, char **argv)
   std::printf("matNum: %u\n", (uint32_t) obj->matNum);
   std::printf("grpNum: %u\n", (uint32_t) obj->grpNum);
 
-  buildFrameBufferObject();
+  //buildFrameBufferObject();
   buildDiffuseMesh();
   glutDisplayFunc(display);
   buildQuad();
