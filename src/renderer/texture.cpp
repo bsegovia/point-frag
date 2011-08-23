@@ -45,67 +45,56 @@ namespace pf
     }
   }
 
-  GLuint loadTexture(const FileName &fileName,
-                     GLuint *format,
-                     GLuint *width, GLuint *height,
-                     GLuint *minLevel, GLuint *maxLevel,
-                     bool mipmap)
+  Texture2D::Texture2D(const FileName &fileName, bool mipmap)
   {
-    int w, h, comp, fmt = GL_RGBA;
-    unsigned char *img = stbi_load(std::string(fileName).c_str(), &w, &h, &comp, 0);
-    if (img == NULL)
-      return 0;
+    int comp;
+    unsigned char *img = stbi_load(std::string(fileName).c_str(),
+                                   (int*) &this->w, (int*) &this->h, &comp, 0);
+    this->fmt = this->minLevel = this->maxLevel = this->handle = 0;
+    if (img != NULL) {
+      // Revert TGA images
+      this->fmt = GL_RGBA;
+      if (fileName.ext() == "tga")
+        revertTGA(img, w, h, comp);
+      const int levelNum = (int) max(log2(w), log2(h));
+      switch (comp) {
+        case 3: this->fmt = GL_RGB; break;
+        case 4: this->fmt = GL_RGBA; break;
+        default: FATAL("unsupported number of componenents");
+      };
+      this->minLevel = 0;
+      this->maxLevel = levelNum;
 
-    // Revert TGA images
-    if (fileName.ext() == "tga")
-      revertTGA(img, w, h, comp);
-    const int levelNum = (int) max(log2(w), log2(h));
-    switch (comp) {
-      case 3: fmt = GL_RGB; break;
-      case 4: fmt = GL_RGBA; break;
-      default: FATAL("unsupported number of componenents");
-    };
-    if (width) *width = w;
-    if (height) *height = h;
-    if (format) *format = fmt;
-    if (minLevel) *minLevel = 0;
-    if (maxLevel) *maxLevel = levelNum;
-
-    // Load the texture
-    GLuint texName = 0;
-    R_CALL (GenTextures, 1, &texName);
-    R_CALL (ActiveTexture, GL_TEXTURE0);
-    R_CALL (BindTexture, GL_TEXTURE_2D, texName);
-    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    int lvl = 0;
-    for (;;) {
-      R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
-      if (lvl >= levelNum || mipmap == false) {
-        free(img);
-        break;
-      } else {
-        const int mmW = max(w/2,1), mmH = max(h/2, 1);
-        unsigned char *mipmap = doMipmap(img, w, h, mmW, mmH, comp);
-        free(img);
-        w = mmW;
-        h = mmH;
-        img = mipmap;
+      // Load the texture
+      R_CALL (GenTextures, 1, &this->handle);
+      R_CALL (ActiveTexture, GL_TEXTURE0);
+      R_CALL (BindTexture, GL_TEXTURE_2D, this->handle);
+      R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      int lvl = 0;
+      for (;;) {
+        R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
+        if (lvl >= levelNum || mipmap == false) {
+          free(img);
+          break;
+        } else {
+          const int mmW = max(w/2, 1u), mmH = max(h/2, 1u);
+          unsigned char *mipmap = doMipmap(img, w, h, mmW, mmH, comp);
+          free(img);
+          w = mmW;
+          h = mmH;
+          img = mipmap;
+        }
+        ++lvl;
       }
-      ++lvl;
-    }
-    R_CALL (BindTexture, GL_TEXTURE_2D, 0);
-    return texName;
+      R_CALL (BindTexture, GL_TEXTURE_2D, 0);
+    } else
+      this->w = this->h = 0;
   }
 
-  Texture2D::Texture2D(const FileName &path, bool mipmap) {
-    this->handle = loadTexture(path, &this->fmt,
-                               &this->w, &this->h,
-                               &this->minLevel, &this->maxLevel,
-                               mipmap);
+  Texture2D::~Texture2D(void) {
+    if (this->handle) R_CALL (DeleteTextures, 1, &this->handle);
   }
-  Texture2D::~Texture2D(void) { R_CALL (DeleteTextures, 1, &this->handle); }
-
 }
 #undef OGL_NAME
 

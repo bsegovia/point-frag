@@ -3,35 +3,24 @@
 
 #include "renderer/ogl.hpp"
 #include "renderer/texture.hpp"
-#include "math/bbox.hpp"
+#include "renderer/renderobj.hpp"
 #include "math/matrix.hpp"
+#include "math/bbox.hpp"
 #include <unordered_map>
 #include <string>
 
 namespace pf
 {
-  /*! Entity used for rendering of OBJ models */
-  struct RenderObj : RefCount {
-    GLuint vertexArray;   /*! Vertex declaration */
-    GLuint vertexBuffer;  /*! Vertex data (positions, normals...) */
-    GLuint elementBuffer; /*! Indices */
-    GLuint grpNum;        /*! Number of groups in the model */
-    Ref<Texture2D> *tex;  /*! One texture per group of triangles */
-    BBox3f *bbox;         /*! One bounding box for each group */
-    struct { GLuint first, last; } *grp; /*! Indices of each group */
-  };
-
   /*! Will basically render everything */
-  struct Renderer : OGL
+  class Renderer : public OGL
   {
+  public:
     /*! Constructor */
     Renderer(void);
     /*! Destructor */
     virtual ~Renderer(void);
     /*! Call it when window size changes */
     void resize(int w, int h);
-    /*! Create a model from an Obj file */
-    Ref<RenderObj> createRenderObj(const FileName &fileName);
 
     /*! Display bounding boxes in wireframe */
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
@@ -91,11 +80,12 @@ namespace pf
   private:
     /*! Store the texture per name (only its base name is taken into account) */
     std::unordered_map<Ref<Texture2D>, GLuint> texMap;
+     /*! Default texture */
+    Ref<Texture2D> defaultTex;
     /*! Default colors */
     vec4f defaultDiffuseCol, defaultSpecularCol;
     /*! Model view projection */
     mat4x4f MVP;
-
     /*! Helper to create buffers for deferred shading */
     GLuint makeGBufferTexture(int internal, int w, int h, int data, int type);
     /*! Helper to build a complete program from file */

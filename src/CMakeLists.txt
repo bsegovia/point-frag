@@ -28,6 +28,7 @@ set (SRC
   models/obj.cpp
   renderer/ogl.cpp
   renderer/texture.cpp
+  renderer/renderobj.cpp
   renderer/renderer.cpp)
 include_directories (.)
 add_executable (app ${SRC})

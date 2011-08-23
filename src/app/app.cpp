@@ -30,7 +30,7 @@ static bool keys[MAX_KEYS];
 static const std::string dataPath = "../../share/";
 
 // All textures per object
-static GLuint *texName = NULL;
+static Ref<Texture2D> *textures = NULL;
 // Bounding boxes of each object
 static BBox3f *bbox = NULL;
 
@@ -43,7 +43,7 @@ static GLint uDiffuseOnlyTex = 0;
 static GLuint ObjDataBufferName = 0;
 static GLuint ObjElementBufferName = 0;
 static GLuint ObjVertexArrayName = 0;
-static GLuint chessTextureName = 0;
+static Ref<Texture2D> chessTextureName = NULL;
 
 #if 0
 // Framebuffer (object)
@@ -164,7 +164,7 @@ static void display(void)
   for (size_t grp = 0; grp < obj->grpNum; ++grp) {
     const uintptr_t offset = obj->grp[grp].first * sizeof(int[3]);
     const GLuint n = obj->grp[grp].last - obj->grp[grp].first + 1;
-    R_CALL (BindTexture, GL_TEXTURE_2D, texName[grp]);
+    R_CALL (BindTexture, GL_TEXTURE_2D, textures[grp]->handle);
     R_CALL (DrawElements, GL_TRIANGLES, 3*n, GL_UNSIGNED_INT, (void*) offset);
   }
   R_CALL (BindVertexArray, 0);
@@ -297,11 +297,10 @@ static GLuint buildProgram(const std::string &prefix,
 static void buildDiffuseMesh(void)
 {
   // Store the texture for each fileName
-  std::unordered_map<std::string, GLuint> texMap;
+  std::unordered_map<std::string, Ref<Texture2D> > texMap;
 
   // chess texture is used when no diffuse is bound
-  const std::string name = dataPath + "Maps/chess.tga";
-  chessTextureName = texMap["chess.tga"] = loadTexture(name.c_str());
+  chessTextureName = texMap["chess.tga"] = new Texture2D(dataPath + "Maps/chess.tga");
 
   // Load all textures
   for (size_t i = 0; i < obj->matNum; ++i) {
@@ -310,8 +309,8 @@ static void buildDiffuseMesh(void)
       continue;
     if (texMap.find(name) == texMap.end()) {
       const std::string path = dataPath + name;
-      const GLuint texName = loadTexture(path.c_str());
-      texMap[name] = texName ? texName : chessTextureName;
+      Ref<Texture2D> tex = new Texture2D(path);
+      texMap[name] = tex->handle ? tex : chessTextureName;
     }
     else
       printf((std::string(name) + " already found\n").c_str());
@@ -330,14 +329,14 @@ static void buildDiffuseMesh(void)
   buildObjBuffers(obj);
 
   // Map each material group to the texture name
-  texName = new GLuint[obj->grpNum];
+  textures = new Ref<Texture2D>[obj->grpNum];
   for (size_t i = 0; i < obj->grpNum; ++i) {
     const int mat = obj->grp[i].m;
     const char *name = obj->mat[mat].map_Kd;
     if (name == NULL || strlen(name) == 0)
-      texName[i] = chessTextureName;
+      textures[i] = chessTextureName;
     else {
-      texName[i] = texMap[name];
+      textures[i] = texMap[name];
       printf("name %s %i\n", name, (int)i);
     }
   }
