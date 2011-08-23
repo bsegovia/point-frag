@@ -76,12 +76,12 @@ namespace pf
       GLuint program;
       GLuint uDiffuse, uMVP;
     } diffuse;
+     /*! Default texture */
+    Ref<Texture2D> defaultTex;
 
   private:
     /*! Store the texture per name (only its base name is taken into account) */
-    std::unordered_map<Ref<Texture2D>, GLuint> texMap;
-     /*! Default texture */
-    Ref<Texture2D> defaultTex;
+    std::unordered_map<std::string, Ref<Texture2D> > texMap;
     /*! Default colors */
     vec4f defaultDiffuseCol, defaultSpecularCol;
     /*! Model view projection */

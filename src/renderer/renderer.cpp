@@ -4,9 +4,9 @@
 namespace pf
 {
 #define OGL_NAME this
-#if 0
+
   /*! Where you may find data files and shaders */
-  static const char *dataPath[] = {
+  static const char *defaultPath[] = {
     "./share/",
     "../share/",
     "../../share/",
@@ -17,7 +17,19 @@ namespace pf
     "../data/",
     "../../data/",
   };
-#endif
+  static const size_t defaultPathNum = sizeof(defaultPath) / sizeof(defaultPath[0]);
+
+  Ref<Texture2D> loadDefaultTexture(Renderer &renderer)
+  {
+    for (size_t i = 0; i < defaultPathNum; ++i) {
+      const std::string prefix = defaultPath[i];
+      Ref<Texture2D> tex = new Texture2D(renderer, prefix + "Maps/chess.tga");
+      if (tex->handle)
+        return tex;
+    }
+    FATAL ("Default texture not found");
+    return NULL;
+  }
 
   GLuint Renderer::makeGBufferTexture(int internal, int w, int h, int data, int type)
   {
@@ -193,6 +205,7 @@ namespace pf
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     this->initPlain();
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
+    this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }
 
   Renderer::~Renderer(void) {

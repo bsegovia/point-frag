@@ -300,7 +300,8 @@ static void buildDiffuseMesh(void)
   std::unordered_map<std::string, Ref<Texture2D> > texMap;
 
   // chess texture is used when no diffuse is bound
-  chessTextureName = texMap["chess.tga"] = new Texture2D(dataPath + "Maps/chess.tga");
+  const FileName &path = dataPath + "Maps/chess.tga";
+  chessTextureName = texMap["chess.tga"] = new Texture2D(*renderer, path);
 
   // Load all textures
   for (size_t i = 0; i < obj->matNum; ++i) {
@@ -309,7 +310,7 @@ static void buildDiffuseMesh(void)
       continue;
     if (texMap.find(name) == texMap.end()) {
       const std::string path = dataPath + name;
-      Ref<Texture2D> tex = new Texture2D(path);
+      Ref<Texture2D> tex = new Texture2D(*renderer, path);
       texMap[name] = tex->handle ? tex : chessTextureName;
     }
     else

@@ -1,12 +1,12 @@
 #include "texture.hpp"
-#include "renderer/ogl.hpp"
+#include "renderer/renderer.hpp"
 #include "math/math.hpp"
 #include "image/stb_image.hpp"
 
 #include <cstring>
 #include <algorithm>
 
-#define OGL_NAME ogl
+#define OGL_NAME (&renderer)
 namespace pf
 {
   static unsigned char *doMipmap(const unsigned char *src,
@@ -45,7 +45,8 @@ namespace pf
     }
   }
 
-  Texture2D::Texture2D(const FileName &fileName, bool mipmap)
+  Texture2D::Texture2D(Renderer &renderer, const FileName &fileName, bool mipmap)
+    : renderer(renderer)
   {
     int comp;
     unsigned char *img = stbi_load(std::string(fileName).c_str(),
