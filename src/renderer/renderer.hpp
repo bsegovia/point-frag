@@ -8,6 +8,7 @@
 #include "math/bbox.hpp"
 #include <unordered_map>
 #include <string>
+#include <cassert>
 
 namespace pf
 {
@@ -26,6 +27,16 @@ namespace pf
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
     /*! Display a model */
     void displayRenderObj(const RenderObj &model);
+
+    /*! Get the texture by name (return NULL if not found) */
+    INLINE Ref<Texture2D> getTexture(const char *name) const {
+      assert(name);
+      const auto it = this->texMap.find(name);
+      if (it == this->texMap.end())
+        return NULL;
+      else
+        return it->second;
+    }
 
     /*! Uniform values used in the renderer */
     INLINE void setDefaultDiffuseCol(vec4f c)  {this->defaultDiffuseCol = c;}
@@ -93,6 +104,10 @@ namespace pf
     /*! Helper to build a complete program from memory */
     GLuint buildProgram(const char *vertSource, const char *geomSource, const char *fragSource);
   };
+
+  /*! Where you may find data files and shaders */
+  extern const char *defaultPath[];
+  extern const size_t defaultPathNum;
 }
 
 #endif /* __RENDERER_HPP__ */

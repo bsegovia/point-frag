@@ -6,7 +6,7 @@ namespace pf
 #define OGL_NAME this
 
   /*! Where you may find data files and shaders */
-  static const char *defaultPath[] = {
+  const char *defaultPath[] = {
     "./share/",
     "../share/",
     "../../share/",
@@ -17,7 +17,7 @@ namespace pf
     "../data/",
     "../../data/",
   };
-  static const size_t defaultPathNum = sizeof(defaultPath) / sizeof(defaultPath[0]);
+  const size_t defaultPathNum = sizeof(defaultPath) / sizeof(defaultPath[0]);
 
   Ref<Texture2D> loadDefaultTexture(Renderer &renderer)
   {
