@@ -155,6 +155,15 @@
 #define _DO_JOIN2(X, Y) X##Y
 
 /* Fatal error macros */
+#if defined(__WIN32__)
+#define FATAL(...)                                          \
+do {                                                        \
+  const char msg[1024];                                     \
+  snprintf(msg, sizeof(msg), __VA_ARGS__);                  \
+  MessageBox(NULL, msg, "Fatal Error", MB_OK);              \
+  exit(-1);                                                 \
+} while (0)
+#else
 #define FATAL(...)                                          \
 do {                                                        \
   fprintf(stderr, "error: ");                               \
@@ -163,6 +172,8 @@ do {                                                        \
   assert(0);                                                \
   exit(-1);                                                 \
 } while (0)
+#endif /* __WIN32__ */
+
 #define NOT_IMPLEMENTED FATAL ("Not implemented")
 #define FATAL_IF(COND, ...) do {                            \
   if(UNLIKELY(COND)) FATAL(__VA_ARGS__);                    \

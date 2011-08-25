@@ -36,8 +36,8 @@ namespace pf
   }
 
   void* alignedMalloc(size_t size, size_t align) {
-  void* ptr = _mm_malloc(size,align);
-    if (!ptr && size) throw std::runtime_error("memory allocation failed");
+    void* ptr = _mm_malloc(size,align);
+    FATAL_IF (!ptr && size, "memory allocation failed");
     return ptr;
   }
 
@@ -46,7 +46,7 @@ namespace pf
   }
 
   void alignedFree(void *ptr) {
-  _mm_free(ptr);
+    _mm_free(ptr);
   }
 }
 #endif
@@ -84,9 +84,9 @@ namespace pf
 namespace pf
 {
   void* alignedMalloc(size_t size, size_t align) {
-  void* ptr = memalign(64,size);
-  if (!ptr && size) throw std::runtime_error("memory allocation failed");
-  return ptr;
+    void* ptr = memalign(64,size);
+    if (!ptr && size) FATAL("memory allocation failed");
+    return ptr;
   }
   void* alignedRealloc(void* ptr, size_t size, size_t align) { return realloc(ptr,size); }
   void alignedFree(void *ptr) { assert(ptr); free(ptr); }
@@ -107,7 +107,7 @@ namespace pf
   void* alignedMalloc(size_t size, size_t align)
   {
     void* mem = malloc(size+(align-1)+sizeof(void*));
-  if (!mem && size) throw std::runtime_error("memory allocation failed");
+    FATAL_IF (!mem && size, "memory allocation failed");
     char* aligned = ((char*)mem) + sizeof(void*);
     aligned += align - ((uintptr_t)aligned & (align - 1));
     ((void**)aligned)[-1] = mem;
@@ -118,7 +118,7 @@ namespace pf
   {
     void* base = ((void**)ptr)[-1];
     void* newbase = realloc(base,size+(align-1)+sizeof(void*));
-    if (newbase != base) throw std::runtime_error("alignedRealloc: reducing size not supported");
+    FATAL_IF (newbase != base, "alignedRealloc: reducing size not supported");
     return ptr;
   }
 

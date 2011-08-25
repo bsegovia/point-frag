@@ -50,7 +50,8 @@ namespace pf
     Task* task = new Task(run,runData,elts,complete,completeData);
     activeTasks++;
     taskMutex.lock();
-    if (numTasks >= MAX_TASKS) throw std::runtime_error("too many tasks generated");
+    if (numTasks >= MAX_TASKS)
+      FATAL("too many tasks generated");
     tasks[numTasks++] = task;
     taskMutex.unlock();
   }
@@ -92,27 +93,20 @@ namespace pf
 
   void TaskScheduler::threadFunction(Thread* thread)
   {
-    try
-    {
-      /* get thread ID */
-      TaskScheduler* This = thread->scheduler;
-      size_t tid = thread->tid;
-      delete thread;
+    /* get thread ID */
+    TaskScheduler* This = thread->scheduler;
+    size_t tid = thread->tid;
+    delete thread;
 
-      /* flush to zero and no denormals */
-      _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
+    /* flush to zero and no denormals */
+    _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
 
+    This->barrier.wait();
+    while (true) {
       This->barrier.wait();
-      while (true) {
-        This->barrier.wait();
-        if (This->terminateThreads) break;
-        This->run(tid);
-        This->barrier.wait();
-      }
-    }
-    catch (const std::exception& e) {
-      std::cout << "Error: " << e.what() << std::endl;
-      exit(1);
+      if (This->terminateThreads) break;
+      This->run(tid);
+      This->barrier.wait();
     }
   }
 

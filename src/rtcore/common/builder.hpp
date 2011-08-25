@@ -59,7 +59,7 @@ namespace pf
     /*! Global atomic node allocator. */
     INLINE size_t globalAllocNodes(size_t num = 1) {
       size_t end = atomicNextNode += num;
-    if (end > allocatedNodes) throw std::runtime_error("Builder: out of node memory");
+      FATAL_IF (end > allocatedNodes, "Builder: out of node memory");
       return end-num;
     }
 
@@ -73,7 +73,7 @@ namespace pf
       alloc.end = alloc.cur+allocBlockSize;
       alloc.cur += num;
       if (alloc.cur < alloc.end) return alloc.cur - num;
-      throw std::runtime_error("Builder: too large node block requested");
+      FATAL ("Builder: too large node block requested");
       return 0;
     }
 
@@ -86,7 +86,7 @@ namespace pf
     /*! Global atomic primitive allocator. */
     INLINE size_t globalAllocPrimitives(size_t num = 1) {
       size_t end = atomicNextPrimitive += num;
-      if (end > allocatedPrimitives) throw std::runtime_error("Builder: out of primitive memory");
+      FATAL_IF (end > allocatedPrimitives, "Builder: out of primitive memory");
       return end-num;
     }
 
@@ -100,7 +100,7 @@ namespace pf
       alloc.end = alloc.cur+allocBlockSize;
       alloc.cur += num;
       if (alloc.cur < alloc.end) return alloc.cur - num;
-      throw std::runtime_error("Builder: too large primitive block requested");
+      FATAL ("Builder: too large primitive block requested");
       return 0;
     }
   };

@@ -53,7 +53,7 @@ namespace pf
     this->GetDoublev = (PFNGLGETDOUBLEVPROC)glutGetProcAddress("glGetDoublev");
     this->GetError = (PFNGLGETERRORPROC)glutGetProcAddress("glGetError");
     this->GetFloatv = (PFNGLGETFLOATVPROC)glutGetProcAddress("glGetFloatv");
-    this->GetIntegerv = glGetIntegerv;//(PFNGLGETINTEGERVPROC)glutGetProcAddress("glGetIntegerv");
+    this->GetIntegerv = (PFNGLGETINTEGERVPROC)glutGetProcAddress("glGetIntegerv");
     this->GetString = (PFNGLGETSTRINGPROC)glutGetProcAddress("glGetString");
     this->GetTexImage = (PFNGLGETTEXIMAGEPROC)glutGetProcAddress("glGetTexImage");
     this->GetTexParameterfv = (PFNGLGETTEXPARAMETERFVPROC)glutGetProcAddress("glGetTexParameterfv");

@@ -22,7 +22,7 @@ namespace pf
   template<typename T>
   int BVH4<T>::createLeaf(const Box* prims, const BuildTriangle* triangles_i, size_t nextTriangle, size_t start, size_t N)
   {
-    if (nextTriangle >= (1<<26)) throw std::runtime_error("cannot encode triangle, ID too large");
+    FATAL_IF (nextTriangle >= (1<<26), "cannot encode triangle, ID too large");
 
     /*! In these SSE vectors we gather blocks of 4 triangles. */
     sse3f v0 = zero, v1 = zero, v2 = zero;

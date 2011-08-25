@@ -34,7 +34,8 @@ namespace pf
   thread_t createThread(thread_func f, void* arg, size_t stack_size, int affinity)
   {
     HANDLE handle = CreateThread(NULL,stack_size,(LPTHREAD_START_ROUTINE)f,arg,0,NULL);
-    if (handle == NULL) throw std::runtime_error("cannot create thread");
+    if (handle == NULL)
+      FATAL("createThread error");
     if (affinity < 0) return thread_t(handle);
 
     /*! set thread affinity */
@@ -182,7 +183,7 @@ namespace pf
     startup->affinity = affinity;
 
     if (pthread_create(tid,&attr,(void*(*)(void*))threadStartup,startup) != 0)
-      throw std::runtime_error("pthread_create");
+      FATAL("Thread creation error");
 
     return thread_t(tid);
   }
@@ -195,7 +196,7 @@ namespace pf
   /*! waits until the given thread has terminated */
   void join(thread_t tid) {
     if (pthread_join(*(pthread_t*)tid, NULL) != 0)
-      throw std::runtime_error("pthread_join");
+      FATAL("pthread_join error");
     delete (pthread_t*)tid;
   }
 
@@ -209,8 +210,7 @@ namespace pf
   tls_t createTls() {
     pthread_key_t* key = new pthread_key_t;
     if (pthread_key_create(key,NULL) != 0)
-      throw std::runtime_error("pthread_key_create");
-
+      FATAL("pthread_key_create error");
     return tls_t(key);
   }
 
@@ -222,13 +222,13 @@ namespace pf
   /*! set the thread local storage pointer */
   void setTls(tls_t tls, void* const ptr) {
     if (pthread_setspecific(*(pthread_key_t*)tls, ptr) != 0)
-      throw std::runtime_error("pthread_setspecific");
+      FATAL("pthread_setspecific error");
   }
 
   /*! destroys thread local storage identifier */
   void destroyTls(tls_t tls) {
     if (pthread_key_delete(*(pthread_key_t*)tls) != 0)
-      throw std::runtime_error("pthread_key_delete");
+      FATAL("pthread_key_delete error");
     delete (pthread_key_t*)tls;
   }
 }

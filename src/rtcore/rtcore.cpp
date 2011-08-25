@@ -37,7 +37,7 @@ namespace pf
       return new BVH4Traverser(BVH2ToBVH4::convert(bvh2));
     }
     else {
-      throw std::runtime_error("invalid acceleration structure: "+std::string(type));
+      FATAL ("invalid acceleration structure");
       return NULL;
     }
   }

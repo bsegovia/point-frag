@@ -134,7 +134,7 @@ namespace pf
     /*! Transforms the ID of a node into a node offset. */
     static INLINE int id2offset(int id) {
       uint64 ofs = uint64(id)*uint64(sizeof(Node)/offsetFactor);
-      if (ofs >= (1ULL<<31)) throw std::runtime_error("nodeID too large");
+      FATAL_IF (ofs >= (1ULL<<31), "nodeID too large");
       return (int)ofs;
     }
 
