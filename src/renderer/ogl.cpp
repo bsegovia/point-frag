@@ -1,6 +1,7 @@
 #include "ogl.hpp"
 #include "sys/platform.hpp"
 #include "sys/string.hpp"
+#include "math/math.hpp"
 #include "GL/freeglut.h"
 
 #include <fstream>
