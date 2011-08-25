@@ -865,12 +865,9 @@ Obj::load(const char *fileName)
       return (p == other.p ) && (n == other.n) && (t == other.t);
     }
     bool operator < (const vertex_key &other) const {
-      if (p != other.p)
-        return p < other.p;
-      if (n != other.n)
-        return n < other.n;
-      if (t != other.t)
-        return t < other.t;
+      if (p != other.p) return p < other.p;
+      if (n != other.n) return n < other.n;
+      if (t != other.t) return t < other.t;
       return false;
     }
     int p,n,t;

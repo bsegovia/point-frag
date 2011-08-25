@@ -78,7 +78,7 @@ namespace pf
     struct {
       GLuint program;
       GLuint uCol, uMVP;
-	  GLuint vertexArray;
+      GLuint vertexArray, arrayBuffer;
     } plain;
     void initPlain(void);
     void destroyPlain(void);

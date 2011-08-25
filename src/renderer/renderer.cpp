@@ -43,9 +43,9 @@ namespace pf
   }
 
   GLuint Renderer::buildProgram(const std::string &prefix,
-                                bool useVertex,
-                                bool useGeometry,
-                                bool useFragment)
+      bool useVertex,
+      bool useGeometry,
+      bool useFragment)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
@@ -73,8 +73,8 @@ namespace pf
   }
 
   GLuint Renderer::buildProgram(const char *vertSource,
-                                const char *geomSource,
-                                const char *fragSource)
+      const char *geomSource,
+      const char *fragSource)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
@@ -130,35 +130,42 @@ namespace pf
   // Plain shader -> typically to display bounding boxex, wireframe geometries
   static const char plainVert[] = {
     "#version 330 core\n"
-    "#define POSITION 0\n"
-    "uniform mat4 MVP;\n"
-    "uniform vec4 c;\n"
-    "layout(location = POSITION) in vec3 p;\n"
-    "out block {\n"
-    "  vec4 c;\n"
-    "} Out;\n"
-    "void main() {\n"
-    "  Out.c = c;\n"
-    "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
-    "}\n"
+      "#define POSITION 0\n"
+      "uniform mat4 MVP;\n"
+      "uniform vec4 c;\n"
+      "layout(location = POSITION) in vec3 p;\n"
+      "out block {\n"
+      "  vec4 c;\n"
+      "} Out;\n"
+      "void main() {\n"
+      "  Out.c = c;\n"
+      "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
+      "}\n"
   };
   static const char plainFrag[] = {
     "#version 330 core\n"
-    "#define FRAG_COLOR 0\n"
-    "uniform sampler2D Diffuse;\n"
-    "in block {\n"
-    "  vec4 c;\n"
-    "} In;\n"
-    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
-    "void main() {\n"
-    "  c = In.c;\n"
-    "}\n"
+      "#define FRAG_COLOR 0\n"
+      "uniform sampler2D Diffuse;\n"
+      "in block {\n"
+      "  vec4 c;\n"
+      "} In;\n"
+      "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
+      "void main() {\n"
+      "  c = In.c;\n"
+      "}\n"
   };
   void Renderer::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
     R_CALL (BindAttribLocation, this->plain.program, ATTR_POSITION, "Position");
-	R_CALL (GenVertexArrays, 1, &this->plain.vertexArray);
-	R_CALLR (this->plain.uMVP, GetUniformLocation, this->plain.program, "MVP");
+    R_CALL (GenBuffers, 1, &this->plain.arrayBuffer);
+    R_CALL (GenVertexArrays, 1, &this->plain.vertexArray);
+    R_CALL (BindVertexArray, this->plain.vertexArray);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->plain.arrayBuffer);
+    R_CALL (EnableVertexAttribArray, ATTR_POSITION);
+    R_CALL (VertexAttribPointer, ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3f), NULL);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+    R_CALL (BindVertexArray, 0);
+    R_CALLR (this->plain.uMVP, GetUniformLocation, this->plain.program, "MVP");
     R_CALLR (this->plain.uCol, GetUniformLocation, this->plain.program, "c");
   }
   void Renderer::destroyPlain(void) {
@@ -166,49 +173,56 @@ namespace pf
       R_CALL (DeleteProgram, this->plain.program);
       std::memset(&this->plain, 0, sizeof(this->plain));
     }
-	if (this->plain.vertexArray)
+    if (this->plain.vertexArray)
       R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
   }
 
   /*! Bounding box indices */
-  static const int bboxIndex[36] = {
-    0,3,1, 1,3,2, 4,5,7, 5,6,7,
-    5,1,2, 5,2,6, 0,3,4, 3,4,7,
-    2,3,7, 2,7,6, 1,4,5, 0,1,3
+  static const int bboxIndex[24] = {
+    0,1, 1,2, 2,3, 3,0, 4,5, 5,6, 6,7, 7,4, 1,5, 2,6, 0,4, 3,7
   };
+  static const size_t bboxIndexNum = ARRAY_ELEM_NUM(bboxIndex);
 
   void Renderer::displayBBox(const BBox3f *bbox, int n, const vec4f *col)
   {
-    vec3f pts[8]; // 8 points of the bounding box
-    R_CALL (UseProgram, this->plain.program);
-	R_CALL (BindVertexArray, this->plain.vertexArray);
-	R_CALL (UniformMatrix4fv, this->plain.uMVP, 1, GL_FALSE, &this->MVP[0][0]);
-    R_CALL (Disable, GL_CULL_FACE);
-    R_CALL (PolygonMode, GL_FRONT_AND_BACK, GL_LINE);
-    if (col == NULL)
-      R_CALL (Uniform4fv, this->plain.uCol, 1, &this->defaultDiffuseCol.x);
+    if (n == 0) return;
+    // Build the vertex and the index buffers. We should proper instancing later
+    // with some geometry shader to avoid that crap
+    vec3f *pts = new vec3f[8*n];
+    int *indices = new int[bboxIndexNum*n];
     for (int i = 0; i < n; ++i) {
-      if (col) R_CALL (Uniform4fv, this->plain.uCol, 4, &col[i].x);
-      pts[0].x = pts[3].x = pts[4].x = pts[7].x = bbox[i].lower.x;
-      pts[0].y = pts[1].y = pts[4].y = pts[5].y = bbox[i].lower.y;
-      pts[0].z = pts[1].z = pts[2].z = pts[3].z = bbox[i].lower.z;
-      pts[1].x = pts[2].x = pts[6].x = pts[5].x = bbox[i].upper.x;
-      pts[2].y = pts[3].y = pts[6].y = pts[7].y = bbox[i].upper.y;
-      pts[4].z = pts[5].z = pts[6].z = pts[7].z = bbox[i].upper.z;
-      R_CALL (EnableVertexAttribArray, ATTR_POSITION);
-	  R_CALL (VertexAttribPointer, ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3f), &pts[0].x);
-      R_CALL (DrawElements, GL_TRIANGLES, 36, GL_UNSIGNED_INT, bboxIndex);
+      pts[8*i+0].x = pts[8*i+3].x = pts[8*i+4].x = pts[8*i+7].x = bbox[i].lower.x;
+      pts[8*i+0].y = pts[8*i+1].y = pts[8*i+4].y = pts[8*i+5].y = bbox[i].lower.y;
+      pts[8*i+0].z = pts[8*i+1].z = pts[8*i+2].z = pts[8*i+3].z = bbox[i].lower.z;
+      pts[8*i+1].x = pts[8*i+2].x = pts[8*i+6].x = pts[8*i+5].x = bbox[i].upper.x;
+      pts[8*i+2].y = pts[8*i+3].y = pts[8*i+6].y = pts[8*i+7].y = bbox[i].upper.y;
+      pts[8*i+4].z = pts[8*i+5].z = pts[8*i+6].z = pts[8*i+7].z = bbox[i].upper.z;
     }
+    for (int i = 0; i < n; ++i)
+    for (size_t j = 0; j < bboxIndexNum; ++j)
+      indices[bboxIndexNum*i+j] = 8*i + bboxIndex[j];
+
+    // Setup the draw and draw the boxes
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->plain.arrayBuffer);
+    R_CALL (BufferData, GL_ARRAY_BUFFER, 8*n*sizeof(vec3f), pts, GL_STREAM_DRAW);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+    R_CALL (UseProgram, this->plain.program);
+    R_CALL (BindVertexArray, this->plain.vertexArray);
+    R_CALL (UniformMatrix4fv, this->plain.uMVP, 1, GL_FALSE, &this->MVP[0][0]);
+    R_CALL (Disable, GL_CULL_FACE);
+    R_CALL (Uniform4fv, this->plain.uCol, 1, &this->defaultDiffuseCol.x);
+    R_CALL (DrawElements, GL_LINES, n*bboxIndexNum, GL_UNSIGNED_INT, indices);
     R_CALL (BindVertexArray, 0);
     R_CALL (Enable, GL_CULL_FACE);
     R_CALL (UseProgram, 0);
-    R_CALL (PolygonMode, GL_FRONT_AND_BACK, GL_FILL);
+    delete [] pts;
+    delete [] indices;
   }
 
   Renderer::Renderer(void) {
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	this->initPlain();
+    this->initPlain();
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
     this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }

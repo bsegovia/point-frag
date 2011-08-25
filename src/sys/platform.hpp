@@ -191,6 +191,9 @@ do {                                                        \
 #define SAFE_DELETE_ARRAY(x) do { if (x != NULL) delete [] x; } while (0)
 #define SAFE_DELETE(x) do { if (x != NULL) delete x; } while (0)
 
+/* Various helper macros */
+#define ARRAY_ELEM_NUM(x) (sizeof(x) / sizeof(x[0]))
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
