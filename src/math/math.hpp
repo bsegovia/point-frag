@@ -28,7 +28,7 @@ namespace pf
   INLINE float cosh (float x) {return ::coshf (x);}
   INLINE float exp  (float x) {return ::expf  (x);}
   INLINE float log  (float x) {return ::logf  (x);}
-  INLINE float log2 (float x) {return ::log(x) / 0.69314718055994530941723212145818;}
+  INLINE float log2 (float x) {return ::log(x) / 0.69314718055994530941723212145818f;}
   INLINE float log10(float x) {return ::log10f(x);}
   INLINE float sin  (float x) {return ::sinf  (x);}
   INLINE float sinh (float x) {return ::sinhf (x);}

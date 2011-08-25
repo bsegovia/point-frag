@@ -19,10 +19,11 @@
 
 #include <stddef.h>
 #include <cstdlib>
+#include <cstdio>
 #include <memory>
 #include <stdexcept>
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////
 /// detect platform
@@ -156,11 +157,12 @@
 
 /* Fatal error macros */
 #if defined(__WIN32__)
+namespace pf { void messageBox(const char*, const char*); }
 #define FATAL(...)                                          \
 do {                                                        \
-  const char msg[1024];                                     \
-  snprintf(msg, sizeof(msg), __VA_ARGS__);                  \
-  MessageBox(NULL, msg, "Fatal Error", MB_OK);              \
+  char msg[1024];						                    \
+  _snprintf_s(msg, sizeof(msg), 1, __VA_ARGS__);            \
+  pf::messageBox("Fatal Error", msg);						\
   exit(-1);                                                 \
 } while (0)
 #else

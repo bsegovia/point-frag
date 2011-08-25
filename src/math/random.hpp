@@ -37,25 +37,25 @@ namespace pf
   }
 
   INLINE vec2f larcher2D(uint32_t i, uint32_t n, uint32_t sx = 0u, uint32_t sy = 0u) {
-    return vec2f(equi(i, n, sx), larcher(i, sy));
+    return vec2f(float(equi(i, n, sx)), float(larcher(i, sy)));
   }
 
   INLINE vec2f sobol2D(uint32_t i, uint32_t sx = 0u, uint32_t sy = 0u) {
-    return vec2f(corput(i, sx), sobol(i, sy));
+    return vec2f(float(corput(i, sx)), float(sobol(i, sy)));
   }
 
   INLINE vec3f sampleSphere(vec2f r) {
-    float phi = 2.0 * float(pi) * r[0];
-    float sinTheta = sqrtf(r[1] * (1.0 - r[1]));
+    const float phi = 2.0f * float(pi) * r[0];
+    const float sinTheta = sqrtf(r[1] * (1.0f - r[1]));
     return vec3f(2.0f * cosf(phi) * sinTheta,
-        1.0 - 2.0f * r[1],
-        2.0f * sinf(phi) * sinTheta);
+                 1.0f - 2.0f * r[1],
+                 2.0f * sinf(phi) * sinTheta);
   }
 
   INLINE vec3f cosineSampleHemisphere(vec2f r) {
     const float phi = r[1] * float(pi) * 2.0f; 
-    const float cosTheta = sqrtf(r[0]);
-    const float sinTheta = sqrtf(std::max(0.0f, 1.0f - cosTheta*cosTheta));
+    const float cosTheta = sqrt(r[0]);
+    const float sinTheta = sqrt(std::max(0.0f, 1.0f - cosTheta*cosTheta));
     const float cosPhi = cosf(phi);
     const float sinPhi = sinf(phi);
     return vec3f(cosPhi * sinTheta, cosTheta, sinPhi * sinTheta); 

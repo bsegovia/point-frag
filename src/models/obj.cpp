@@ -895,11 +895,11 @@ Obj::load(const char *fileName)
   std::vector<ObjTriangle> tris;
   for (auto poly = polys.begin(); poly != polys.end(); ++poly) {
     if (poly->n == 3) {
-      const ObjTriangle tri(vec3f(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+      const ObjTriangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
       tris.push_back(tri);
     } else {
-      const ObjTriangle tri0(vec3f(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
-      const ObjTriangle tri1(vec3f(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
+      const ObjTriangle tri0(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+      const ObjTriangle tri1(vec3i(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
       tris.push_back(tri0);
       tris.push_back(tri1);
     }
@@ -929,9 +929,9 @@ Obj::load(const char *fileName)
     const obj_vector *p = loader.vertexList[src.p];
     const obj_vector *n = loader.normalList[src.n];
     const obj_vector *t = loader.textureList[src.t];
-    v.p[0] = p->e[0]; v.p[1] = p->e[1]; v.p[2] = p->e[2];
-    v.n[0] = n->e[0]; v.n[1] = n->e[1]; v.n[2] = n->e[2];
-    v.t[0] = t->e[0]; v.t[1] = t->e[1];
+    v.p[0] = float(p->e[0]); v.p[1] = float(p->e[1]); v.p[2] = float(p->e[2]);
+    v.n[0] = float(n->e[0]); v.n[1] = float(n->e[1]); v.n[2] = float(n->e[2]);
+    v.t[0] = float(t->e[0]); v.t[1] = float(t->e[1]);
   }
 
   // Allocate the ObjMaterial

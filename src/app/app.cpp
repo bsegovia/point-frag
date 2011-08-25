@@ -116,8 +116,8 @@ static void updateCamera(void)
   const double dt = updateTime();
 
   // Change mouse orientation
-  const float xrel = float(mouseXRel) * dt * angularSpeed;
-  const float yrel = float(mouseYRel) * dt * angularSpeed;
+  const float xrel = float(mouseXRel) * float(dt) * angularSpeed;
+  const float yrel = float(mouseYRel) * float(dt) * angularSpeed;
   cam.updateOrientation(xrel, yrel);
   mouseXRel = mouseYRel = 0;
 
