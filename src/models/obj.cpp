@@ -5,7 +5,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
-#include <unordered_map>
+//#include <unordered_map>
+#include <map>
 #include <vector>
 #include <algorithm>
 
@@ -860,8 +861,21 @@ Obj::load(const char *fileName)
   // Sort vertices and create new faces
   struct vertex_key {
     INLINE vertex_key(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
+    bool operator == (const vertex_key &other) const {
+      return (p == other.p ) && (n == other.n) && (t == other.t);
+    }
+    bool operator < (const vertex_key &other) const {
+      if (p != other.p)
+        return p < other.p;
+      if (n != other.n)
+        return n < other.n;
+      if (t != other.t)
+        return t < other.t;
+      return false;
+    }
     int p,n,t;
   };
+#if 0
   struct key_hash {
     long operator() (const vertex_key &key) const {return hash(key);}
   };
@@ -870,8 +884,12 @@ Obj::load(const char *fileName)
       return (x.p == y.p) && (x.n == y.n) && (x.t == y.t);
     }
   };
-  struct poly { int v[MAX_VERTEX_COUNT]; int mat; int n; };
   std::unordered_map<vertex_key, int, key_hash, key_eq> map;
+#else
+  std::map<vertex_key, int> map;
+
+#endif
+  struct poly { int v[MAX_VERTEX_COUNT]; int mat; int n; };
   std::vector<poly> polys;
   int vert_n = 0;
   for (int i = 0; i < loader.faceCount; ++i) {
