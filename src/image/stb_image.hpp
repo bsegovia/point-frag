@@ -22,5 +22,5 @@ extern stbi_uc *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req_
 }
 #endif
 
-#endif /* __STB_IMAGE_H__ */
+#endif /* __STB_IMAGE_HPP__ */
 

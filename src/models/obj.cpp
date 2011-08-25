@@ -834,18 +834,18 @@ static void patchName(char *str)
 
 Obj::Obj(void) {std::memset(this,0,sizeof(Obj));}
 
-INLINE uint str_hash(const char *key)
+INLINE uint32 str_hash(const char *key)
 {
-    uint h = 5381;
+    uint32 h = 5381;
     for(size_t i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k; // bernstein k=33 xor
     return h;
 }
 
 template <typename T>
-INLINE uint hash(const T elem)
+INLINE uint32 hash(const T elem)
 {
   const char *key = (const char *) &elem;
-  uint h = 5381;
+  uint32 h = 5381;
   for(size_t i = 0; i < sizeof(T); ++i) h = ((h<<5)+h)^key[i];
   return h;
 }
@@ -909,12 +909,12 @@ Obj::load(const char *fileName)
   std::sort(tris.begin(), tris.end(), _cmp);
   std::vector<ObjMatGroup> matGrp;
   int curr = tris[0].m;
-  matGrp.push_back(ObjMatGroup({0,0,curr}));
+  matGrp.push_back(ObjMatGroup(0,0,curr));
   for (size_t i = 0; i < tris.size(); ++i)
     if (tris[i].m != curr) {
       curr = tris[i].m;
       matGrp.back().last = (int) (i-1);
-      matGrp.push_back(ObjMatGroup({(int)i,0,curr}));
+      matGrp.push_back(ObjMatGroup((int)i,0,curr));
     }
   matGrp.back().last = tris.size() - 1;
 
@@ -981,17 +981,17 @@ Obj::load(const char *fileName)
 
 Obj::~Obj(void)
 {
-  DELETE_ARRAY(this->tri);
-  DELETE_ARRAY(this->vert);
-  DELETE_ARRAY(this->grp);
+  SAFE_DELETE_ARRAY(this->tri);
+  SAFE_DELETE_ARRAY(this->vert);
+  SAFE_DELETE_ARRAY(this->grp);
   for (size_t i = 0; i < this->matNum; ++i) {
     ObjMaterial &mat = this->mat[i];
-    DELETE_ARRAY(mat.name);
-    DELETE_ARRAY(mat.map_Ka);
-    DELETE_ARRAY(mat.map_Kd);
-    DELETE_ARRAY(mat.map_D);
-    DELETE_ARRAY(mat.map_Bump);
+    SAFE_DELETE_ARRAY(mat.name);
+    SAFE_DELETE_ARRAY(mat.map_Ka);
+    SAFE_DELETE_ARRAY(mat.map_Kd);
+    SAFE_DELETE_ARRAY(mat.map_D);
+    SAFE_DELETE_ARRAY(mat.map_Bump);
   }
-  DELETE_ARRAY(this->mat);
+  SAFE_DELETE_ARRAY(this->mat);
 }
 

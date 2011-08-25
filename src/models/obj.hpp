@@ -24,7 +24,11 @@ namespace pf
   };
 
   // OBJ material group - triangles are grouped by material
-  struct ObjMatGroup { int first, last, m; };
+  struct ObjMatGroup {
+    ObjMatGroup(int first_, int last_, int m_) : first(first_), last(last_), m(m_) {}
+    ObjMatGroup(void) {}
+    int first, last, m;
+  };
 
   // OBJ Material - just a dump of mtl description
   struct ObjMaterial {

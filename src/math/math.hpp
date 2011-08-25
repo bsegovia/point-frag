@@ -4,14 +4,16 @@
 #include "sys/platform.hpp"
 
 #include <cmath>
-#include <float.h>
+#include <cfloat>
 
 #define DECL template <typename T> INLINE
 
 namespace pf
 {
 #if defined(__WIN32__)
-  INLINE bool finite ( const float x ) {return _finite(x) != 0;}
+  #undef min
+  #undef max
+  INLINE bool finite (float x) {return _finite(x) != 0;}
 #endif
 
   INLINE float sign (float x) {return x<0?-1.0f:1.0f;}
@@ -26,6 +28,7 @@ namespace pf
   INLINE float cosh (float x) {return ::coshf (x);}
   INLINE float exp  (float x) {return ::expf  (x);}
   INLINE float log  (float x) {return ::logf  (x);}
+  INLINE float log2 (float x) {return ::log(x) / 0.69314718055994530941723212145818;}
   INLINE float log10(float x) {return ::log10f(x);}
   INLINE float sin  (float x) {return ::sinf  (x);}
   INLINE float sinh (float x) {return ::sinhf (x);}
@@ -47,6 +50,7 @@ namespace pf
   INLINE double cosh (double x) {return ::cosh (x);}
   INLINE double exp  (double x) {return ::exp  (x);}
   INLINE double log  (double x) {return ::log  (x);}
+  INLINE double log2 (double x) {return ::log(x) / 0.69314718055994530941723212145818;}
   INLINE double log10(double x) {return ::log10(x);}
   INLINE double rcp  (double x) {return 1.0/x;}
   INLINE double rsqrt(double x) {return 1.0/::sqrt(x);}

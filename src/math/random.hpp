@@ -45,7 +45,7 @@ namespace pf
   }
 
   INLINE vec3f sampleSphere(vec2f r) {
-    float phi = 2.0 * M_PI * r[0];
+    float phi = 2.0 * float(pi) * r[0];
     float sinTheta = sqrtf(r[1] * (1.0 - r[1]));
     return vec3f(2.0f * cosf(phi) * sinTheta,
         1.0 - 2.0f * r[1],
@@ -53,7 +53,7 @@ namespace pf
   }
 
   INLINE vec3f cosineSampleHemisphere(vec2f r) {
-    const float phi = r[1] * M_PI * 2.0f; 
+    const float phi = r[1] * float(pi) * 2.0f; 
     const float cosTheta = sqrtf(r[0]);
     const float sinTheta = sqrtf(std::max(0.0f, 1.0f - cosTheta*cosTheta));
     const float cosPhi = cosf(phi);
@@ -62,10 +62,10 @@ namespace pf
   }
 
   INLINE vec3f sampleCone(vec2f r, float angle) {
-    float cosAngle = cosf(angle / 180.0f * M_PI);
-    float d1 = 1 - r[1]*(1 - cosAngle);
-    float d0 = cosf(2.0f*M_PI*r[0]) * sqrtf(1 - d1*d1);
-    float d2 = sinf(2.0f*M_PI*r[0]) * sqrtf(1 - d1*d1);
+    float cosAngle = cosf(angle / 180.0f * float(pi));
+    float d1 = 1.f - r[1] * (1.f - cosAngle);
+    float d0 = cosf(2.0f*float(pi)*r[0]) * sqrt(1.f - d1*d1);
+    float d2 = sinf(2.0f*float(pi)*r[0]) * sqrt(1.f - d1*d1);
     return vec3f(d0, d1, d2);
   }
 

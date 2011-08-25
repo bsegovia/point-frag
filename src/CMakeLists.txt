@@ -1,3 +1,5 @@
+include (FindGLUT)
+include_directories (${GLUT_INCLUDE_PATH})
 set (SRC
   app/camera.cpp
   app/app.cpp
@@ -32,5 +34,9 @@ set (SRC
   renderer/renderer.cpp)
 include_directories (.)
 add_executable (app ${SRC})
-target_link_libraries(app glut pthread)
+if (UNIX)
+  target_link_libraries(app ${GLUT_LIBRARY} pthread)
+else (UNIX)
+  target_link_libraries(app ${GLUT_LIBRARY})
+endif (UNIX)
 

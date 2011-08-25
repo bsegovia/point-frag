@@ -52,7 +52,7 @@ namespace pf
     this->GetDoublev = (PFNGLGETDOUBLEVPROC)glutGetProcAddress("glGetDoublev");
     this->GetError = (PFNGLGETERRORPROC)glutGetProcAddress("glGetError");
     this->GetFloatv = (PFNGLGETFLOATVPROC)glutGetProcAddress("glGetFloatv");
-    this->GetIntegerv = (PFNGLGETINTEGERVPROC)glutGetProcAddress("glGetIntegerv");
+    this->GetIntegerv = glGetIntegerv;//(PFNGLGETINTEGERVPROC)glutGetProcAddress("glGetIntegerv");
     this->GetString = (PFNGLGETSTRINGPROC)glutGetProcAddress("glGetString");
     this->GetTexImage = (PFNGLGETTEXIMAGEPROC)glutGetProcAddress("glGetTexImage");
     this->GetTexParameterfv = (PFNGLGETTEXPARAMETERFVPROC)glutGetProcAddress("glGetTexParameterfv");
@@ -352,7 +352,7 @@ namespace pf
     this->GetProgramiv(programName, GL_LINK_STATUS, &result);
     fprintf(stderr, "Linking program\n");
     this->GetProgramiv(programName, GL_INFO_LOG_LENGTH, &infoLogLength);
-    std::vector<char> Buffer(std::max(infoLogLength, int(1)));
+    std::vector<char> Buffer(max(infoLogLength, int(1)));
     this->GetProgramInfoLog(programName, infoLogLength, NULL, &Buffer[0]);
     fprintf(stderr, "%s\n", &Buffer[0]);
 

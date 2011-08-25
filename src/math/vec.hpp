@@ -94,8 +94,8 @@ namespace pf
     INLINE vec3 (const vec3& v) {x = v.x; y = v.y; z = v.z;}
     template<typename T1> INLINE vec3 (const vec3<T1>& a) : x(T(a.x)), y(T(a.y)), z(T(a.z)) {}
     template<typename T1> INLINE vec3& OP= (const vec3<T1>& v) {x = v.x; y = v.y; z = v.z; return *this;}
-    INLINE explicit vec3 (T a) : x(a), y(a), z(a) {}
-    INLINE explicit vec3 (T x, T y, T z) : x(x), y(y), z(z) {}
+    INLINE explicit vec3 (const T &a) : x(a), y(a), z(a) {}
+    INLINE explicit vec3 (const T &x, const T &y, const T &z) : x(x), y(y), z(z) {}
     INLINE explicit vec3 (const T* a, index_t stride = 1) : x(a[0]), y(a[stride]), z(a[2*stride]) {}
     INLINE vec3 (ZeroTy)   : x(zero), y(zero), z(zero) {}
     INLINE vec3 (OneTy)    : x(one), y(one), z(one) {}

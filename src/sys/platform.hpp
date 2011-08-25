@@ -121,13 +121,13 @@
 #else
 #undef NOINLINE
 #undef INLINE
-#define NOINLINE             __attribute__((noinline))
+#define NOINLINE        __attribute__((noinline))
 #define INLINE          inline __attribute__((always_inline))
-#define RESTRICT             __restrict
-#define THREAD               __thread
-#define ALIGNED(...)           __attribute__((aligned(__VA_ARGS__)))
-#define __FUNCTION__           __PRETTY_FUNCTION__
-#define debugbreak()           asm ("int $3")
+#define RESTRICT        __restrict
+#define THREAD          __thread
+#define ALIGNED(...)    __attribute__((aligned(__VA_ARGS__)))
+#define __FUNCTION__    __PRETTY_FUNCTION__
+#define debugbreak()    asm ("int $3")
 #endif
 
 #ifdef __GNUC__
@@ -169,8 +169,8 @@ do {                                                        \
 } while(0)
 
 /* Safe deletion macros */
-#define DELETE_ARRAY(x) do { if (x != NULL) delete [] x; } while (0)
-#define DELETE(x) do { if (x != NULL) delete x; } while (0)
+#define SAFE_DELETE_ARRAY(x) do { if (x != NULL) delete [] x; } while (0)
+#define SAFE_DELETE(x) do { if (x != NULL) delete x; } while (0)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types

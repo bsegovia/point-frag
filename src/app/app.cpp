@@ -13,7 +13,6 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
-#include <sys/time.h>
 
 using namespace pf;
 
@@ -84,7 +83,7 @@ const Vertex VertexData[VertexCount] =
 static FlyCamera cam;
 
 static const float speed = 1.f; //  [m/s]
-static const float angularSpeed = 4.f * 180.f / M_PI / 100.f; // [radian/pixel/s]
+static const float angularSpeed = 4.f * 180.f / float(pi) / 100.f; // [radian/pixel/s]
 static double prevTime = 0., displayTime = 0.;
 static int mouseX = 0, mouseY = 0;
 static int mouseXRel = 0, mouseYRel = 0;
@@ -94,9 +93,7 @@ static uint64_t currFrame = 0;
 // Returns time elapsed from the previous frame
 static double updateTime(void)
 {
-  struct timeval tval;
-  gettimeofday(&tval, NULL);
-  const double currTime = tval.tv_sec + 1e-6 * tval.tv_usec;
+  const double currTime = getSeconds();
   const double dt = currTime - prevTime;
 
   // Display FPS with enough frames only
@@ -403,9 +400,7 @@ int main(int argc, char **argv)
   glutDisplayFunc(display);
   buildQuad();
 
-  struct timeval tval;
-  gettimeofday(&tval, NULL);
-  displayTime = prevTime = tval.tv_sec + 1e-6 * tval.tv_usec;
+  displayTime = getSeconds();
 
   glutIdleFunc(idle); 
   glutReshapeFunc(reshape);

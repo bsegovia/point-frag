@@ -1,7 +1,7 @@
-#include "texture.hpp"
+#include "renderer/texture.hpp"
 #include "renderer/renderer.hpp"
-#include "math/math.hpp"
 #include "image/stb_image.hpp"
+#include "math/math.hpp"
 
 #include <cstring>
 #include <algorithm>
@@ -57,7 +57,7 @@ namespace pf
       this->fmt = GL_RGBA;
       if (fileName.ext() == "tga")
         revertTGA(img, w, h, comp);
-      const int levelNum = (int) max(log2(w), log2(h));
+      const int levelNum = (int) max(log2(float(w)), log2(float(h)));
       switch (comp) {
         case 3: this->fmt = GL_RGB; break;
         case 4: this->fmt = GL_RGBA; break;
