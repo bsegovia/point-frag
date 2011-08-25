@@ -170,7 +170,7 @@ static void display(void)
 
   // Display all the bounding boxes
   R_CALL (setMVP, MVP);
-  R_CALL (displayBBox, bbox, obj->grpNum);
+ // R_CALL (displayBBox, bbox, obj->grpNum);
   glutSwapBuffers();
 }
 

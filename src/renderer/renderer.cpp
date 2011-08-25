@@ -157,7 +157,8 @@ namespace pf
   void Renderer::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
     R_CALL (BindAttribLocation, this->plain.program, ATTR_POSITION, "Position");
-    R_CALLR (this->plain.uMVP, GetUniformLocation, this->plain.program, "MVP");
+	R_CALL (GenVertexArrays, 1, &this->plain.vertexArray);
+	R_CALLR (this->plain.uMVP, GetUniformLocation, this->plain.program, "MVP");
     R_CALLR (this->plain.uCol, GetUniformLocation, this->plain.program, "c");
   }
   void Renderer::destroyPlain(void) {
@@ -165,6 +166,8 @@ namespace pf
       R_CALL (DeleteProgram, this->plain.program);
       std::memset(&this->plain, 0, sizeof(this->plain));
     }
+	if (this->plain.vertexArray)
+      R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
   }
 
   /*! Bounding box indices */
@@ -178,7 +181,8 @@ namespace pf
   {
     vec3f pts[8]; // 8 points of the bounding box
     R_CALL (UseProgram, this->plain.program);
-    R_CALL (UniformMatrix4fv, this->plain.uMVP, 1, GL_FALSE, &this->MVP[0][0]);
+	R_CALL (BindVertexArray, this->plain.vertexArray);
+	R_CALL (UniformMatrix4fv, this->plain.uMVP, 1, GL_FALSE, &this->MVP[0][0]);
     R_CALL (Disable, GL_CULL_FACE);
     R_CALL (PolygonMode, GL_FRONT_AND_BACK, GL_LINE);
     if (col == NULL)
@@ -192,10 +196,10 @@ namespace pf
       pts[2].y = pts[3].y = pts[6].y = pts[7].y = bbox[i].upper.y;
       pts[4].z = pts[5].z = pts[6].z = pts[7].z = bbox[i].upper.z;
       R_CALL (EnableVertexAttribArray, ATTR_POSITION);
-      R_CALL (VertexAttribPointer, ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3f), &pts[0].x);
+	  R_CALL (VertexAttribPointer, ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3f), &pts[0].x);
       R_CALL (DrawElements, GL_TRIANGLES, 36, GL_UNSIGNED_INT, bboxIndex);
     }
-    R_CALL (DisableVertexAttribArray, ATTR_POSITION);
+    R_CALL (BindVertexArray, 0);
     R_CALL (Enable, GL_CULL_FACE);
     R_CALL (UseProgram, 0);
     R_CALL (PolygonMode, GL_FRONT_AND_BACK, GL_FILL);
@@ -203,7 +207,8 @@ namespace pf
 
   Renderer::Renderer(void) {
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
-    this->initPlain();
+    this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	this->initPlain();
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
     this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }

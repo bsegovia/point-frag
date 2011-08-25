@@ -313,7 +313,7 @@ namespace pf
       MAKE_ERR_STRING(GL_INVALID_OPERATION);
       MAKE_ERR_STRING(GL_INVALID_FRAMEBUFFER_OPERATION);
       MAKE_ERR_STRING(GL_OUT_OF_MEMORY);
-      default: errString = "GL_UNKKNOWN";
+      default: errString = "GL_UNKNOWN";
     }
 #undef MAKE_ERR_STRING
     fprintf(stderr, "OpenGL err(%s): %s\n", errString.c_str(), title ? title : "");
