@@ -91,14 +91,6 @@ namespace pf
     GET_PROC(GenTextures, glGenTextures, PFNGLGENTEXTURESPROC);
     GET_PROC(IsTexture, glIsTexture, PFNGLISTEXTUREPROC);
 
-    // OpenGL 1.2 functions
-    GET_PROC(BlendColor, glBlendColor, PFNGLBLENDCOLORPROC);
-    GET_PROC(BlendEquation, glBlendEquation, PFNGLBLENDEQUATIONPROC);
-    GET_PROC(DrawRangeElements, glDrawRangeElements, PFNGLDRAWRANGEELEMENTSPROC);
-    GET_PROC(TexImage3D, glTexImage3D, PFNGLTEXIMAGE3DPROC);
-    GET_PROC(TexSubImage3D, glTexSubImage3D, PFNGLTEXSUBIMAGE3DPROC);
-    GET_PROC(CopyTexSubImage3D, glCopyTexSubImage3D, PFNGLCOPYTEXSUBIMAGE3DPROC);
-
 #if defined(__WIN32__)
   // Now, we load everything with glut on Windows too
   #undef GET_PROC
@@ -107,6 +99,14 @@ namespace pf
     FATAL_IF (this->FIELD == NULL, "OpenGL 3.3 is required"); \
   } while (0)
 #endif /* __WIN32__ */
+
+    // OpenGL 1.2 functions
+    GET_PROC(BlendColor, glBlendColor, PFNGLBLENDCOLORPROC);
+    GET_PROC(BlendEquation, glBlendEquation, PFNGLBLENDEQUATIONPROC);
+    GET_PROC(DrawRangeElements, glDrawRangeElements, PFNGLDRAWRANGEELEMENTSPROC);
+    GET_PROC(TexImage3D, glTexImage3D, PFNGLTEXIMAGE3DPROC);
+    GET_PROC(TexSubImage3D, glTexSubImage3D, PFNGLTEXSUBIMAGE3DPROC);
+    GET_PROC(CopyTexSubImage3D, glCopyTexSubImage3D, PFNGLCOPYTEXSUBIMAGE3DPROC);
 
     // Load OpenGL 1.3 functions
     GET_PROC(ActiveTexture, glActiveTexture, PFNGLACTIVETEXTUREPROC);

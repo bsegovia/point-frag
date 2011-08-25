@@ -842,11 +842,11 @@ INLINE uint32 str_hash(const char *key)
 }
 
 template <typename T>
-INLINE uint32 hash(const T elem)
+INLINE uint32 hash(const T &elem)
 {
   const char *key = (const char *) &elem;
   uint32 h = 5381;
-  for(size_t i = 0; i < sizeof(T); ++i) h = ((h<<5)+h)^key[i];
+  for(size_t i = 0; i < sizeof(T); i++) h = ((h<<5)+h)^key[i];
   return h;
 }
 
@@ -858,15 +858,16 @@ Obj::load(const char *fileName)
     return false;
 
   // Sort vertices and create new faces
-  struct vertex_key { int p,n,t; };
+  struct vertex_key {
+    INLINE vertex_key(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
+    int p,n,t;
+  };
   struct key_hash {
-    long operator() (const vertex_key &key) const {
-      return hash(key);
-    }
+    long operator() (const vertex_key &key) const {return hash(key);}
   };
   struct key_eq {
     bool operator() (const vertex_key &x, const vertex_key &y) const {
-      return x.p == y.p && x.n == y.n && x.t == y.t;
+      return (x.p == y.p) && (x.n == y.n) && (x.t == y.t);
     }
   };
   struct poly { int v[MAX_VERTEX_COUNT]; int mat; int n; };
@@ -880,8 +881,8 @@ Obj::load(const char *fileName)
       const int p = face->vertex_index[j];
       const int n = face->normal_index[j];
       const int t = face->texture_index[j];
-      const vertex_key key = {p,n,t};
-      auto it = map.find(key);
+      const vertex_key key(p,n,t);
+      const auto it = map.find(key);
       if (it == map.end())
         v[j] = map[key] = vert_n++;
       else
@@ -890,7 +891,7 @@ Obj::load(const char *fileName)
     const poly p = {{v[0],v[1],v[2],v[3]},face->material_index,face->vertex_count};
     polys.push_back(p);
   }
-
+  
   // Create triangles now
   std::vector<ObjTriangle> tris;
   for (auto poly = polys.begin(); poly != polys.end(); ++poly) {

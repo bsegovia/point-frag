@@ -161,9 +161,14 @@ namespace pf { void messageBox(const char*, const char*); }
 #define FATAL(...)                                          \
 do {                                                        \
   char msg[1024];						                    \
-  _snprintf_s(msg, sizeof(msg), 1, __VA_ARGS__);            \
+  _snprintf_s(msg, sizeof(msg), _countof(msg), __VA_ARGS__);\
   pf::messageBox("Fatal Error", msg);						\
-  exit(-1);                                                 \
+  fprintf(stderr, "error: ");                               \
+  fprintf(stderr, __VA_ARGS__);                             \
+  fprintf(stderr, "\n");                                    \
+  fflush(stderr);											\
+  assert(false);                                            \
+  _exit(-1);                                                \
 } while (0)
 #else
 #define FATAL(...)                                          \
@@ -171,8 +176,9 @@ do {                                                        \
   fprintf(stderr, "error: ");                               \
   fprintf(stderr, __VA_ARGS__);                             \
   fprintf(stderr, "\n");                                    \
+  fflush(stderr);											\
   assert(0);                                                \
-  exit(-1);                                                 \
+  _exit(-1);                                                \
 } while (0)
 #endif /* __WIN32__ */
 
