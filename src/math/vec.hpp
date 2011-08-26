@@ -222,7 +222,7 @@ namespace pf
               select(s,t.z,f.z),
               select(s,t.w,f.w));
   }
-  template<typename T> inline std::ostream& OP<<(std::ostream& cout, const V4& a) {
+  DECL std::ostream& OP<<(std::ostream& cout, const V4& a) {
     return cout << "(" << a.x << ", " << a.y << ", " << a.z << ", " << a.w << ")";
   }
 

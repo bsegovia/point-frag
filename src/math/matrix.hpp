@@ -54,19 +54,18 @@ namespace pf
          (q.r*q.r - q.i*q.i - q.j*q.j + q.k*q.k)) {}
     INLINE mat3x3(T m00, T m01, T m02,
                   T m10, T m11, T m12,
-                  T m20, T m21, T m22) : vx(m00,m10,m20),
-                                         vy(m01,m11,m21),
-                                         vz(m02,m12,m22) {}
+                  T m20, T m21, T m22) :
+      vx(m00,m10,m20), vy(m01,m11,m21), vz(m02,m12,m22) {}
     INLINE mat3x3(ZeroTy) : vx(zero), vy(zero), vz(zero) {}
     INLINE mat3x3(OneTy)  : vx(one, zero, zero), vy(zero, one, zero), vz(zero, zero, one) {}
 
     /*! Methods */
-    INLINE mat3x3 adjoint() const {
+    INLINE mat3x3 adjoint(void) const {
       return mat3x3(cross(vy,vz),
                     cross(vz,vx),
                     cross(vx,vy)).transposed();
     }
-    INLINE mat3x3 transposed() const {
+    INLINE mat3x3 transposed(void) const {
       return mat3x3(vx.x,vx.y,vx.z,
                     vy.x,vy.y,vy.z,
                     vz.x,vz.y,vz.z);
@@ -129,7 +128,7 @@ namespace pf
   struct mat4x3
   {
     M33 l; /*! linear part of affine space */
-    V3 p; /*! affine part of affine space */
+    V3 p;  /*! affine part of affine space */
 
     /*! Constructors */
     INLINE mat4x3 (){}
