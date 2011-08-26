@@ -4,6 +4,7 @@
 #include "math/matrix.hpp"
 #include "math/bbox.hpp"
 #include "renderer/texture.hpp"
+#include "renderer/renderobj.hpp"
 #include "renderer/renderer.hpp"
 
 #include <GL/freeglut.h>
@@ -16,67 +17,11 @@
 
 using namespace pf;
 
-static int w = 1024;
-static int h = 1024;
-static Obj *obj = NULL;
-static const GLuint ATTRIB_POSITION = 0;
-static const GLuint ATTRIB_TEXCOORD = 1;
-static const GLuint ATTRIB_COLOR = 2;
-static const GLuint ATTRIB_NORMAL = 3;
-static const GLuint ATTRIB_TANGENT = 4;
+static int w = 1024, h = 1024;
 static const size_t MAX_KEYS = 256;
 static bool keys[MAX_KEYS];
-static const std::string dataPath = "../../share/";
-
-// All textures per object
-static Ref<Texture2D> *textures = NULL;
-// Bounding boxes of each object
-static BBox3f *bbox = NULL;
-
-// To display the geometry with a diffuse texture (only)
-static GLuint diffuseOnlyProgram = 0;
-static GLint uDiffuseOnlyMVP = 0;
-static GLint uDiffuseOnlyTex = 0;
-
-// OBJ geometry
-static GLuint ObjDataBufferName = 0;
-static GLuint ObjElementBufferName = 0;
-static GLuint ObjVertexArrayName = 0;
-static Ref<Texture2D> chessTextureName = NULL;
-
-#if 0
-// Framebuffer (object)
-static GLuint frameBufferName = 0;
-static GLuint bufferRGBAName = 0;
-static GLuint bufferDepthName = 0;
-#endif
-
-// Quat to display the final picture
-static GLuint quadVertexArrayName = 0;
-static GLuint quadBufferName = 0;
-static GLuint quadProgramName = 0;
-static GLuint quadUniformDiffuse = 0;
-static GLuint quadUniformMVP = 0;
-
 static Renderer *renderer = NULL;
-
-struct Vertex
-{
-  Vertex (vec2f p_, vec2f t_) : p(p_), t(t_) {}
-  vec2f p,t;
-};
-
-const GLsizei VertexCount = 6;
-const GLsizeiptr VertexSize = VertexCount * sizeof(Vertex);
-const Vertex VertexData[VertexCount] =
-{
-  Vertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f)),
-  Vertex(vec2f( 1.0f,-1.0f), vec2f(1.0f, 1.0f)),
-  Vertex(vec2f( 1.0f, 1.0f), vec2f(1.0f, 0.0f)),
-  Vertex(vec2f( 1.0f, 1.0f), vec2f(1.0f, 0.0f)),
-  Vertex(vec2f(-1.0f, 1.0f), vec2f(0.0f, 0.0f)),
-  Vertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f))
-};
+Ref<RenderObj> renderObj = NULL;
 
 #define OGL_NAME ((Renderer*)ogl)
 
@@ -153,78 +98,15 @@ static void display(void)
   R_CALL (Clear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Display the objects with their textures
-  R_CALL (UseProgram, diffuseOnlyProgram);
-  R_CALL (UniformMatrix4fv, uDiffuseOnlyMVP, 1, GL_FALSE, &MVP[0][0]);
-  R_CALL (BindVertexArray, ObjVertexArrayName);
-  R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, ObjElementBufferName);
-  R_CALL (ActiveTexture, GL_TEXTURE0);
-  for (size_t grp = 0; grp < obj->grpNum; ++grp) {
-    const uintptr_t offset = obj->grp[grp].first * sizeof(int[3]);
-    const GLuint n = obj->grp[grp].last - obj->grp[grp].first + 1;
-    R_CALL (BindTexture, GL_TEXTURE_2D, textures[grp]->handle);
-    R_CALL (DrawElements, GL_TRIANGLES, 3*n, GL_UNSIGNED_INT, (void*) offset);
-  }
-  R_CALL (BindVertexArray, 0);
-  R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+  R_CALL (UseProgram, renderer->diffuse.program);
+  R_CALL (UniformMatrix4fv, renderer->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
+  renderObj->display();
+  R_CALL (UseProgram, 0);
 
   // Display all the bounding boxes
   R_CALL (setMVP, MVP);
-  R_CALL (displayBBox, bbox, obj->grpNum);
+  R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
   glutSwapBuffers();
-}
-
-static void buildObjBuffers(const Obj *obj)
-{
-  const size_t vertexSize = obj->vertNum * sizeof(ObjVertex);
-
-  // Contain the vertex data
-  R_CALL (GenBuffers, 1, &ObjDataBufferName);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, ObjDataBufferName);
-  R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, obj->vert, GL_STATIC_DRAW);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-
-  // Build the indices
-  GLuint *indices = new GLuint[obj->triNum * 3];
-  const size_t indexSize = sizeof(GLuint[3]) * obj->triNum;
-  for (size_t from = 0, to = 0; from < obj->triNum; ++from, to += 3) {
-    indices[to+0] = obj->tri[from].v[0];
-    indices[to+1] = obj->tri[from].v[1];
-    indices[to+2] = obj->tri[from].v[2];
-  }
-  R_CALL (GenBuffers, 1, &ObjElementBufferName);
-  R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, ObjElementBufferName);
-  R_CALL (BufferData, GL_ELEMENT_ARRAY_BUFFER, indexSize, indices, GL_STATIC_DRAW);
-  R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
-  delete [] indices;
-
-  // Contain the vertex array
-  R_CALL (GenVertexArrays, 1, &ObjVertexArrayName);
-  R_CALL (BindVertexArray, ObjVertexArrayName);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, ObjDataBufferName);
-  R_CALL (VertexAttribPointer, ATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), NULL);
-  R_CALL (VertexAttribPointer, ATTRIB_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), (void*)(6*sizeof(float)));
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-  R_CALL (EnableVertexAttribArray, ATTRIB_POSITION);
-  R_CALL (EnableVertexAttribArray, ATTRIB_TEXCOORD);
-  R_CALL (BindVertexArray, 0);
-}
-
-static void buildQuadBuffer(void)
-{
-  R_CALL (GenBuffers, 1, &quadBufferName);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, quadBufferName);
-  R_CALL (BufferData, GL_ARRAY_BUFFER, VertexSize, VertexData, GL_STATIC_DRAW);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-  R_CALL (GenVertexArrays, 1, &quadVertexArrayName);
-  R_CALL (BindVertexArray, quadVertexArrayName);
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, quadBufferName);
-  R_CALL (VertexAttribPointer, ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-  R_CALL (VertexAttribPointer, ATTRIB_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,t));
-  R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-  R_CALL (EnableVertexAttribArray, ATTRIB_POSITION);
-  R_CALL (EnableVertexAttribArray, ATTRIB_TEXCOORD);
-  R_CALL (BindVertexArray, 0);
 }
 
 static void keyDown(unsigned char key, int x, int y) { keys[key] = true; }
@@ -232,7 +114,7 @@ static void keyUp(unsigned char key, int x, int y) { keys[key] = false; }
 static void mouse(int Button, int State, int x, int y) { }
 static void reshape(int _w, int _h) {
   w = _w; h = _h;
-  //buildFrameBufferObject();
+  renderer->resize(w, h);
 }
 static void idle(void) { glutPostRedisplay(); }
 
@@ -261,118 +143,6 @@ static void motion(int x, int y)
   mouseY = y;
 }
 
-static GLuint buildProgram(const std::string &prefix,
-                             bool useVertex,
-                             bool useGeometry,
-                             bool useFragment)
-{
-  GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
-  R_CALLR (program, CreateProgram);
-
-  if (useVertex) {
-    const FileName path = FileName(prefix + ".vert");
-    R_CALLR (vertexName, createShader, GL_VERTEX_SHADER, path);
-    R_CALL (AttachShader, program, vertexName);
-    R_CALL (DeleteShader, vertexName);
-  }
-  if (useFragment) {
-    const FileName path = FileName(prefix + ".frag");
-    R_CALLR (fragmentName, createShader, GL_FRAGMENT_SHADER, path);
-    R_CALL (AttachShader, program, fragmentName);
-    R_CALL (DeleteShader, fragmentName);
-  }
-  if (useGeometry) {
-    const FileName path = FileName(prefix + ".geom");
-    R_CALLR (geometryName, createShader, GL_GEOMETRY_SHADER, path);
-    R_CALL (AttachShader, program, geometryName);
-    R_CALL (DeleteShader, geometryName);
-  }
-  R_CALL (LinkProgram, program);
-  return program;
-}
-
-static void buildDiffuseMesh(void)
-{
-  // Store the texture for each fileName
-  std::unordered_map<std::string, Ref<Texture2D> > texMap;
-
-  // chess texture is used when no diffuse is bound
-  const FileName &path = dataPath + "Maps/chess.tga";
-  chessTextureName = texMap["chess.tga"] = new Texture2D(*renderer, path);
-
-  // Load all textures
-  for (size_t i = 0; i < obj->matNum; ++i) {
-    const char *name = obj->mat[i].map_Kd;
-    if (name == NULL || strlen(name) == 0)
-      continue;
-    if (texMap.find(name) == texMap.end()) {
-      const std::string path = dataPath + name;
-      Ref<Texture2D> tex = new Texture2D(*renderer, path);
-      texMap[name] = tex->handle ? tex : chessTextureName;
-    }
-    else
-      printf((std::string(name) + " already found\n").c_str());
-  }
-
-  // GLSL program to display geometries with diffuse
-  diffuseOnlyProgram = buildProgram(dataPath + "texture", true, false, true);
-  R_CALL (BindAttribLocation, diffuseOnlyProgram, ATTRIB_POSITION, "Position");
-  R_CALL (BindAttribLocation, diffuseOnlyProgram, ATTRIB_TEXCOORD, "Texcoord");
-  R_CALLR (uDiffuseOnlyMVP, GetUniformLocation, diffuseOnlyProgram, "MVP");
-  R_CALLR (uDiffuseOnlyTex, GetUniformLocation, diffuseOnlyProgram, "Diffuse");
-  R_CALL (UseProgram, diffuseOnlyProgram);
-  R_CALL (Uniform1i, uDiffuseOnlyTex, 0);
-  R_CALL (UseProgram, 0);
-
-  buildObjBuffers(obj);
-
-  // Map each material group to the texture name
-  textures = new Ref<Texture2D>[obj->grpNum];
-  for (size_t i = 0; i < obj->grpNum; ++i) {
-    const int mat = obj->grp[i].m;
-    const char *name = obj->mat[mat].map_Kd;
-    if (name == NULL || strlen(name) == 0)
-      textures[i] = chessTextureName;
-    else {
-      textures[i] = texMap[name];
-      printf("name %s %i\n", name, (int)i);
-    }
-  }
-
-  // Compute each object bounding box
-  bbox = new BBox3f[obj->grpNum];
-  for (size_t i = 0; i < obj->grpNum; ++i) {
-    const size_t first = obj->grp[i].first, last = obj->grp[i].last;
-    bbox[i] = BBox3f(empty);
-    for (size_t j = first; j < last; ++j) {
-      const ObjVertex &v0 = obj->vert[obj->tri[j].v[0]];
-      const ObjVertex &v1 = obj->vert[obj->tri[j].v[1]];
-      const ObjVertex &v2 = obj->vert[obj->tri[j].v[2]];
-      bbox[i].grow(v0.p);
-      bbox[i].grow(v1.p);
-      bbox[i].grow(v2.p);
-    }
-  }
-}
-
-static void buildQuad(void)
-{
-  // screen aligned quad
-  buildQuadBuffer();
-
-  // Load the GLSL program to display geometries with diffuse
-  quadProgramName = buildProgram(dataPath + "deferred", true, false, true);
-  R_CALL (BindAttribLocation, quadProgramName, ATTRIB_POSITION, "p");
-  R_CALL (BindAttribLocation, quadProgramName, ATTRIB_TEXCOORD, "t");
-
-  // Get the uniforms
-  R_CALLR (quadUniformDiffuse, GetUniformLocation, quadProgramName, "Diffuse");
-  R_CALLR (quadUniformMVP, GetUniformLocation, quadProgramName, "MVP");
-  R_CALL (UseProgram, quadProgramName);
-  R_CALL (Uniform1i, quadUniformDiffuse, 0);
-  R_CALL (UseProgram, 0);
-}
-
 int main(int argc, char **argv)
 {
   glutInitWindowSize(w, h);
@@ -385,20 +155,8 @@ int main(int argc, char **argv)
   glutCreateWindow(argv[0]);
 
   ogl = renderer = new Renderer;
-
-  // Load OBJ file
-  obj = new Obj;
-  FATAL_IF (obj->load((dataPath + "f000.obj").c_str()) == false, "Loading failed");
-  std::printf("loaded OBJ\n");
-  std::printf("triNum: %u\n", (uint32_t) obj->triNum);
-  std::printf("vertNum: %u\n", (uint32_t) obj->vertNum);
-  std::printf("matNum: %u\n", (uint32_t) obj->matNum);
-  std::printf("grpNum: %u\n", (uint32_t) obj->grpNum);
-
-  //buildFrameBufferObject();
-  buildDiffuseMesh();
+  renderObj = new RenderObj(*renderer, "f000.obj");
   glutDisplayFunc(display);
-  buildQuad();
 
   displayTime = getSeconds();
 

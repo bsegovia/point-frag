@@ -37,6 +37,10 @@ namespace pf
       else
         return it->second;
     }
+    /*! Set the texture in the map */
+    INLINE void setTexture(const char *name, Ref<Texture2D> &tex) {
+      this->texMap[name] = tex;
+    }
 
     /*! Uniform values used in the renderer */
     INLINE void setDefaultDiffuseCol(vec4f c)  {this->defaultDiffuseCol = c;}
@@ -62,19 +66,16 @@ namespace pf
     void initGBuffer(int w, int h);
     void destroyGBuffer(void);
 
-    /*! Fullscreen quad */
-    struct {
-      GLuint vertexArray;
-      GLuint arrayBuffer;
-    } quadBuffer;
-
-    /*! GLSL program to display a quad */
+    /*! To display a quad */
     struct {
       GLuint program;
       GLuint uDiffuse, uMVP;
+      GLuint vertexArray, arrayBuffer;
     } quad;
+    void initQuad(void);
+    void destroyQuad(void);
 
-    /*! GLSL program to display object with one color */
+    /*! To display object with one color */
     struct {
       GLuint program;
       GLuint uCol, uMVP;
@@ -88,12 +89,15 @@ namespace pf
       GLuint program;
       GLuint uDiffuse, uMVP;
     } diffuse;
-     /*! Default texture */
+    void initDiffuse(void);
+    void destroyDiffuse(void);
+
+    /*! Default texture */
     Ref<Texture2D> defaultTex;
 
   private:
     /*! Store the texture per name (only its base name is taken into account) */
-    std::unordered_map<std::string, Ref<Texture2D> > texMap;
+    std::unordered_map<std::string, Ref<Texture2D>> texMap;
     /*! Default colors */
     vec4f defaultDiffuseCol, defaultSpecularCol;
     /*! Model view projection */

@@ -852,10 +852,10 @@ INLINE uint32 hash(const T &elem)
 }
 
 bool
-Obj::load(const char *fileName)
+Obj::load(const FileName &fileName)
 {
   objLoader loader;
-  if (loader.load(fileName) == 0)
+  if (loader.load(fileName.c_str()) == 0)
     return false;
 
   // Sort vertices and create new faces

@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_FILENAME_H__
-#define __PF_FILENAME_H__
+#ifndef __PF_FILENAME_HPP__
+#define __PF_FILENAME_HPP__
 
 #include "platform.hpp"
 #include <string>
@@ -79,7 +79,7 @@ namespace pf
   private:
     std::string filename;
   };
-
 }
 
-#endif
+#endif /* __PF_FILENAME_HPP__ */
+

@@ -2,11 +2,12 @@
 #define __OBJ_HPP__
 
 #include "sys/platform.hpp"
+#include "sys/filename.hpp"
 #include "math/vec.hpp"
 
 namespace pf
 {
-  // OBJ triangle - indexes vertices and material
+  /*! OBJ triangle - indexes vertices and material */
   struct ObjTriangle {
     INLINE ObjTriangle(void) {}
     INLINE ObjTriangle(vec3i v_, int m_) : v(v_), m(m_) {}
@@ -14,7 +15,7 @@ namespace pf
     int m;
   };
 
-  // OBJ vertex - stores position, normal and texture coordinates
+  /*! OBJ vertex - stores position, normal and texture coordinates */
   struct ObjVertex {
     INLINE ObjVertex(void) {}
     INLINE ObjVertex(vec3f p_, vec3f n_, vec2f t_) :
@@ -23,14 +24,15 @@ namespace pf
     vec2f t;
   };
 
-  // OBJ material group - triangles are grouped by material
+  /*! OBJ material group - triangles are grouped by material */
   struct ObjMatGroup {
-    ObjMatGroup(int first_, int last_, int m_) : first(first_), last(last_), m(m_) {}
+    ObjMatGroup(int first_, int last_, int m_) :
+      first(first_), last(last_), m(m_) {}
     ObjMatGroup(void) {}
     int first, last, m;
   };
 
-  // OBJ Material - just a dump of mtl description
+  /*! OBJ Material - just a dump of mtl description */
   struct ObjMaterial {
     char *name;
     char *map_Ka;
@@ -49,11 +51,12 @@ namespace pf
     double refract_index;
   };
 
-  // OBJ - an obj file (vertices are processed and merged)
+  /*! OBJ - an obj file (vertices are processed and merged) */
   struct Obj {
     Obj(void);
     ~Obj(void);
-    bool load(const char *fileName);
+    INLINE bool isValid(void) const {return this->triNum > 0;}
+    bool load(const FileName &fileName);
     ObjTriangle *tri;
     ObjVertex *vert;
     ObjMatGroup *grp;

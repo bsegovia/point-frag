@@ -17,10 +17,9 @@ namespace pf
     "../data/",
     "../../data/",
   };
-  const size_t defaultPathNum = sizeof(defaultPath) / sizeof(defaultPath[0]);
+  const size_t defaultPathNum = ARRAY_ELEM_NUM(defaultPath);
 
-  Ref<Texture2D> loadDefaultTexture(Renderer &renderer)
-  {
+  Ref<Texture2D> loadDefaultTexture(Renderer &renderer) {
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const std::string prefix = defaultPath[i];
       Ref<Texture2D> tex = new Texture2D(renderer, prefix + "Maps/chess.tga");
@@ -31,8 +30,7 @@ namespace pf
     return NULL;
   }
 
-  GLuint Renderer::makeGBufferTexture(int internal, int w, int h, int data, int type)
-  {
+  GLuint Renderer::makeGBufferTexture(int internal, int w, int h, int data, int type) {
     GLuint tex = 0;
     R_CALL (GenTextures, 1, &tex);
     R_CALL (BindTexture, GL_TEXTURE_2D, tex);
@@ -43,9 +41,9 @@ namespace pf
   }
 
   GLuint Renderer::buildProgram(const std::string &prefix,
-      bool useVertex,
-      bool useGeometry,
-      bool useFragment)
+                                bool useVertex,
+                                bool useGeometry,
+                                bool useFragment)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
@@ -53,18 +51,21 @@ namespace pf
     if (useVertex) {
       const FileName path = FileName(prefix + ".vert");
       R_CALLR (vertexName, createShader, GL_VERTEX_SHADER, path);
+      FATAL_IF (geometryName == 0, "Unable to create program");
       R_CALL (AttachShader, program, vertexName);
       R_CALL (DeleteShader, vertexName);
     }
     if (useFragment) {
       const FileName path = FileName(prefix + ".frag");
       R_CALLR (fragmentName, createShader, GL_FRAGMENT_SHADER, path);
+      FATAL_IF (geometryName == 0, "Unable to create program");
       R_CALL (AttachShader, program, fragmentName);
       R_CALL (DeleteShader, fragmentName);
     }
     if (useGeometry) {
       const FileName path = FileName(prefix + ".geom");
       R_CALLR (geometryName, createShader, GL_GEOMETRY_SHADER, path);
+      FATAL_IF (geometryName == 0, "Unable to create program");
       R_CALL (AttachShader, program, geometryName);
       R_CALL (DeleteShader, geometryName);
     }
@@ -73,8 +74,8 @@ namespace pf
   }
 
   GLuint Renderer::buildProgram(const char *vertSource,
-      const char *geomSource,
-      const char *fragSource)
+                                const char *geomSource,
+                                const char *fragSource)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
@@ -98,8 +99,7 @@ namespace pf
     return program;
   }
 
-  void Renderer::initGBuffer(int w, int h)
-  {
+  void Renderer::initGBuffer(int w, int h) {
     R_CALL (ActiveTexture, GL_TEXTURE0);
     this->gbuffer.diffuse_exp = makeGBufferTexture(GL_RGBA16F, w, h, GL_RGBA, GL_UNSIGNED_BYTE);
     this->gbuffer.radiance = makeGBufferTexture(GL_RGBA16F, w, h, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -116,9 +116,7 @@ namespace pf
     R_CALL (FramebufferTexture, GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, this->gbuffer.zbuffer, 0);
     R_CALL (BindFramebuffer, GL_FRAMEBUFFER, 0);
   }
-
-  void Renderer::destroyGBuffer(void)
-  {
+  void Renderer::destroyGBuffer(void) {
     if (this->gbuffer.fbo) R_CALL (DeleteFramebuffers, 1, &this->gbuffer.fbo);
     if (this->gbuffer.diffuse_exp) R_CALL (DeleteTextures, 1, &this->gbuffer.diffuse_exp);
     if (this->gbuffer.radiance) R_CALL (DeleteTextures, 1, &this->gbuffer.radiance);
@@ -127,32 +125,32 @@ namespace pf
     if (this->gbuffer.zbuffer) R_CALL (DeleteTextures, 1, &this->gbuffer.zbuffer);
   }
 
-  // Plain shader -> typically to display bounding boxex, wireframe geometries
+  /*! Plain shader -> display bounding boxex, wireframe geometries ...  */
   static const char plainVert[] = {
     "#version 330 core\n"
-      "#define POSITION 0\n"
-      "uniform mat4 MVP;\n"
-      "uniform vec4 c;\n"
-      "layout(location = POSITION) in vec3 p;\n"
-      "out block {\n"
-      "  vec4 c;\n"
-      "} Out;\n"
-      "void main() {\n"
-      "  Out.c = c;\n"
-      "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
-      "}\n"
+    "#define POSITION 0\n"
+    "uniform mat4 MVP;\n"
+    "uniform vec4 c;\n"
+    "layout(location = POSITION) in vec3 p;\n"
+    "out block {\n"
+    "  vec4 c;\n"
+    "} Out;\n"
+    "void main() {\n"
+    "  Out.c = c;\n"
+    "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
+    "}\n"
   };
   static const char plainFrag[] = {
     "#version 330 core\n"
-      "#define FRAG_COLOR 0\n"
-      "uniform sampler2D Diffuse;\n"
-      "in block {\n"
-      "  vec4 c;\n"
-      "} In;\n"
-      "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
-      "void main() {\n"
-      "  c = In.c;\n"
-      "}\n"
+    "#define FRAG_COLOR 0\n"
+    "uniform sampler2D Diffuse;\n"
+    "in block {\n"
+    "  vec4 c;\n"
+    "} In;\n"
+    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
+    "void main() {\n"
+    "  c = In.c;\n"
+    "}\n"
   };
   void Renderer::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
@@ -175,6 +173,134 @@ namespace pf
     }
     if (this->plain.vertexArray)
       R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
+    if (this->plain.arrayBuffer)
+      R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
+  }
+
+  /*! Diffuse shader -> just display geometries with a diffuse texture */
+  static const char diffuseVert[] = {
+    "#version 330 core\n"
+    "#define POSITION 0\n"
+    "#define TEXCOORD 1\n"
+    "uniform mat4 MVP;\n"
+    "layout(location = POSITION) in vec3 p;\n"
+    "layout(location = TEXCOORD) in vec2 t;\n"
+    "out block {\n"
+    "  vec2 t;\n"
+    "} Out;\n"
+    "void main() {	\n"
+    "  Out.t = t;\n"
+    "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
+    "}\n"
+  };
+  static const char diffuseFrag[] = {
+    "#version 330 core\n"
+    "#define FRAG_COLOR  0\n"
+    "uniform sampler2D Diffuse;\n"
+    "in block {\n"
+    "  vec2 t;\n"
+    "} In;\n"
+    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
+    "void main() {\n"
+    "  c = texture(Diffuse, In.t);\n"
+    "}\n"
+  };
+  void Renderer::initDiffuse(void) {
+    this->diffuse.program = buildProgram(diffuseVert, NULL, diffuseFrag);
+    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "Position");
+    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "Texcoord");
+    R_CALLR (this->diffuse.uMVP, GetUniformLocation, this->diffuse.program, "MVP");
+    R_CALLR (this->diffuse.uDiffuse, GetUniformLocation, this->diffuse.program, "Diffuse");
+    R_CALL (UseProgram, this->diffuse.program);
+    R_CALL (Uniform1i, this->diffuse.uDiffuse, 0);
+    R_CALL (UseProgram, 0);
+  }
+  void Renderer::destroyDiffuse(void) {
+    R_CALL (DeleteProgram, this->diffuse.program);
+  }
+
+  /*! Quad -> mostly used to display textures or for simple deferred shading */
+  static const char quadVert[] = {
+    "#version 330 core\n"
+    "#define POSITION	0\n"
+    "#define TEXCOORD	1\n"
+    "#define COLOR		3\n"
+    "#define FRAG_COLOR	0\n"
+    "uniform mat4 MVP;\n"
+    "layout(location = POSITION) in vec2 p;\n"
+    "layout(location = TEXCOORD) in vec2 t;\n"
+    "out block\n"
+    "{\n"
+    "  vec2 t;\n"
+    "} Out;\n"
+    "void main()\n"
+    "{	\n"
+    "  Out.t = t;\n"
+    "  gl_Position = MVP * vec4(p,0.f,1.f);\n"
+    "}\n"
+  };
+  static const char quadFrag[] = {
+    "#version 330 core\n"
+    "#define POSITION	0\n"
+    "#define TEXCOORD	1\n"
+    "#define COLOR		3\n"
+    "#define FRAG_COLOR	0\n"
+    "uniform sampler2D Diffuse;\n"
+    "in block\n"
+    "{\n"
+    "	vec2 t;\n"
+    "} In;\n"
+    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
+    "void main()\n"
+    "{\n"
+    "  c = texture(Diffuse, In.t);\n"
+    "  c /= c.w;\n"
+    "  c.xyz = vec3(abs(dot(normalize(c.xyz), normalize(vec3(1,1,1)))));\n"
+    "  //c = vec4(In.t.x,In.t.y,0,0);\n"
+    "}\n"
+  };
+  struct QuadVertex {
+    INLINE QuadVertex(vec2f p_, vec2f t_) : p(p_), t(t_) {}
+    vec2f p, t;
+  };
+  static const QuadVertex quadData[] = {
+    QuadVertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f)),
+    QuadVertex(vec2f( 1.0f,-1.0f), vec2f(1.0f, 1.0f)),
+    QuadVertex(vec2f( 1.0f, 1.0f), vec2f(1.0f, 0.0f)),
+    QuadVertex(vec2f( 1.0f, 1.0f), vec2f(1.0f, 0.0f)),
+    QuadVertex(vec2f(-1.0f, 1.0f), vec2f(0.0f, 0.0f)),
+    QuadVertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f))
+  };
+  void Renderer::initQuad(void) {
+    // Build vertex data
+    R_CALL (GenBuffers, 1, &this->quad.arrayBuffer);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->quad.arrayBuffer);
+    R_CALL (BufferData, GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_STATIC_DRAW);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+    R_CALL (GenVertexArrays, 1, &this->quad.vertexArray);
+    R_CALL (BindVertexArray, this->quad.vertexArray);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->quad.arrayBuffer);
+    R_CALL (VertexAttribPointer, ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), NULL);
+    R_CALL (VertexAttribPointer, ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(QuadVertex), (void*)offsetof(QuadVertex,t));
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+    R_CALL (EnableVertexAttribArray, ATTR_POSITION);
+    R_CALL (EnableVertexAttribArray, ATTR_TEXCOORD);
+    R_CALL (BindVertexArray, 0);
+
+    // Setup the program
+    this->quad.program = buildProgram(quadVert, NULL, quadFrag);
+    R_CALL (BindAttribLocation, this->quad.program, ATTR_POSITION, "p");
+    R_CALL (BindAttribLocation, this->quad.program, ATTR_TEXCOORD, "t");
+    R_CALLR (this->quad.uDiffuse, GetUniformLocation, this->quad.program, "Diffuse");
+    R_CALLR (this->quad.uMVP, GetUniformLocation, this->quad.program, "MVP");
+    R_CALL (UseProgram, this->quad.program);
+    R_CALL (Uniform1i, this->quad.uDiffuse, 0);
+    R_CALL (UseProgram, 0);
+  }
+  void Renderer::destroyQuad(void) {
+    R_CALL (DeleteProgram, this->quad.program);
+    R_CALL (DeleteVertexArrays, 1, &this->quad.vertexArray);
+    R_CALL (DeleteBuffers, 1, &this->quad.arrayBuffer);
   }
 
   /*! Bounding box indices */
@@ -186,6 +312,7 @@ namespace pf
   void Renderer::displayBBox(const BBox3f *bbox, int n, const vec4f *col)
   {
     if (n == 0) return;
+
     // Build the vertex and the index buffers. We should proper instancing later
     // with some geometry shader to avoid that crap
     vec3f *pts = new vec3f[8*n];
@@ -222,20 +349,26 @@ namespace pf
   Renderer::Renderer(void) {
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    this->initQuad();
     this->initPlain();
+    this->initDiffuse();
+    this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
     this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }
 
   Renderer::~Renderer(void) {
     this->destroyGBuffer();
+    this->destroyDiffuse();
     this->destroyPlain();
+    this->destroyQuad();
   }
 
   void Renderer::resize(int w, int h) {
     this->destroyGBuffer();
     this->initGBuffer(w, h);
   }
+
 #undef OGL_NAME
 }
 

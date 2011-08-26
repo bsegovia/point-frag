@@ -15,7 +15,10 @@ namespace pf
   {
     /*! Create texture from an image. mipmap == true will create the mipmaps */
     Texture2D(Renderer &renderer, const FileName &path, bool mipmap = true);
+    /*! Release it from OGL */
     ~Texture2D(void);
+    /*! Valid means it is actually in GL */
+    INLINE bool isValid(void) const {return this->handle != 0;}
     Renderer &renderer;/*! Owner of this class */
     GLuint handle;     /*! Texture object itself */
     GLuint fmt;        /*! GL format of the texture */

@@ -94,7 +94,7 @@ namespace pf
   }
 
   Texture2D::~Texture2D(void) {
-    if (this->handle) R_CALL (DeleteTextures, 1, &this->handle);
+    if (this->isValid()) R_CALL (DeleteTextures, 1, &this->handle);
   }
 }
 #undef OGL_NAME

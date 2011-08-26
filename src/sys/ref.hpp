@@ -46,35 +46,26 @@ namespace pf
     /// Constructors, Assignment & Cast Operators
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE Ref( void ) : ptr(NULL) {}
+    INLINE Ref(void) : ptr(NULL) {}
     INLINE Ref(NullTy) : ptr(NULL) {}
-    INLINE Ref( const Ref& input ) : ptr(input.ptr) { if ( ptr ) ptr->refInc(); }
+    INLINE Ref(const Ref& input) : ptr(input.ptr) { if ( ptr ) ptr->refInc(); }
+    INLINE Ref(Type* const input) : ptr(input) { if (ptr) ptr->refInc(); }
+    INLINE ~Ref(void) { if (ptr && ptr->refDec()) delete ptr; }
 
-    INLINE Ref( Type* const input ) : ptr(input) {
-      if ( ptr )
-        ptr->refInc();
-    }
-
-    INLINE ~Ref( void ) {
-        if ( ptr && ptr->refDec() )
-          delete ptr;
-    }
-
-    INLINE Ref& operator =( const Ref& input )
-    {
+    INLINE Ref& operator= (const Ref &input) {
       if ( input.ptr ) input.ptr->refInc();
       if ( ptr && ptr->refDec() ) delete ptr;
       *(Type**)&ptr = input.ptr;
       return *this;
     }
 
-    INLINE Ref& operator =( NullTy ) {
-      if ( ptr && ptr->refDec() ) delete ptr;
+    INLINE Ref& operator= (NullTy) {
+      if (ptr && ptr->refDec()) delete ptr;
       *(Type**)&ptr = NULL;
       return *this;
     }
 
-    INLINE operator bool( void ) const { return ptr != NULL; }
+    INLINE operator bool(void) const { return ptr != NULL; }
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Properties
