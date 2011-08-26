@@ -243,44 +243,21 @@ namespace pf
     }
 
     /*! Methods and operators */
-    M44& operator= (const M44 &m) {
-      c[0] = m[0]; c[1] = m[1]; c[2] = m[2]; c[3] = m[3];
-      return *this;
-    }
-    template <typename U> INLINE M44& operator= (const mat4x4<U> &m) {
-      c[0] = m[0]; c[1] = m[1]; c[2] = m[2]; c[3] = m[3];
-      return *this;
-    }
-    template <typename U> INLINE M44& operator+= (U s) {
-      c[0] += s; c[1] += s; c[2] += s; c[3] += s;
-      return *this;
-    }
-    template <typename U> INLINE M44& operator+= (const mat4x4<U> & m) {
-      c[0] += m[0]; c[1] += m[1]; c[2] += m[2]; c[3] += m[3];
-      return *this;
-    }
-    template <typename U> INLINE M44& operator-= (U s) {
-      c[0] -= s; c[1] -= s; c[2] -= s; c[3] -= s;
-      return *this;
-    }
-    template <typename U> INLINE M44& operator-= (const mat4x4<U> &m) {
-      c[0] -= m[0]; c[1] -= m[1]; c[2] -= m[2]; c[3] -= m[3];
-      return *this;
-    }
-    template <typename U> INLINE M44& operator*= (U s) {
-      c[0] *= s; c[1] *= s; c[2] *= s; c[3] *= s;
-      return *this;
-    }
-    template <typename U> INLINE M44& operator*= (const mat4x4<U> &m) {
-      return (*this = *this * m);
-    }
-    template <typename U> INLINE M44& operator/= (U s) {
-      c[0] /= s; c[1] /= s; c[2] /= s; c[3] /= s;
-      return *this;
-    }
-    template <typename U> INLINE M44& operator/= (const mat4x4<U> &m) {
-      return (*this = *this / m);
-    }
+#define DECL_U template <typename U> INLINE
+#define M44U const mat4x4<U>& 
+    DECL_U M44& OP+= (U s) {c[0]+=s; c[1]+=s; c[2]+=s; c[3]+=s; return *this;}
+    DECL_U M44& OP-= (U s) {c[0]-=s; c[1]-=s; c[2]-=s; c[3]-=s; return *this;}
+    DECL_U M44& OP*= (U s) {c[0]*=s; c[1]*=s; c[2]*=s; c[3]*=s; return *this;}
+    DECL_U M44& OP/= (U s) {c[0]/=s; c[1]/=s; c[2]/=s; c[3]/=s; return *this;}
+    DECL_U M44& OP=  (M44U m) {c[0]=m[0];  c[1]=m[1];  c[2]=m[2];  c[3]=m[3]; return *this;}
+    DECL_U M44& OP+= (M44U m) {c[0]+=m[0]; c[1]+=m[1]; c[2]+=m[2]; c[3]+=m[3]; return *this;}
+    DECL_U M44& OP-= (M44U m) {c[0]-=m[0]; c[1]-=m[1]; c[2]-=m[2]; c[3]-=m[3]; return *this;}
+    DECL_U M44& OP*= (M44U m) {c[0]*=m[0]; c[1]*=m[1]; c[2]*=m[2]; c[3]*=m[3]; return *this;}
+    DECL_U M44& OP/= (M44U m) {c[0]/=m[0]; c[1]/=m[1]; c[2]/=m[2]; c[3]/=m[3]; return *this;}
+#undef DECL_U
+#undef M44U
+    M44& OP= (const M44 &m) {c[0]=m[0];c[1]=m[1];c[2]=m[2];c[3]=m[3];return *this;}
+
     INLINE M44 inverse() const {
       const T f00 = c[2][2]*c[3][3] - c[3][2]*c[2][3];
       const T f01 = c[2][1]*c[3][3] - c[3][1]*c[2][3];
