@@ -1,0 +1,4 @@
+DECL_GL_PROC(GetInteger64i_v, glGetInteger64i_v, PFNGLGETINTEGER64I_VPROC)
+DECL_GL_PROC(GetBufferParameteri64v, glGetBufferParameteri64v, PFNGLGETBUFFERPARAMETERI64VPROC)
+DECL_GL_PROC(FramebufferTexture, glFramebufferTexture, PFNGLFRAMEBUFFERTEXTUREPROC)
+

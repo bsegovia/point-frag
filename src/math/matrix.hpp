@@ -75,9 +75,7 @@ namespace pf
 
     /* Static methods */
     static INLINE mat3x3 scale(V3 &s) {
-      return mat3x3(s.x,0,0,
-                    0,s.y,0,
-                    0,0,s.z);
+      return mat3x3(s.x,0,0, 0,s.y,0, 0,0,s.z);
     }
     static INLINE mat3x3 rotate(V3 _u, T r) {
       V3 u = normalize(_u);
