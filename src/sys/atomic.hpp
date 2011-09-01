@@ -33,12 +33,12 @@ namespace pf
     INLINE operator atomic_t() const { return data; }
 
   public:
-  INLINE friend atomic_t operator +=( Atomic& value, const atomic_t input ) { return atomic_add(&value.data, input) + input; }
+    INLINE friend atomic_t operator +=( Atomic& value, const atomic_t input ) { return atomic_add(&value.data, input) + input; }
     INLINE friend atomic_t operator ++( Atomic& value ) { return atomic_add(&value.data,  1) + 1; }
     INLINE friend atomic_t operator --( Atomic& value ) { return atomic_add(&value.data, -1) - 1; }
     INLINE friend atomic_t operator ++( Atomic& value, int ) { return atomic_add(&value.data,  1); }
     INLINE friend atomic_t operator --( Atomic& value, int ) { return atomic_add(&value.data, -1); }
-  INLINE friend atomic_t cmpxchg    ( Atomic& value, const atomic_t v, const atomic_t c) { return atomic_cmpxchg(&value.data,v,c); }
+    INLINE friend atomic_t cmpxchg    ( Atomic& value, const atomic_t v, const atomic_t c) { return atomic_cmpxchg(&value.data,v,c); }
 
   private:
     volatile atomic_t data;

@@ -3,6 +3,7 @@
 
 #include "sys/platform.hpp"
 #include "sys/filename.hpp"
+#include "sys/atomic.hpp"
 
 #include "GL/gl3.h"
 #include "GL/glext.h"
@@ -16,6 +17,7 @@ namespace pf
     OGL(void);
     virtual ~OGL(void);
 
+/*! We instantiate all GL functions here */
 #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) PROTOTYPE FIELD;
 #include "ogl100.hxx"
 #include "ogl110.hxx"
@@ -27,6 +29,30 @@ namespace pf
 #include "ogl310.hxx"
 #include "ogl320.hxx"
 #undef DECL_GL_PROC
+
+    /*! We count all OGL allocations by overriding all OGL allocation and
+     * deletion functions
+     */
+    Atomic textureNum;
+    Atomic vertexArrayNum;
+    Atomic bufferNum;
+    Atomic frameBufferNum;
+    INLINE void GenTextures(GLsizei n, GLuint *tex) {
+      this->textureNum += n;
+      this->_GenTextures(n, tex);
+    }
+    INLINE void DeleteTextures(GLsizei n, const GLuint *tex) {
+      this->textureNum += -n;
+      this->_DeleteTextures(n, tex);
+    }
+    INLINE void GenBuffers(GLsizei n, GLuint *buffer) {
+      this->bufferNum += n;
+      this->_GenBuffers(n, buffer);
+    }
+    INLINE void DeleteBuffers(GLsizei n, const GLuint *buffer) {
+      this->bufferNum += -n;
+      this->_DeleteBuffers(n, buffer);
+    }
 
     /*! Driver dependent constants */
     int32_t maxColorAttachmentNum;

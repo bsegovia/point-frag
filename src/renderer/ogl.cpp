@@ -12,7 +12,11 @@
 
 namespace pf
 {
-  OGL::OGL()
+  OGL::OGL() :
+    textureNum(0),
+    vertexArrayNum(0),
+    bufferNum(0),
+    frameBufferNum(0)
   {
 // On Windows, we directly load from OpenGL up 1.2 functions
 #if defined(__WIN32__)
@@ -45,7 +49,7 @@ namespace pf
 
 #undef DECL_GL_PROC
 
-    // Get driver dependent constants
+// Get driver dependent constants
 #define GET_CST(ENUM, FIELD)                        \
     this->GetIntegerv(ENUM, &this->FIELD);          \
     fprintf(stdout, #ENUM " == %i\n", this->FIELD);
