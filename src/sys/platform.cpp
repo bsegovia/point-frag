@@ -49,8 +49,8 @@ namespace pf
     _mm_free(ptr);
   }
 
-  void messageBox(const char *title, const char *msg) {
-	  MessageBox(NULL, msg, "Fatal Error", MB_OK);
+  void fatalBox(const char *msg) {
+    MessageBox(NULL, msg, "Fatal Error", MB_OK);
   }
 }
 #endif

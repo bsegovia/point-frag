@@ -132,9 +132,9 @@
 #endif
 
 #ifdef __GNUC__
-    #define MAYBE_UNUSED __attribute__((used))
+  #define MAYBE_UNUSED __attribute__((used))
 #else
-    #define MAYBE_UNUSED
+  #define MAYBE_UNUSED
 #endif
 
 #if defined(_MSC_VER)
@@ -157,35 +157,32 @@
 
 /* Fatal error macros */
 #if defined(__WIN32__)
-namespace pf { void messageBox(const char*, const char*); }
-#define FATAL(...)                                          \
-do {                                                        \
-  char msg[1024];						                    \
-  _snprintf_s(msg, sizeof(msg), _countof(msg), __VA_ARGS__);\
-  pf::messageBox("Fatal Error", msg);						\
-  fprintf(stderr, "error: ");                               \
-  fprintf(stderr, __VA_ARGS__);                             \
-  fprintf(stderr, "\n");                                    \
-  fflush(stderr);											\
-  assert(false);                                            \
-  _exit(-1);                                                \
+#define FATAL(...)                                           \
+do {                                                         \
+  char msg[1024];                                            \
+  namespace pf {void fatalBox(const char*, const char*);}    \
+  _snprintf_s(msg, sizeof(msg), _countof(msg), __VA_ARGS__); \
+  pf::fatalBox(msg);                                         \
+  fprintf(stderr, "error: ");                                \
+  fprintf(stderr, __VA_ARGS__);                              \
+  fprintf(stderr, "\n");                                     \
+  fflush(stderr); assert(false); _exit(-1);                  \
 } while (0)
 #else
-#define FATAL(...)                                          \
-do {                                                        \
-  fprintf(stderr, "error: ");                               \
-  fprintf(stderr, __VA_ARGS__);                             \
-  fprintf(stderr, "\n");                                    \
-  fflush(stderr);											\
-  assert(0);                                                \
-  _exit(-1);                                                \
+#define FATAL(...)                                           \
+do {                                                         \
+  fprintf(stderr, "error: ");                                \
+  fprintf(stderr, __VA_ARGS__);                              \
+  fprintf(stderr, "\n");                                     \
+  fflush(stderr); assert(0); _exit(-1);                      \
 } while (0)
 #endif /* __WIN32__ */
 
 #define NOT_IMPLEMENTED FATAL ("Not implemented")
-#define FATAL_IF(COND, ...) do {                            \
-  if(UNLIKELY(COND)) FATAL(__VA_ARGS__);                    \
-} while(0)
+#define FATAL_IF(COND, ...)                                  \
+do {                                                         \
+  if(UNLIKELY(COND)) FATAL(__VA_ARGS__);                     \
+} while (0)
 
 /* Safe deletion macros */
 #define SAFE_DELETE_ARRAY(x) do { if (x != NULL) delete [] x; } while (0)
