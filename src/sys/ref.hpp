@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_REF_H__
-#define __PF_REF_H__
+#ifndef __PF_REF_HPP__
+#define __PF_REF_HPP__
 
 #include "sys/atomic.hpp"
 

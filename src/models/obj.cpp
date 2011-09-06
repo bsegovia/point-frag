@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
-//#include <unordered_map>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -148,12 +147,12 @@ struct obj_scene_data {
   obj_camera *camera;
 };
 
-class objLoader
+class ObjLoader
 {
 public:
 
-  objLoader();
-  ~objLoader();
+  ObjLoader();
+  ~ObjLoader();
   int load(const char *filename);
 
   obj_vector **vertexList;
@@ -216,8 +215,8 @@ static char list_is_full(list *listo)
 
 static void list_make(list *listo, int start_size, char growable)
 {
-  listo->names = (char**) malloc(sizeof(char*) * start_size);
-  listo->items = (void**) malloc(sizeof(void*) * start_size);
+  listo->names = (char**) pf::malloc(sizeof(char*) * start_size);
+  listo->items = (void**) pf::malloc(sizeof(void*) * start_size);
   listo->item_count = 0;
   listo->current_max_size = start_size;
   listo->growable = growable;
@@ -260,7 +259,7 @@ static int list_add_item(list *listo, void *item, char *name)
   if(name != NULL)
   {
     name_length = strlen(name);
-    new_name = (char*) malloc(sizeof(char) * name_length + 1);
+    new_name = (char*) pf::malloc(sizeof(char) * name_length + 1);
     strncpy(new_name, name, name_length);
     listo->names[listo->item_count] = new_name;
   }
@@ -285,7 +284,7 @@ static void list_delete_index(list *listo, int indx)
 
   //remove item
   if(listo->names[indx] != NULL)
-    free(listo->names[indx]);
+    pf::free(listo->names[indx]);
 
   //restructure
   for(j=indx; j < listo->item_count-1; j++) {
@@ -309,14 +308,21 @@ static void list_delete_all(list *listo)
 static void list_free(list *listo)
 {
   list_delete_all(listo);
-  free(listo->names);
-  free(listo->items);
+  pf::free(listo->names);
+  pf::free(listo->items);
 }
 
 static void obj_free_half_list(list *listo)
 {
   list_delete_all(listo);
-  free(listo->names);
+  pf::free(listo->names);
+}
+
+static void obj_free_list(list *listo)
+{
+  list_delete_all(listo);
+  pf::free(listo->names);
+  pf::free(listo->items);
 }
 
 static int obj_convert_to_list_index(int current_max, int index)
@@ -393,7 +399,7 @@ static int obj_parse_vertex_index(int *vertex_index, int *texture_index, int *no
 static obj_face* obj_parse_face(obj_growable_scene_data *scene)
 {
   int vertex_count;
-  obj_face *face = (obj_face*)malloc(sizeof(obj_face));
+  obj_face *face = (obj_face*)pf::malloc(sizeof(obj_face));
 
   vertex_count = obj_parse_vertex_index(face->vertex_index, face->texture_index, face->normal_index);
   obj_convert_to_list_index_v(scene->vertex_list.item_count, face->vertex_index);
@@ -408,7 +414,7 @@ static obj_sphere* obj_parse_sphere(obj_growable_scene_data *scene)
 {
   int temp_indices[MAX_VERTEX_COUNT];
 
-  obj_sphere *obj = (obj_sphere*)malloc(sizeof(obj_sphere));
+  obj_sphere *obj = (obj_sphere*)pf::malloc(sizeof(obj_sphere));
   obj_parse_vertex_index(temp_indices, obj->texture_index, NULL);
   obj_convert_to_list_index_v(scene->vertex_texture_list.item_count, obj->texture_index);
   obj->pos_index = obj_convert_to_list_index(scene->vertex_list.item_count, temp_indices[0]);
@@ -422,7 +428,7 @@ static obj_plane* obj_parse_plane(obj_growable_scene_data *scene)
 {
   int temp_indices[MAX_VERTEX_COUNT];
 
-  obj_plane *obj = (obj_plane*)malloc(sizeof(obj_plane));
+  obj_plane *obj = (obj_plane*)pf::malloc(sizeof(obj_plane));
   obj_parse_vertex_index(temp_indices, obj->texture_index, NULL);
   obj_convert_to_list_index_v(scene->vertex_texture_list.item_count, obj->texture_index);
   obj->pos_index = obj_convert_to_list_index(scene->vertex_list.item_count, temp_indices[0]);
@@ -434,14 +440,14 @@ static obj_plane* obj_parse_plane(obj_growable_scene_data *scene)
 
 static obj_light_point* obj_parse_light_point(obj_growable_scene_data *scene)
 {
-  obj_light_point *o= (obj_light_point*)malloc(sizeof(obj_light_point));
+  obj_light_point *o= (obj_light_point*)pf::malloc(sizeof(obj_light_point));
   o->pos_index = obj_convert_to_list_index(scene->vertex_list.item_count, atoi( strtok(NULL, WHITESPACE)) );
   return o;
 }
 
 static obj_light_quad* obj_parse_light_quad(obj_growable_scene_data *scene)
 {
-  obj_light_quad *o = (obj_light_quad*)malloc(sizeof(obj_light_quad));
+  obj_light_quad *o = (obj_light_quad*)pf::malloc(sizeof(obj_light_quad));
   obj_parse_vertex_index(o->vertex_index, NULL, NULL);
   obj_convert_to_list_index_v(scene->vertex_list.item_count, o->vertex_index);
 
@@ -452,7 +458,7 @@ static obj_light_disc* obj_parse_light_disc(obj_growable_scene_data *scene)
 {
   int temp_indices[MAX_VERTEX_COUNT];
 
-  obj_light_disc *obj = (obj_light_disc*)malloc(sizeof(obj_light_disc));
+  obj_light_disc *obj = (obj_light_disc*)pf::malloc(sizeof(obj_light_disc));
   obj_parse_vertex_index(temp_indices, NULL, NULL);
   obj->pos_index = obj_convert_to_list_index(scene->vertex_list.item_count, temp_indices[0]);
   obj->normal_index = obj_convert_to_list_index(scene->vertex_normal_list.item_count, temp_indices[1]);
@@ -462,7 +468,7 @@ static obj_light_disc* obj_parse_light_disc(obj_growable_scene_data *scene)
 
 static obj_vector* obj_parse_vector()
 {
-  obj_vector *v = (obj_vector*)malloc(sizeof(obj_vector));
+  obj_vector *v = (obj_vector*)pf::malloc(sizeof(obj_vector));
   v->e[0] = v->e[1] = v->e[2] = 0.;
   for (int i = 0; i < 3; ++i) {
     const char * str = strtok(NULL, WHITESPACE);
@@ -492,17 +498,15 @@ static int obj_parse_mtl_file(char *filename, list *material_list)
   FILE *mtl_file_stream;
 
   // open scene
-  mtl_file_stream = fopen( filename, "r");
-  if(mtl_file_stream == 0)
-  {
+  mtl_file_stream = fopen(filename, "r");
+  if(mtl_file_stream == 0) {
     fprintf(stderr, "Error reading file: %s\n", filename);
     return 0;
   }
 
-  list_make(material_list, 10, 1);
+  assert(material_list != NULL);
 
-  while( fgets(current_line, OBJ_LINE_SIZE, mtl_file_stream) )
-  {
+  while (fgets(current_line, OBJ_LINE_SIZE, mtl_file_stream)) {
     current_token = strtok( current_line, " \t\n\r");
     line_number++;
 
@@ -512,7 +516,7 @@ static int obj_parse_mtl_file(char *filename, list *material_list)
     //start material
     else if( strequal(current_token, "newmtl")) {
       material_open = 1;
-      current_mtl = (obj_material*) malloc(sizeof(obj_material));
+      current_mtl = (obj_material*) pf::malloc(sizeof(obj_material));
       obj_set_material_defaults(current_mtl);
 
       // get the name
@@ -644,7 +648,7 @@ static int obj_parse_obj_file(obj_growable_scene_data *growable_data, const char
       list_add_item(&growable_data->light_quad_list, o, NULL);
     }
     else if( strequal(current_token, "c") ) { //camera
-      growable_data->camera = (obj_camera*) malloc(sizeof(obj_camera));
+      growable_data->camera = (obj_camera*) pf::malloc(sizeof(obj_camera));
       obj_parse_camera(growable_data, growable_data->camera);
     }
     else if( strequal(current_token, "usemtl") ) // usemtl
@@ -698,45 +702,59 @@ static void obj_free_temp_storage(obj_growable_scene_data *growable_data)
   obj_free_half_list(&growable_data->material_list);
 }
 
+static void obj_free_all_storage(obj_growable_scene_data *growable_data)
+{
+  obj_free_list(&growable_data->vertex_list);
+  obj_free_list(&growable_data->vertex_normal_list);
+  obj_free_list(&growable_data->vertex_texture_list);
+  obj_free_list(&growable_data->face_list);
+  obj_free_list(&growable_data->sphere_list);
+  obj_free_list(&growable_data->plane_list);
+  obj_free_list(&growable_data->light_point_list);
+  obj_free_list(&growable_data->light_quad_list);
+  obj_free_list(&growable_data->light_disc_list);
+  obj_free_list(&growable_data->material_list);
+}
+
 static void delete_obj_data(obj_scene_data *data_out)
 {
   int i;
 
   for(i=0; i<data_out->vertex_count; i++)
-    free(data_out->vertex_list[i]);
-  free(data_out->vertex_list);
+    pf::free(data_out->vertex_list[i]);
+  pf::free(data_out->vertex_list);
   for(i=0; i<data_out->vertex_normal_count; i++)
-    free(data_out->vertex_normal_list[i]);
-  free(data_out->vertex_normal_list);
+    pf::free(data_out->vertex_normal_list[i]);
+  pf::free(data_out->vertex_normal_list);
   for(i=0; i<data_out->vertex_texture_count; i++)
-    free(data_out->vertex_texture_list[i]);
-  free(data_out->vertex_texture_list);
+    pf::free(data_out->vertex_texture_list[i]);
+  pf::free(data_out->vertex_texture_list);
 
   for(i=0; i<data_out->face_count; i++)
-    free(data_out->face_list[i]);
-  free(data_out->face_list);
+    pf::free(data_out->face_list[i]);
+  pf::free(data_out->face_list);
   for(i=0; i<data_out->sphere_count; i++)
-    free(data_out->sphere_list[i]);
-  free(data_out->sphere_list);
+    pf::free(data_out->sphere_list[i]);
+  pf::free(data_out->sphere_list);
   for(i=0; i<data_out->plane_count; i++)
-    free(data_out->plane_list[i]);
-  free(data_out->plane_list);
+    pf::free(data_out->plane_list[i]);
+  pf::free(data_out->plane_list);
 
   for(i=0; i<data_out->light_point_count; i++)
-    free(data_out->light_point_list[i]);
-  free(data_out->light_point_list);
+    pf::free(data_out->light_point_list[i]);
+  pf::free(data_out->light_point_list);
   for(i=0; i<data_out->light_disc_count; i++)
-    free(data_out->light_disc_list[i]);
-  free(data_out->light_disc_list);
+    pf::free(data_out->light_disc_list[i]);
+  pf::free(data_out->light_disc_list);
   for(i=0; i<data_out->light_quad_count; i++)
-    free(data_out->light_quad_list[i]);
-  free(data_out->light_quad_list);
+    pf::free(data_out->light_quad_list[i]);
+  pf::free(data_out->light_quad_list);
 
   for(i=0; i<data_out->material_count; i++)
-    free(data_out->material_list[i]);
-  free(data_out->material_list);
+    pf::free(data_out->material_list[i]);
+  pf::free(data_out->material_list);
 
-  free(data_out->camera);
+  pf::free(data_out->camera);
 }
 
 static void obj_copy_to_out_storage(obj_scene_data *data_out, obj_growable_scene_data *growable_data)
@@ -777,18 +795,20 @@ static int parse_obj_scene(obj_scene_data *data_out, const char *filename)
   obj_growable_scene_data growable_data;
 
   obj_init_temp_storage(&growable_data);
-  if (obj_parse_obj_file(&growable_data, filename) == 0)
+  if (obj_parse_obj_file(&growable_data, filename) == 0) {
+    obj_free_all_storage(&growable_data);
     return 0;
+  }
 
   obj_copy_to_out_storage(data_out, &growable_data);
   obj_free_temp_storage(&growable_data);
   return 1;
 }
 
-objLoader::objLoader() { std::memset(this, 0, sizeof(*this)); }
-objLoader::~objLoader() { delete_obj_data(&data); }
+ObjLoader::ObjLoader() { std::memset(this, 0, sizeof(*this)); }
+ObjLoader::~ObjLoader() { delete_obj_data(&data); }
 
-int objLoader::load(const char *filename) {
+int ObjLoader::load(const char *filename) {
   int no_error = 1;
   no_error = parse_obj_scene(&data, filename);
   if(no_error) {
@@ -854,7 +874,7 @@ INLINE uint32 hash(const T &elem)
 bool
 Obj::load(const FileName &fileName)
 {
-  objLoader loader;
+  ObjLoader loader;
   if (loader.load(fileName.c_str()) == 0)
     return false;
 
@@ -872,20 +892,8 @@ Obj::load(const FileName &fileName)
     }
     int p,n,t;
   };
-#if 0
-  struct key_hash {
-    long operator() (const vertex_key &key) const {return hash(key);}
-  };
-  struct key_eq {
-    bool operator() (const vertex_key &x, const vertex_key &y) const {
-      return (x.p == y.p) && (x.n == y.n) && (x.t == y.t);
-    }
-  };
-  std::unordered_map<vertex_key, int, key_hash, key_eq> map;
-#else
-  std::map<vertex_key, int> map;
 
-#endif
+  std::map<vertex_key, int> map;
   struct poly { int v[MAX_VERTEX_COUNT]; int mat; int n; };
   std::vector<poly> polys;
   int vert_n = 0;
@@ -906,7 +914,7 @@ Obj::load(const FileName &fileName)
     const poly p = {{v[0],v[1],v[2],v[3]},face->material_index,face->vertex_count};
     polys.push_back(p);
   }
-  
+
   // Create triangles now
   std::vector<ObjTriangle> tris;
   for (auto poly = polys.begin(); poly != polys.end(); ++poly) {

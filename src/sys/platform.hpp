@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_PLATFORM_H__
-#define __PF_PLATFORM_H__
+#ifndef __PF_PLATFORM_HPP__
+#define __PF_PLATFORM_HPP__
 
 #include <stddef.h>
 #include <cstdlib>
@@ -240,12 +240,7 @@ typedef int32 index_t;
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "sys/constants.hpp"
-#include "sys/ref.hpp"
-
-/*! regular allocation (counted) */
-extern "C" void* pfMalloc(size_t size);
-extern "C" void* pfRealloc(void *ptr, size_t size);
-extern "C" void  pfFree(void *ptr);
+#include "sys/alloc.hpp"
 
 namespace pf
 {
@@ -253,10 +248,6 @@ namespace pf
   INLINE bool  select(bool s, bool  t , bool f) { return s ? t : f; }
   INLINE int   select(bool s, int   t,   int f) { return s ? t : f; }
   INLINE float select(bool s, float t, float f) { return s ? t : f; }
-
-  /*! aligned malloc */
-  void* alignedMalloc(size_t size, size_t align = 64);
-  void alignedFree(void* ptr);
 
 #define ALIGNED_CLASS                                             \
 public:                                                           \

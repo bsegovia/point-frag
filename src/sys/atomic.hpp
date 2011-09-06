@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_ATOMIC_H__
-#define __PF_ATOMIC_H__
+#ifndef __PF_ATOMIC_HPP__
+#define __PF_ATOMIC_HPP__
 
 #include "sys/intrinsics.hpp"
 
@@ -43,6 +43,7 @@ namespace pf
   private:
     volatile atomic_t data;
   };
- }
+}
 
-#endif
+#endif /* __PF_ATOMIC_HPP__ */
+

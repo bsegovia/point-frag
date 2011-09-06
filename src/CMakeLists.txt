@@ -6,6 +6,7 @@ set (SRC
   sys/filename.cpp
   sys/library.cpp
   sys/thread.cpp
+  sys/alloc.cpp
   sys/tasking.cpp
   sys/sysinfo.cpp
   sys/mutex.cpp

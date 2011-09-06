@@ -41,10 +41,7 @@ namespace pf
           }
           if (isLoaded == false)
             renderer.setTexture(name, renderer.defaultTex);
-          printf("BOUM0\n");
         }
-        else
-          printf("BOUM1\n");
       }
 
       // Map each material group to the texture name
