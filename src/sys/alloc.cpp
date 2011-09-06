@@ -43,6 +43,8 @@ namespace pf
 
   void* MemoryDebugger::insertAlloc(void *ptr, const char *file, const char *function, int line)
   {
+    if (ptr == NULL)
+      return ptr;
     Lock<MutexSys> lock(memoryDebuggerMutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) != allocMap.end(), "Pointer already in map");
@@ -67,6 +69,7 @@ namespace pf
 
   void MemoryDebugger::removeAlloc(void *ptr)
   {
+    if (ptr == NULL) return;
     Lock<MutexSys> lock(memoryDebuggerMutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
@@ -74,8 +77,7 @@ namespace pf
     unfreedNum--;
   }
 
-  void MemoryDebugger::dumpAlloc(void)
-  {
+  void MemoryDebugger::dumpAlloc(void) {
     std::cerr << "Unfreed number: " << unfreedNum << std::endl;
     for (auto it = allocMap.begin(); it != allocMap.end(); ++it) {
       const AllocData &data = it->second;
@@ -84,6 +86,7 @@ namespace pf
                    "function " << staticStringVector[data.functionName] << ", " <<
                    "line " << data.line << std::endl;
     }
+    std::cerr << staticStringVector.size() << " allocated static strings" << std::endl;
   }
 
   /*! Declare C like interface functions here */
@@ -99,6 +102,8 @@ namespace pf
     if (memoryDebugger) memoryDebugger->dumpAlloc();
   }
   void startMemoryDebugger(void) {
+    if (memoryDebugger)
+      endMemoryDebugger();
     memoryDebugger = new MemoryDebugger;
   }
   void endMemoryDebugger(void) {
