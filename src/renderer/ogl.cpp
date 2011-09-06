@@ -59,7 +59,12 @@ namespace pf
 #undef GET_CST
   }
 
-  OGL::~OGL() {}
+  OGL::~OGL() {
+    assert(this->textureNum == 0 &&
+           this->vertexArrayNum == 0 &&
+           this->bufferNum == 0 &&
+           this->frameBufferNum == 0);
+  }
 
   bool OGL::checkError(const char *title) const
   {

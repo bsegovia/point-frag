@@ -31,7 +31,7 @@ namespace pf
 #undef DECL_GL_PROC
 
     /*! We count all OGL allocations by overriding all OGL allocation and
-     * deletion functions
+     *  deletion functions
      */
     Atomic textureNum;
     Atomic vertexArrayNum;
@@ -52,6 +52,22 @@ namespace pf
     INLINE void DeleteBuffers(GLsizei n, const GLuint *buffer) {
       this->bufferNum += -n;
       this->_DeleteBuffers(n, buffer);
+    }
+    INLINE void GenFramebuffers(GLsizei n, GLuint *buffer) {
+      this->frameBufferNum += n;
+      this->_GenFramebuffers(n, buffer);
+    }
+    INLINE void DeleteFramebuffers(GLsizei n, const GLuint *buffer) {
+      this->frameBufferNum += -n;
+      this->_DeleteFramebuffers(n, buffer);
+    }
+    INLINE void GenVertexArrays(GLsizei n, GLuint *buffer) {
+      this->vertexArrayNum += n;
+      this->_GenVertexArrays(n, buffer);
+    }
+    INLINE void DeleteVertexArrays(GLsizei n, const GLuint *buffer) {
+      this->vertexArrayNum += -n;
+      this->_DeleteVertexArrays(n, buffer);
     }
 
     /*! Driver dependent constants */
@@ -80,21 +96,26 @@ namespace pf
  *  structure which contains all OGL functions with name OGL_NAME
  */
 #ifndef NDEBUG
-  #define R_CALL(NAME, ...)                                                   \
-    do {                                                                      \
-      OGL_NAME->NAME(__VA_ARGS__);                                            \
-      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed");\
+  #define R_CALL(NAME, ...)                                                    \
+    do {                                                                       \
+      OGL_NAME->NAME(__VA_ARGS__);                                             \
+      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed"); \
     } while (0)
-  #define R_CALLR(RET, NAME, ...)                                             \
-    do {                                                                      \
-      RET = OGL_NAME->NAME(__VA_ARGS__);                                      \
-      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed");\
+  #define R_CALLR(RET, NAME, ...)                                              \
+    do {                                                                       \
+      RET = OGL_NAME->NAME(__VA_ARGS__);                                       \
+      FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed"); \
     } while (0)
 #else
-  #define R_CALL(NAME, ...) do { OGL_NAME->NAME(__VA_ARGS__); } while (0)
-  #define R_CALLR(RET, NAME, ...) do { RET = OGL_NAME->NAME(__VA_ARGS__); } while (0)
+  #define R_CALL(NAME, ...)                                                    \
+    do {                                                                       \
+      OGL_NAME->NAME(__VA_ARGS__);                                             \
+    } while (0)
+  #define R_CALLR(RET, NAME, ...)                                              \
+    do {                                                                       \
+      RET = OGL_NAME->NAME(__VA_ARGS__);                                       \
+    } while (0)
 #endif /* NDEBUG */
-
 }
 
 #endif /* __OGL_HPP__ */

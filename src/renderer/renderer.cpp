@@ -167,14 +167,9 @@ namespace pf
     R_CALLR (this->plain.uCol, GetUniformLocation, this->plain.program, "c");
   }
   void Renderer::destroyPlain(void) {
-    if (this->plain.program) {
-      R_CALL (DeleteProgram, this->plain.program);
-      std::memset(&this->plain, 0, sizeof(this->plain));
-    }
-    if (this->plain.vertexArray)
-      R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
-    if (this->plain.arrayBuffer)
-      R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
+    R_CALL (DeleteProgram, this->plain.program);
+    R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
+    R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
   }
 
   /*! Diffuse shader -> just display geometries with a diffuse texture */

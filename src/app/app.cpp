@@ -55,7 +55,12 @@ static double updateTime(void)
 
 static void updateCamera(void)
 {
-  if (keys[27] == true) exit(0);
+  if (keys[27] == true) {
+    renderObj = NULL;
+    delete renderer;
+    ogl = renderer = NULL;
+    exit(0);
+  }
 
   // Get the time elapsed
   const double dt = updateTime();
@@ -170,7 +175,8 @@ int main(int argc, char **argv)
   glutKeyboardUpFunc(keyUp);
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
   glutMainLoop();
-
+  delete renderer;
+  ogl = renderer = NULL;
   return 0;
 }
 #undef OGL_NAME

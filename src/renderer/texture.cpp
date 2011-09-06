@@ -24,7 +24,7 @@ namespace pf
       const int offset2 = (2*x+0 + 2*y*w+w) * compNum;
       const int offset3 = (2*x+1 + 2*y*w+0) * compNum;
       for (int c = 0; c < compNum; ++c) {
-        const float f = float(src[offset0+c]) + 
+        const float f = float(src[offset0+c]) +
                         float(src[offset1+c]) +
                         float(src[offset2+c]) +
                         float(src[offset3+c]);
