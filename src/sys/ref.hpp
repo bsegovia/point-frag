@@ -18,6 +18,7 @@
 #define __PF_REF_HPP__
 
 #include "sys/atomic.hpp"
+#include "sys/alloc.hpp"
 
 namespace pf
 {
@@ -50,17 +51,17 @@ namespace pf
     INLINE Ref(NullTy) : ptr(NULL) {}
     INLINE Ref(const Ref& input) : ptr(input.ptr) { if ( ptr ) ptr->refInc(); }
     INLINE Ref(Type* const input) : ptr(input) { if (ptr) ptr->refInc(); }
-    INLINE ~Ref(void) { if (ptr && ptr->refDec()) delete ptr; }
+    INLINE ~Ref(void) { if (ptr && ptr->refDec()) DELETE(ptr); }
 
     INLINE Ref& operator= (const Ref &input) {
       if ( input.ptr ) input.ptr->refInc();
-      if ( ptr && ptr->refDec() ) delete ptr;
+      if ( ptr && ptr->refDec() ) DELETE(ptr);
       *(Type**)&ptr = input.ptr;
       return *this;
     }
 
     INLINE Ref& operator= (NullTy) {
-      if (ptr && ptr->refDec()) delete ptr;
+      if (ptr && ptr->refDec()) DELETE(ptr);
       *(Type**)&ptr = NULL;
       return *this;
     }
@@ -80,22 +81,17 @@ namespace pf
     INLINE       Ref<TypeOut> cast()       { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
     template<typename TypeOut>
     INLINE const Ref<TypeOut> cast() const { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
-
-    template<typename TypeOut>
-    INLINE       Ref<TypeOut> dynamicCast()       { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
-    template<typename TypeOut>
-    INLINE const Ref<TypeOut> dynamicCast() const { return Ref<TypeOut>(dynamic_cast<TypeOut*>(ptr)); }
   };
 
-  template<typename Type> INLINE  bool operator < ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
+  template<typename Type> INLINE  bool operator< ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
 
-  template<typename Type> INLINE  bool operator ==( const Ref<Type>& a, NullTy             ) { return a.ptr == NULL  ; }
-  template<typename Type> INLINE  bool operator ==( NullTy            , const Ref<Type>& b ) { return NULL  == b.ptr ; }
-  template<typename Type> INLINE  bool operator ==( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr == b.ptr ; }
+  template<typename Type> INLINE  bool operator== ( const Ref<Type>& a, NullTy             ) { return a.ptr == NULL  ; }
+  template<typename Type> INLINE  bool operator== ( NullTy            , const Ref<Type>& b ) { return NULL  == b.ptr ; }
+  template<typename Type> INLINE  bool operator== ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr == b.ptr ; }
 
-  template<typename Type> INLINE  bool operator !=( const Ref<Type>& a, NullTy             ) { return a.ptr != NULL  ; }
-  template<typename Type> INLINE  bool operator !=( NullTy            , const Ref<Type>& b ) { return NULL  != b.ptr ; }
-  template<typename Type> INLINE  bool operator !=( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
+  template<typename Type> INLINE  bool operator!= ( const Ref<Type>& a, NullTy             ) { return a.ptr != NULL  ; }
+  template<typename Type> INLINE  bool operator!= ( NullTy            , const Ref<Type>& b ) { return NULL  != b.ptr ; }
+  template<typename Type> INLINE  bool operator!= ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
 }
 
 #endif

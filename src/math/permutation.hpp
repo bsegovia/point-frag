@@ -33,7 +33,7 @@ namespace pf
     Permutation(int size)
     {
       elts = size;
-      perm = new int[elts];
+      perm = NEW_ARRAY(int, elts);
       for (int i=0; i<elts; i++) perm[i] = i;
       for (int i=0; i<elts; i++) std::swap(perm[i],perm[random<uint32>()%elts]);
     }
@@ -43,14 +43,14 @@ namespace pf
     Permutation(int size, Random& rng)
     {
       elts = size;
-      perm = new int[elts];
+      perm = NEW_ARRAY(int, elts);
       for (int i=0; i<elts; i++) perm[i] = i;
       for (int i=0; i<elts; i++) std::swap(perm[i],perm[rng.getInt(elts)]);
     }
 
     /*! Destroys the permutation. */
     ~Permutation() {
-      if (perm) delete[] perm; perm = NULL;
+      SAFE_DELETE_ARRAY(perm); perm = NULL;
     }
 
     /*! Returns the size of the permutation. */

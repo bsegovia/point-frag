@@ -163,7 +163,7 @@ namespace pf
 
   static void* threadStartup(ThreadStartupData* parg)
   {
-    ThreadStartupData arg = *parg; delete parg; parg = NULL;
+    ThreadStartupData arg = *parg; DELETE(parg); parg = NULL;
     setAffinity(arg.affinity);
     arg.f(arg.arg);
     return NULL;
@@ -176,8 +176,8 @@ namespace pf
     pthread_attr_init(&attr);
     if (stack_size > 0) pthread_attr_setstacksize (&attr, stack_size);
 
-    pthread_t* tid = new pthread_t;
-    ThreadStartupData* startup = new ThreadStartupData;
+    pthread_t* tid = NEW(pthread_t);
+    ThreadStartupData* startup = NEW(ThreadStartupData);
     startup->f = f;
     startup->arg = arg;
     startup->affinity = affinity;
@@ -197,18 +197,18 @@ namespace pf
   void join(thread_t tid) {
     if (pthread_join(*(pthread_t*)tid, NULL) != 0)
       FATAL("pthread_join error");
-    delete (pthread_t*)tid;
+    DELETE((pthread_t*)tid);
   }
 
   /*! destroy a hardware thread by its handle */
   void destroyThread(thread_t tid) {
     pthread_cancel(*(pthread_t*)tid);
-    delete (pthread_t*)tid;
+    DELETE((pthread_t*)tid);
   }
 
   /*! creates thread local storage */
   tls_t createTls() {
-    pthread_key_t* key = new pthread_key_t;
+    pthread_key_t* key = NEW(pthread_key_t);
     if (pthread_key_create(key,NULL) != 0)
       FATAL("pthread_key_create error");
     return tls_t(key);
@@ -229,7 +229,7 @@ namespace pf
   void destroyTls(tls_t tls) {
     if (pthread_key_delete(*(pthread_key_t*)tls) != 0)
       FATAL("pthread_key_delete error");
-    delete (pthread_key_t*)tls;
+    DELETE((pthread_key_t*)tls);
   }
 }
 #endif

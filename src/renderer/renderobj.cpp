@@ -13,7 +13,7 @@ namespace pf
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
     // Load the OBJ file first
-    Obj *obj = new Obj;
+    Obj *obj = NEW(Obj);
     bool isLoaded = false;
     for (size_t i = 0; i < defaultPathNum; ++i) {
       isLoaded = obj->load(FileName(defaultPath[i]) + fileName);
@@ -32,7 +32,7 @@ namespace pf
           for (size_t i = 0; i < defaultPathNum; ++i) {
             const FileName dataPath(defaultPath[i]);
             const FileName path = dataPath + FileName(name);
-            tex = new Texture2D(renderer, path);
+            tex = NEW(Texture2D, renderer, path);
             isLoaded = tex->isValid();
             if (isLoaded) {
               renderer.setTexture(name, tex);
@@ -45,7 +45,7 @@ namespace pf
       }
 
       // Map each material group to the texture name
-      this->tex = new Ref<Texture2D>[obj->grpNum];
+      this->tex = NEW_ARRAY(Ref<Texture2D>, obj->grpNum);
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const int mat = obj->grp[i].m;
         const char *name = obj->mat[mat].map_Kd;
@@ -57,8 +57,8 @@ namespace pf
 
       // Compute each object bounding box and group of triangles
       this->grpNum = obj->grpNum;
-      this->bbox = new BBox3f[obj->grpNum];
-      this->grp = new RenderObj::Group[this->grpNum];
+      this->bbox = NEW_ARRAY(BBox3f, obj->grpNum);
+      this->grp = NEW_ARRAY(RenderObj::Group, this->grpNum);
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const size_t first = obj->grp[i].first, last = obj->grp[i].last;
         this->grp[i].first = first;
@@ -79,7 +79,7 @@ namespace pf
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
 
       // Build the indices
-      GLuint *indices = new GLuint[obj->triNum * 3];
+      GLuint *indices = NEW_ARRAY(GLuint, obj->triNum * 3);
       const size_t indexSize = sizeof(GLuint[3]) * obj->triNum;
       for (size_t from = 0, to = 0; from < obj->triNum; ++from, to += 3) {
         indices[to+0] = obj->tri[from].v[0];
@@ -90,7 +90,7 @@ namespace pf
       R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
       R_CALL (BufferData, GL_ELEMENT_ARRAY_BUFFER, indexSize, indices, GL_STATIC_DRAW);
       R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
-      delete [] indices;
+      DELETE_ARRAY(indices);
 
       // Contain the vertex array
       R_CALL (GenVertexArrays, 1, &this->vertexArray);
@@ -105,7 +105,7 @@ namespace pf
     }
 
     // We do not need anymore the OBJ structure
-    delete obj;
+    DELETE(obj);
   }
 
   RenderObj::~RenderObj(void) {
@@ -113,8 +113,9 @@ namespace pf
       R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
       R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
       R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-      delete [] this->tex;
-      delete [] this->bbox;
+      DELETE_ARRAY(this->tex);
+      DELETE_ARRAY(this->bbox);
+      DELETE_ARRAY(this->grp);
     }
   }
 

@@ -28,15 +28,15 @@ namespace pf
     Array2D() : sizeX(0), sizeY(0), data(NULL) {}
 
     Array2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY) {
-      data = new T*[sizeX];
+      data = NEW_ARRAY(T*, sizeX);
       for (size_t x = 0; x < sizeX; x++)
-        data[x] = new T[sizeY];
+        data[x] = NEW_ARRAY(T, sizeY);
     }
 
     ~Array2D() {
       for (size_t x = 0; x < sizeX; x++)
-        delete[] data[x];
-      delete[] data;
+        DELETE_ARRAY(data[x]);
+      DELETE_ARRAY(data);
     }
 
     operator const T**() const { return const_cast<const T**>(data); }

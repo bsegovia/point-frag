@@ -31,7 +31,7 @@ namespace pf
     setAffinity(0);
     barrier.init(numThreads);
     for (size_t i=0; i<numThreads-1; i++)
-      threads.push_back(createThread((thread_func)threadFunction,new Thread(i+1,this),4*1024*1024,int(i+1)));
+      threads.push_back(createThread((thread_func)threadFunction,NEW(Thread,i+1,this),4*1024*1024,int(i+1)));
     barrier.wait();
   }
 
@@ -47,7 +47,7 @@ namespace pf
 
   void TaskScheduler::addTask(Task::runFunction run, void* runData, size_t elts, Task::completeFunction complete, void* completeData)
   {
-    Task* task = new Task(run,runData,elts,complete,completeData);
+    Task* task = NEW(Task,run,runData,elts,complete,completeData);
     activeTasks++;
     taskMutex.lock();
     if (numTasks >= MAX_TASKS)
@@ -85,7 +85,7 @@ namespace pf
       /* complete the task */
       if (--task->completed == 0) {
         if (task->complete) task->complete(tid,task->completeData);
-        delete task;
+        DELETE(task);
         activeTasks--;
       }
     }
@@ -96,7 +96,7 @@ namespace pf
     /* get thread ID */
     TaskScheduler* This = thread->scheduler;
     size_t tid = thread->tid;
-    delete thread;
+    DELETE(thread);
 
     /* flush to zero and no denormals */
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
@@ -113,14 +113,14 @@ namespace pf
   void TaskScheduler::init(int numThreads)
   {
     if (scheduler != NULL) return;
-    if (numThreads < 0) scheduler = new TaskScheduler(getNumberOfLogicalThreads());
-    else scheduler = new TaskScheduler(numThreads);
+    if (numThreads < 0) scheduler = NEW(TaskScheduler,getNumberOfLogicalThreads());
+    else scheduler = NEW(TaskScheduler,numThreads);
   }
 
   void TaskScheduler::cleanup()
   {
     if (scheduler) {
-      delete scheduler; 
+      DELETE(scheduler);
       scheduler = NULL;
     }
   }

@@ -878,7 +878,7 @@ Obj::load(const FileName &fileName)
   if (loader.load(fileName.c_str()) == 0)
     return false;
 
-  // Sort vertices and create new faces
+  // Sort vertices and create faces
   struct vertex_key {
     INLINE vertex_key(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
     bool operator == (const vertex_key &other) const {
@@ -959,13 +959,13 @@ Obj::load(const FileName &fileName)
   }
 
   // Allocate the ObjMaterial
-  ObjMaterial *mat = new ObjMaterial[loader.materialCount];
+  ObjMaterial *mat = NEW_ARRAY(ObjMaterial, loader.materialCount);
   std::memset(mat, 0, sizeof(ObjMaterial) * loader.materialCount);
 
 #define COPY_FIELD(NAME)                                \
   if (from.NAME) {                                      \
     const size_t len = std::strlen(from.NAME);          \
-    to.NAME = new char[len + 1];                        \
+    to.NAME = NEW_ARRAY(char, len + 1);                 \
     memcpy(to.NAME, from.NAME, std::strlen(from.NAME)); \
     to.NAME[len] = 0;                                   \
     patchName(to.NAME);                                 \
@@ -988,15 +988,15 @@ Obj::load(const FileName &fileName)
   this->grpNum = matGrp.size();
   this->matNum = loader.materialCount;
   if (this->triNum) {
-    this->tri = new ObjTriangle[this->triNum];
+    this->tri = NEW_ARRAY(ObjTriangle, this->triNum);
     std::memcpy(this->tri, &tris[0],  sizeof(ObjTriangle) * this->triNum);
   }
   if (this->vertNum) {
-    this->vert = new ObjVertex[this->vertNum];
+    this->vert = NEW_ARRAY(ObjVertex, this->vertNum);
     std::memcpy(this->vert, &verts[0], sizeof(ObjVertex) * this->vertNum);
   }
   if (this->grpNum) {
-    this->grp = new ObjMatGroup[this->grpNum];
+    this->grp = NEW_ARRAY(ObjMatGroup, this->grpNum);
     std::memcpy(this->grp,  &matGrp[0],  sizeof(ObjMatGroup) * this->grpNum);
   }
   this->mat = mat;

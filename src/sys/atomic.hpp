@@ -23,22 +23,22 @@ namespace pf
 {
   struct Atomic {
   protected:
-    Atomic( const Atomic& ); // don't implement
-    Atomic& operator =( const Atomic& ); // don't implement
+    Atomic(const Atomic&); // don't implement
+    Atomic& operator= (const Atomic&); // don't implement
 
   public:
-    INLINE Atomic( void ) {}
-    INLINE Atomic( const atomic_t data ) : data(data) {}
-    INLINE Atomic& operator =( const atomic_t input ) { data = input; return *this; }
+    INLINE Atomic(void) {}
+    INLINE Atomic(atomic_t data) : data(data) {}
+    INLINE Atomic& operator =(const atomic_t input) { data = input; return *this; }
     INLINE operator atomic_t() const { return data; }
 
   public:
-    INLINE friend atomic_t operator +=( Atomic& value, const atomic_t input ) { return atomic_add(&value.data, input) + input; }
-    INLINE friend atomic_t operator ++( Atomic& value ) { return atomic_add(&value.data,  1) + 1; }
-    INLINE friend atomic_t operator --( Atomic& value ) { return atomic_add(&value.data, -1) - 1; }
-    INLINE friend atomic_t operator ++( Atomic& value, int ) { return atomic_add(&value.data,  1); }
-    INLINE friend atomic_t operator --( Atomic& value, int ) { return atomic_add(&value.data, -1); }
-    INLINE friend atomic_t cmpxchg    ( Atomic& value, const atomic_t v, const atomic_t c) { return atomic_cmpxchg(&value.data,v,c); }
+    INLINE friend atomic_t operator+= (Atomic& value, atomic_t input) { return atomic_add(&value.data, input) + input; }
+    INLINE friend atomic_t operator++ (Atomic& value) { return atomic_add(&value.data,  1) + 1; }
+    INLINE friend atomic_t operator-- (Atomic& value) { return atomic_add(&value.data, -1) - 1; }
+    INLINE friend atomic_t operator++ (Atomic& value, int) { return atomic_add(&value.data,  1); }
+    INLINE friend atomic_t operator-- (Atomic& value, int) { return atomic_add(&value.data, -1); }
+    INLINE friend atomic_t cmpxchg    (Atomic& value, const atomic_t v, const atomic_t c) { return atomic_cmpxchg(&value.data,v,c); }
 
   private:
     volatile atomic_t data;

@@ -118,7 +118,8 @@
 #define ALIGNED(...)         __declspec(align(__VA_ARGS__))
 //#define __FUNCTION__           __FUNCTION__
 #define debugbreak()         __debugbreak()
-
+#define WINDOWS_DELETE DELETE
+#undef DELETE  // We use it on our side
 #else
 #undef NOINLINE
 #undef INLINE
@@ -185,8 +186,8 @@ do {                                                         \
 } while (0)
 
 /* Safe deletion macros */
-#define SAFE_DELETE_ARRAY(x) do { if (x != NULL) delete [] x; } while (0)
-#define SAFE_DELETE(x) do { if (x != NULL) delete x; } while (0)
+#define SAFE_DELETE_ARRAY(x) do { if (x != NULL) DELETE_ARRAY(x); } while (0)
+#define SAFE_DELETE(x) do { if (x != NULL) DELETE(x); } while (0)
 
 /* Various helper macros */
 #define ARRAY_ELEM_NUM(x) (sizeof(x) / sizeof(x[0]))
@@ -226,10 +227,10 @@ typedef int32 index_t;
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__INTEL_COMPILER)
-#pragma warning(disable:265 ) // floating-point operation result is out of range
-#pragma warning(disable:383 ) // value copied to temporary, reference to temporary used
-#pragma warning(disable:869 ) // parameter was never referenced
-#pragma warning(disable:981 ) // operands are evaluated in unspecified order
+#pragma warning(disable:265)  // floating-point operation result is out of range
+#pragma warning(disable:383)  // value copied to temporary, reference to temporary used
+#pragma warning(disable:869)  // parameter was never referenced
+#pragma warning(disable:981)  // operands are evaluated in unspecified order
 #pragma warning(disable:1418) // external function definition with no prior declaration
 #pragma warning(disable:1419) // external declaration in primary source file
 #pragma warning(disable:1572) // floating-point equality and inequality comparisons are unreliable

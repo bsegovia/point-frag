@@ -57,8 +57,9 @@ static void updateCamera(void)
 {
   if (keys[27] == true) {
     renderObj = NULL;
-    delete renderer;
+    DELETE(renderer);
     ogl = renderer = NULL;
+    dumpAlloc();
     exit(0);
   }
 
@@ -150,6 +151,7 @@ static void motion(int x, int y)
 
 int main(int argc, char **argv)
 {
+  startMemoryDebugger();
   glutInitWindowSize(w, h);
   glutInitWindowPosition(64, 64);
   glutInit(&argc, argv);
@@ -159,8 +161,8 @@ int main(int argc, char **argv)
   glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
   glutCreateWindow(argv[0]);
 
-  ogl = renderer = new Renderer;
-  renderObj = new RenderObj(*renderer, "f000.obj");
+  ogl = renderer = NEW(Renderer);
+  renderObj = NEW(RenderObj, *renderer, "f000.obj");
   glutDisplayFunc(display);
 
   displayTime = getSeconds();
@@ -175,7 +177,8 @@ int main(int argc, char **argv)
   glutKeyboardUpFunc(keyUp);
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
   glutMainLoop();
-  delete renderer;
+
+  DELETE(renderer);
   ogl = renderer = NULL;
   return 0;
 }

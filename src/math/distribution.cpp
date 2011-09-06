@@ -30,15 +30,15 @@ namespace pf
   }
 
   Distribution1D::~Distribution1D() {
-    if (PDF) delete[] PDF; PDF = NULL;
-    if (CDF) delete[] CDF; CDF = NULL;
+    if (PDF) DELETE_ARRAY(PDF); PDF = NULL;
+    if (CDF) DELETE_ARRAY(CDF); CDF = NULL;
   }
 
   void Distribution1D::init(const float* f, size_t size_in)
   {
     size = size_in;
-    PDF = new float[size];
-    CDF = new float[size+1];
+    PDF = NEW_ARRAY(float, size);
+    CDF = NEW_ARRAY(float, size+1);
 
     CDF[0] = 0.0f;
     for (size_t i=1; i<size+1; i++)
@@ -81,16 +81,16 @@ namespace pf
   }
 
   Distribution2D::~Distribution2D() {
-    if (xDists) delete[] xDists; xDists = NULL;
+    SAFE_DELETE_ARRAY(xDists); xDists = NULL;
   }
 
   void Distribution2D::init(const float** f, const size_t w, const size_t h)
   {
     /*! create arrays */
-    if (xDists) delete[] xDists;
+    SAFE_DELETE_ARRAY(xDists);
     width = w; height = h;
-    xDists = new Distribution1D[height];
-    float* fy = new float[height];
+    xDists = NEW_ARRAY(Distribution1D, height);
+    float* fy = NEW_ARRAY(float, height);
 
     /*! compute y distribution and initialize row distributions */
     for (size_t y=0; y<height; y++)
@@ -106,7 +106,7 @@ namespace pf
 
     /*! initializes the y distribution */
     yDist.init(fy, height);
-    delete[] fy;
+    DELETE_ARRAY(fy);
   }
 
   Sample2f Distribution2D::sample(const vec2f& u) const

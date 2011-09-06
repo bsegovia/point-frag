@@ -25,10 +25,9 @@ namespace pf
 {
   /*! system mutex using windows API */
   MutexSys::MutexSys( void ) { mutex = new CRITICAL_SECTION; InitializeCriticalSection((CRITICAL_SECTION*)mutex); }
-  MutexSys::~MutexSys( void ) { DeleteCriticalSection((CRITICAL_SECTION*)mutex); delete (CRITICAL_SECTION*)mutex; }
+  MutexSys::~MutexSys( void ) { DeleteCriticalSection((CRITICAL_SECTION*)mutex); delete ((CRITICAL_SECTION*)mutex); }
   void MutexSys::lock( void ) { EnterCriticalSection((CRITICAL_SECTION*)mutex); }
   void MutexSys::unlock( void ) { LeaveCriticalSection((CRITICAL_SECTION*)mutex); }
-
   void MutexActive::lock  ( void ) { while ( cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE) _mm_pause(); }
 }
 #endif
@@ -40,10 +39,9 @@ namespace pf
 {
   /*! system mutex using pthreads */
   MutexSys::MutexSys( void ) { mutex = new pthread_mutex_t; pthread_mutex_init((pthread_mutex_t*)mutex, NULL); }
-  MutexSys::~MutexSys( void ) { pthread_mutex_destroy((pthread_mutex_t*)mutex); delete (pthread_mutex_t*)mutex; }
+  MutexSys::~MutexSys( void ) { pthread_mutex_destroy((pthread_mutex_t*)mutex); delete ((pthread_mutex_t*)mutex); }
   void MutexSys::lock( void ) { pthread_mutex_lock((pthread_mutex_t*)mutex); }
   void MutexSys::unlock( void ) { pthread_mutex_unlock((pthread_mutex_t*)mutex); }
-
   void MutexActive::lock  ( void ) { while ( cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE) _mm_pause(); }
 }
 #endif

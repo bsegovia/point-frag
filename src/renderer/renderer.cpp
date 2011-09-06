@@ -22,7 +22,7 @@ namespace pf
   Ref<Texture2D> loadDefaultTexture(Renderer &renderer) {
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const std::string prefix = defaultPath[i];
-      Ref<Texture2D> tex = new Texture2D(renderer, prefix + "Maps/chess.tga");
+      Ref<Texture2D> tex = NEW(Texture2D, renderer, prefix + "Maps/chess.tga");
       if (tex->handle)
         return tex;
     }
@@ -310,8 +310,8 @@ namespace pf
 
     // Build the vertex and the index buffers. We should proper instancing later
     // with some geometry shader to avoid that crap
-    vec3f *pts = new vec3f[8*n];
-    int *indices = new int[bboxIndexNum*n];
+    vec3f *pts = NEW_ARRAY(vec3f, 8*n);
+    int *indices = NEW_ARRAY(int, bboxIndexNum*n);
     for (int i = 0; i < n; ++i) {
       pts[8*i+0].x = pts[8*i+3].x = pts[8*i+4].x = pts[8*i+7].x = bbox[i].lower.x;
       pts[8*i+0].y = pts[8*i+1].y = pts[8*i+4].y = pts[8*i+5].y = bbox[i].lower.y;
@@ -337,8 +337,8 @@ namespace pf
     R_CALL (BindVertexArray, 0);
     R_CALL (Enable, GL_CULL_FACE);
     R_CALL (UseProgram, 0);
-    delete [] pts;
-    delete [] indices;
+    DELETE_ARRAY(pts);
+    DELETE_ARRAY(indices);
   }
 
   Renderer::Renderer(void) {
