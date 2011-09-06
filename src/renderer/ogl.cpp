@@ -18,7 +18,7 @@ namespace pf
     bufferNum(0),
     frameBufferNum(0)
   {
-// On Windows, we directly load from OpenGL up 1.2 functions
+// On Windows, we directly load from OpenGL 1.1 functions
 #if defined(__WIN32__)
   #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) this->FIELD = NAME;
 #else
