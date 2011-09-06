@@ -242,6 +242,11 @@ typedef int32 index_t;
 #include "sys/constants.hpp"
 #include "sys/ref.hpp"
 
+/*! regular allocation (counted) */
+extern "C" void* pfMalloc(size_t size);
+extern "C" void* pfRealloc(void *ptr, size_t size);
+extern "C" void  pfFree(void *ptr);
+
 namespace pf
 {
   /*! selects */
@@ -251,13 +256,12 @@ namespace pf
 
   /*! aligned malloc */
   void* alignedMalloc(size_t size, size_t align = 64);
-  void* alignedRealloc(void* ptr, size_t size, size_t align = 64);
   void alignedFree(void* ptr);
 
-#define ALIGNED_CLASS \
-public:\
+#define ALIGNED_CLASS                                             \
+public:                                                           \
   void* operator new(size_t size) { return alignedMalloc(size); } \
-  void operator delete(void* ptr) { alignedFree(ptr); } \
+  void operator delete(void* ptr) { alignedFree(ptr); }           \
 private:
 
   /*! random functions */

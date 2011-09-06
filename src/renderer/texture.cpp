@@ -14,8 +14,7 @@ namespace pf
                                  int mmW, int mmH,
                                  int compNum)
   {
-    // Use malloc since stb_image also uses malloc
-    unsigned char *dst = (unsigned char*) malloc(mmW*mmH*compNum);
+    unsigned char *dst = (unsigned char*) pfMalloc(mmW*mmH*compNum);
     for (int y = 0; y < mmH; ++y)
     for (int x = 0; x < mmW; ++x) {
       const int offset = (x + y*mmW) * compNum;
@@ -76,12 +75,12 @@ namespace pf
       for (;;) {
         R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
         if (lvl >= levelNum || mipmap == false) {
-          free(img);
+          pfFree(img);
           break;
         } else {
           const int mmW = max(w/2, 1u), mmH = max(h/2, 1u);
           unsigned char *mipmap = doMipmap(img, w, h, mmW, mmH, comp);
-          free(img);
+          pfFree(img);
           w = mmW;
           h = mmH;
           img = mipmap;
