@@ -38,14 +38,14 @@ namespace pf
     std::vector<const char*> staticStringVector;
     std::map<uintptr_t, AllocData> allocMap;
     /*! Protect the memory debugger accesses */
-    MutexSys memoryDebuggerMutex;
+    MutexSys mutex;
   };
 
   void* MemoryDebugger::insertAlloc(void *ptr, const char *file, const char *function, int line)
   {
     if (ptr == NULL)
       return ptr;
-    Lock<MutexSys> lock(memoryDebuggerMutex);
+    Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) != allocMap.end(), "Pointer already in map");
     const auto fileIt = staticStringMap.find(file);
@@ -70,7 +70,7 @@ namespace pf
   void MemoryDebugger::removeAlloc(void *ptr)
   {
     if (ptr == NULL) return;
-    Lock<MutexSys> lock(memoryDebuggerMutex);
+    Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
     allocMap.erase(iptr);
