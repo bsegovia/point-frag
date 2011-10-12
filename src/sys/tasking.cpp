@@ -747,7 +747,7 @@ namespace pf {
 
   void TaskingSystemStart(void) {
     FATAL_IF (scheduler != NULL, "scheduler is already running");
-    scheduler = PF_NEW(TaskScheduler, 0);
+    scheduler = PF_NEW(TaskScheduler);
     allocator = PF_NEW(TaskAllocator, scheduler->getThreadNum()+1);
   }
 
