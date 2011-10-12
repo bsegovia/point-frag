@@ -17,7 +17,7 @@
 #ifndef __PF_PLATFORM_HPP__
 #define __PF_PLATFORM_HPP__
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
@@ -101,6 +101,10 @@
 /// Makros
 ////////////////////////////////////////////////////////////////////////////////
 
+/*! Modern x86 processors */
+#define CACHE_LINE 64
+#define CACHE_LINE_ALIGNED ALIGNED(CACHE_LINE)
+
 #ifdef __WIN32__
 #define __dllexport extern "C" __declspec(dllexport)
 #define __dllimport extern "C" __declspec(dllimport)
@@ -118,8 +122,6 @@
 #define ALIGNED(...)         __declspec(align(__VA_ARGS__))
 //#define __FUNCTION__           __FUNCTION__
 #define debugbreak()         __debugbreak()
-#define WINDOWS_DELETE DELETE
-#undef DELETE  // We use it on our side
 #else
 #undef NOINLINE
 #undef INLINE
@@ -142,7 +144,14 @@
 #define __builtin_expect(expr,b) expr
 #endif
 
-/* debug printing macros */
+/* Debug syntactic sugar */
+#ifdef NDEBUG
+#define IF_DEBUG(EXPR)
+#else
+#define IF_DEBUG(EXPR) EXPR
+#endif /* NDEBUG */
+
+/* Debug printing macros */
 #define STRING(x) #x
 #define PING std::cout << __FILE__ << " (" << __LINE__ << "): " << __FUNCTION__ << std::endl
 #define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
@@ -158,10 +167,10 @@
 
 /* Fatal error macros */
 #if defined(__WIN32__)
+namespace pf { void fatalBox(const char*); }
 #define FATAL(...)                                           \
 do {                                                         \
   char msg[1024];                                            \
-  namespace pf {void fatalBox(const char*, const char*);}    \
   _snprintf_s(msg, sizeof(msg), _countof(msg), __VA_ARGS__); \
   pf::fatalBox(msg);                                         \
   fprintf(stderr, "error: ");                                \
@@ -186,8 +195,8 @@ do {                                                         \
 } while (0)
 
 /* Safe deletion macros */
-#define SAFE_DELETE_ARRAY(x) do { if (x != NULL) DELETE_ARRAY(x); } while (0)
-#define SAFE_DELETE(x) do { if (x != NULL) DELETE(x); } while (0)
+#define PF_SAFE_DELETE_ARRAY(x) do { if (x != NULL) PF_DELETE_ARRAY(x); } while (0)
+#define PF_SAFE_DELETE(x) do { if (x != NULL) PF_DELETE(x); } while (0)
 
 /* Various helper macros */
 #define ARRAY_ELEM_NUM(x) (sizeof(x) / sizeof(x[0]))
@@ -250,10 +259,40 @@ namespace pf
   INLINE int   select(bool s, int   t,   int f) { return s ? t : f; }
   INLINE float select(bool s, float t, float f) { return s ? t : f; }
 
-#define ALIGNED_CLASS                                             \
-public:                                                           \
-  void* operator new(size_t size) { return alignedMalloc(size); } \
-  void operator delete(void* ptr) { alignedFree(ptr); }           \
+  /*! Return the next power of 2 */
+  INLINE uint32 nextHighestPowerOf2(uint32 x) {
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+  }
+
+  INLINE uint32 logi2(uint32 x) {
+    uint32 r = 0;
+    while(x >>= 1) r++;
+    return r;
+  }
+
+  template<uint32 N> INLINE uint32
+  isPowerOf(uint32 i) {
+    while (i > 1) {
+      if (i%N) return false;
+      i = i/N;
+    }
+    return true;
+  }
+
+  template<> INLINE uint32 isPowerOf<2>(uint32 i) { return ((i-1)&i) == 0; }
+
+#define ALIGNED_CLASS                                               \
+public:                                                             \
+  void* operator new(size_t size) { return alignedMalloc(size); }   \
+  void operator delete(void* ptr) { alignedFree(ptr); }             \
+  void* operator new[](size_t size) { return alignedMalloc(size); } \
+  void operator delete[](void* ptr) { alignedFree(ptr); }           \
 private:
 
   /*! random functions */

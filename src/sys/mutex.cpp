@@ -28,13 +28,12 @@ namespace pf
   MutexSys::~MutexSys( void ) { DeleteCriticalSection((CRITICAL_SECTION*)mutex); delete ((CRITICAL_SECTION*)mutex); }
   void MutexSys::lock( void ) { EnterCriticalSection((CRITICAL_SECTION*)mutex); }
   void MutexSys::unlock( void ) { LeaveCriticalSection((CRITICAL_SECTION*)mutex); }
-  void MutexActive::lock  ( void ) { while ( cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE) _mm_pause(); }
 }
 #endif
 
 #if defined(__UNIX__)
 #include <pthread.h>
-#include <xmmintrin.h>
+
 namespace pf
 {
   /*! system mutex using pthreads */
@@ -42,7 +41,6 @@ namespace pf
   MutexSys::~MutexSys( void ) { pthread_mutex_destroy((pthread_mutex_t*)mutex); delete ((pthread_mutex_t*)mutex); }
   void MutexSys::lock( void ) { pthread_mutex_lock((pthread_mutex_t*)mutex); }
   void MutexSys::unlock( void ) { pthread_mutex_unlock((pthread_mutex_t*)mutex); }
-  void MutexActive::lock  ( void ) { while ( cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE) _mm_pause(); }
 }
 #endif
 

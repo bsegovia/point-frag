@@ -132,6 +132,10 @@ namespace pf
 
   static struct FullTy {
   } full MAYBE_UNUSED;
+
+  static const size_t KB = 1024u;
+  static const size_t MB = KB*KB;
+  static const size_t GB = KB*MB;
 }
 
 #endif

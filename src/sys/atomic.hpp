@@ -21,28 +21,32 @@
 
 namespace pf
 {
-  struct Atomic {
+  template <typename T>
+  struct AtomicInternal {
   protected:
-    Atomic(const Atomic&); // don't implement
-    Atomic& operator= (const Atomic&); // don't implement
+    AtomicInternal(const AtomicInternal&); // don't implement
+    AtomicInternal& operator= (const AtomicInternal&); // don't implement
 
   public:
-    INLINE Atomic(void) {}
-    INLINE Atomic(atomic_t data) : data(data) {}
-    INLINE Atomic& operator =(const atomic_t input) { data = input; return *this; }
-    INLINE operator atomic_t() const { return data; }
+    INLINE AtomicInternal(void) {}
+    INLINE AtomicInternal(T data) : data(data) {}
+    INLINE AtomicInternal& operator =(const T input) { data = input; return *this; }
+    INLINE operator T() const { return data; }
 
   public:
-    INLINE friend atomic_t operator+= (Atomic& value, atomic_t input) { return atomic_add(&value.data, input) + input; }
-    INLINE friend atomic_t operator++ (Atomic& value) { return atomic_add(&value.data,  1) + 1; }
-    INLINE friend atomic_t operator-- (Atomic& value) { return atomic_add(&value.data, -1) - 1; }
-    INLINE friend atomic_t operator++ (Atomic& value, int) { return atomic_add(&value.data,  1); }
-    INLINE friend atomic_t operator-- (Atomic& value, int) { return atomic_add(&value.data, -1); }
-    INLINE friend atomic_t cmpxchg    (Atomic& value, const atomic_t v, const atomic_t c) { return atomic_cmpxchg(&value.data,v,c); }
+    INLINE friend T operator+= (AtomicInternal& value, T input) { return atomic_add(&value.data, input) + input; }
+    INLINE friend T operator++ (AtomicInternal& value) { return atomic_add(&value.data,  1) + 1; }
+    INLINE friend T operator-- (AtomicInternal& value) { return atomic_add(&value.data, -1) - 1; }
+    INLINE friend T operator++ (AtomicInternal& value, int) { return atomic_add(&value.data,  1); }
+    INLINE friend T operator-- (AtomicInternal& value, int) { return atomic_add(&value.data, -1); }
+    INLINE friend T cmpxchg    (AtomicInternal& value, const T v, const T c) { return atomic_cmpxchg(&value.data,v,c); }
 
   private:
-    volatile atomic_t data;
+    volatile T data;
   };
+
+  typedef AtomicInternal<atomic32_t> Atomic32;
+  typedef AtomicInternal<atomic_t> Atomic;
 }
 
 #endif /* __PF_ATOMIC_HPP__ */

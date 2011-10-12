@@ -1,8 +1,27 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "sys/alloc.hpp"
 #include "sys/atomic.hpp"
 #include "sys/mutex.hpp"
 
+#if PF_DEBUG_MEMORY
 #include <unordered_map>
+#endif /* PF_DEBUG_MEMORY */
+
 #include <map>
 #include <vector>
 
@@ -11,27 +30,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 namespace pf
 {
-  /*! Count the still unfreed allocations */
-  static Atomic unfreedNum(0);
 
-#if DEBUG_MEMORY
+#if PF_DEBUG_MEMORY
   /*! Store each allocation data */
   struct AllocData {
     INLINE AllocData(void) {}
-    INLINE AllocData(int fileName_, int functionName_, int line_, int alloc_) :
+    INLINE AllocData(int fileName_, int functionName_, int line_, intptr_t alloc_) :
       fileName(fileName_), functionName(functionName_), line(line_), alloc(alloc_) {}
-    int fileName, functionName, line, alloc;
+    int fileName, functionName, line;
+	intptr_t alloc;
   };
 
   /*! Store allocation information */
   struct MemoryDebugger {
-    MemoryDebugger(void) : allocNum(0) {}
+    MemoryDebugger(void) : unfreedNum(0), allocNum(0) {}
     void* insertAlloc(void *ptr, const char *file, const char *function, int line);
     void removeAlloc(void *ptr);
     void dumpAlloc(void);
-
+    /*! Count the still unfreed allocations */
+    volatile intptr_t unfreedNum;
     /*! Total number of allocations done */
-    Atomic allocNum;
+    volatile intptr_t allocNum;
     /*! Sorts the file name and function name strings */
     std::unordered_map<const char*, int> staticStringMap;
     /*! Each element contains the actual string */
@@ -43,8 +62,7 @@ namespace pf
 
   void* MemoryDebugger::insertAlloc(void *ptr, const char *file, const char *function, int line)
   {
-    if (ptr == NULL)
-      return ptr;
+    if (ptr == NULL) return ptr;
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
     FATAL_IF(allocMap.find(iptr) != allocMap.end(), "Pointer already in map");
@@ -53,12 +71,12 @@ namespace pf
     int fileName, functionName;
     if (fileIt == staticStringMap.end()) {
       staticStringVector.push_back(file);
-      staticStringMap[file] = fileName = staticStringVector.size() - 1;
+      staticStringMap[file] = fileName = int(staticStringVector.size()) - 1;
     } else
       fileName = staticStringMap[file];
     if (functionIt == staticStringMap.end()) {
       staticStringVector.push_back(function);
-      staticStringMap[function] = functionName = staticStringVector.size() - 1;
+      staticStringMap[function] = functionName = int(staticStringVector.size()) - 1;
     } else
       functionName = staticStringMap[function];
     allocMap[iptr] = AllocData(fileName, functionName, line, allocNum);
@@ -111,26 +129,21 @@ namespace pf
     memoryDebugger = NULL;
     delete _debug;
   }
-#endif /* DEBUG_MEMORY */
+#endif /* PF_DEBUG_MEMORY */
 }
 
 namespace pf
 {
   void* malloc(size_t size) {
-    unfreedNum++;
     return std::malloc(size);
   }
 
   void* realloc(void *ptr, size_t size) {
-    if (ptr == NULL) unfreedNum++;
     return std::realloc(ptr, size);
   }
 
   void free(void *ptr) {
-    if (ptr != NULL) {
-      unfreedNum--;
-      std::free(ptr);
-    }
+    if (ptr != NULL) std::free(ptr);
   }
 }
 
@@ -138,7 +151,7 @@ namespace pf
 /// Windows Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifdef __WIN32__
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -148,12 +161,10 @@ namespace pf
   void* alignedMalloc(size_t size, size_t align) {
     void* ptr = _mm_malloc(size,align);
     FATAL_IF (!ptr && size, "memory allocation failed");
-    unfreedNum++;
     return ptr;
   }
 
   void alignedFree(void *ptr) {
-    if (ptr) unfreedNum--;
     _mm_free(ptr);
   }
 }
@@ -174,14 +185,12 @@ namespace pf
 namespace pf
 {
   void* alignedMalloc(size_t size, size_t align) {
-    void* ptr = memalign(64,size);
-    unfreedNum++;
+    void* ptr = memalign(align,size);
     FATAL_IF (!ptr && size, "memory allocation failed");
     return ptr;
   }
 
   void alignedFree(void *ptr) {
-    if (ptr) unfreedNum--;
     free(ptr);
   }
 }

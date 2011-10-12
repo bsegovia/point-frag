@@ -57,7 +57,7 @@ static void updateCamera(void)
 {
   if (keys[27] == true) {
     renderObj = NULL;
-    DELETE(renderer);
+    PF_DELETE(renderer);
     ogl = renderer = NULL;
     dumpAlloc();
     exit(0);
@@ -161,8 +161,8 @@ int main(int argc, char **argv)
   glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
   glutCreateWindow(argv[0]);
 
-  ogl = renderer = NEW(Renderer);
-  renderObj = NEW(RenderObj, *renderer, "f000.obj");
+  ogl = renderer = PF_NEW(Renderer);
+  renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
   glutDisplayFunc(display);
 
   displayTime = getSeconds();
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
   glutMainLoop();
 
-  DELETE(renderer);
+  PF_DELETE(renderer);
   ogl = renderer = NULL;
   return 0;
 }

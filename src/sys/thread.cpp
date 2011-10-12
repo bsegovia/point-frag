@@ -38,57 +38,39 @@ namespace pf
       FATAL("createThread error");
     if (affinity < 0) return thread_t(handle);
 
-    /*! set thread affinity */
-    int group = affinity / 64;
+    // set thread affinity
     int thread = affinity % 64;
-#if (_WIN32_WINNT >= 0x0601)
-    GROUP_AFFINITY aff;
-    aff.Group = (WORD)group;
-    aff.Mask = (KAFFINITY)(1L << thread);
-    SetThreadGroupAffinity(handle,&aff,NULL);
-#endif
     SetThreadAffinityMask(handle, DWORD_PTR(1L << thread));
+
     return thread_t(handle);
   }
 
-  /*! set affinity of the calling thread */
   void setAffinity(int affinity) {
     if (affinity >= 0) SetThreadAffinityMask(GetCurrentThread(), DWORD_PTR(1L << affinity));
   }
 
-  /*! the thread calling this function gets yielded */
-  void yield() {
-    Sleep(0);
-  }
+  void yield(int time) { Sleep(time); }
 
-  /*! waits until the given thread has terminated */
   void join(thread_t tid) {
     WaitForSingleObject(HANDLE(tid), INFINITE);
     CloseHandle(HANDLE(tid));
   }
 
-  /*! destroy a hardware thread by its handle */
   void destroyThread(thread_t tid) {
     TerminateThread(HANDLE(tid),0);
     CloseHandle(HANDLE(tid));
   }
 
-  /*! creates thread local storage */
-  tls_t createTls() {
-    return tls_t(TlsAlloc());
-  }
+  tls_t createTls() { return tls_t(TlsAlloc()); }
 
-  /*! set the thread local storage pointer */
   void setTls(tls_t tls, void* const ptr) {
     TlsSetValue(DWORD(size_t(tls)), ptr);
   }
 
-  /*! return the thread local storage pointer */
   void* getTls(tls_t tls) {
     return TlsGetValue(DWORD(size_t(tls)));
   }
 
-  /*! destroys thread local storage identifier */
   void destroyTls(tls_t tls) {
     TlsFree(DWORD(size_t(tls)));
   }
@@ -163,21 +145,20 @@ namespace pf
 
   static void* threadStartup(ThreadStartupData* parg)
   {
-    ThreadStartupData arg = *parg; DELETE(parg); parg = NULL;
+    ThreadStartupData arg = *parg; PF_DELETE(parg); parg = NULL;
     setAffinity(arg.affinity);
     arg.f(arg.arg);
     return NULL;
   }
 
-  /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, int affinity)
   {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     if (stack_size > 0) pthread_attr_setstacksize (&attr, stack_size);
 
-    pthread_t* tid = NEW(pthread_t);
-    ThreadStartupData* startup = NEW(ThreadStartupData);
+    pthread_t* tid = PF_NEW(pthread_t);
+    ThreadStartupData* startup = PF_NEW(ThreadStartupData);
     startup->f = f;
     startup->arg = arg;
     startup->affinity = affinity;
@@ -188,48 +169,42 @@ namespace pf
     return thread_t(tid);
   }
 
-  /*! the thread calling this function gets yielded */
-  void yield() {
-    sched_yield(); // works also under MacOSX
+  void yield(int time) {
+    if (time == 0) sched_yield();
+    else usleep(time * 1000);
   }
 
-  /*! waits until the given thread has terminated */
   void join(thread_t tid) {
     if (pthread_join(*(pthread_t*)tid, NULL) != 0)
       FATAL("pthread_join error");
-    DELETE((pthread_t*)tid);
+    PF_DELETE((pthread_t*)tid);
   }
 
-  /*! destroy a hardware thread by its handle */
   void destroyThread(thread_t tid) {
     pthread_cancel(*(pthread_t*)tid);
-    DELETE((pthread_t*)tid);
+    PF_DELETE((pthread_t*)tid);
   }
 
-  /*! creates thread local storage */
   tls_t createTls() {
-    pthread_key_t* key = NEW(pthread_key_t);
+    pthread_key_t* key = PF_NEW(pthread_key_t);
     if (pthread_key_create(key,NULL) != 0)
       FATAL("pthread_key_create error");
     return tls_t(key);
   }
 
-  /*! return the thread local storage pointer */
   void* getTls(tls_t tls) {
     return pthread_getspecific(*(pthread_key_t*)tls);
   }
 
-  /*! set the thread local storage pointer */
   void setTls(tls_t tls, void* const ptr) {
     if (pthread_setspecific(*(pthread_key_t*)tls, ptr) != 0)
       FATAL("pthread_setspecific error");
   }
 
-  /*! destroys thread local storage identifier */
   void destroyTls(tls_t tls) {
     if (pthread_key_delete(*(pthread_key_t*)tls) != 0)
       FATAL("pthread_key_delete error");
-    DELETE((pthread_key_t*)tls);
+    PF_DELETE((pthread_key_t*)tls);
   }
 }
 #endif

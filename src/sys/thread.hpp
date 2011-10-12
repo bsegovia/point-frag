@@ -33,8 +33,8 @@ namespace pf
   /*! set affinity of the calling thread */
   void setAffinity(int affinity);
 
-  /*! the thread calling this function gets yielded */
-  void yield();
+  /*! the thread calling this function gets yielded for a number of seconds */
+  void yield(int time = 0);
 
   /*! waits until the given thread has terminated */
   void join(thread_t tid);

@@ -182,10 +182,10 @@ namespace pf {
       // Execute the function
       task->run();
       // The run is one dependency to finish
-      const atomic_t isDone = task->toEnd--;
+      const atomic_t stillRunning = task->toEnd--;
 
       // We are done here
-      if (isDone == 0) {
+      if (stillRunning == 0) {
         // Run the continuation if any
         if (task->continuation) {
           task->continuation->toStart--;
@@ -237,7 +237,8 @@ namespace pf {
     // slightly delay the ending of it (note that much since we enqueue /
     // dequeue in LIFO style here)
     if (this->elemNum > 1) {
-      this->toEnd++;
+      this->toEnd += 2;
+      scheduler->schedule(*this);
       scheduler->schedule(*this);
       atomic_t curr;
       while ((curr = --this->elemNum) >= 0)

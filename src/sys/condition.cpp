@@ -24,8 +24,8 @@
 namespace pf
 {
   /*! system condition using windows API */
-  ConditionSys::ConditionSys () { cond = NEW(CONDITION_VARIABLE); InitializeConditionVariable((CONDITION_VARIABLE*)cond); }
-  ConditionSys::~ConditionSys() { DELETE((CONDITION_VARIABLE*)cond); }
+  ConditionSys::ConditionSys () { cond = PF_NEW(CONDITION_VARIABLE); InitializeConditionVariable((CONDITION_VARIABLE*)cond); }
+  ConditionSys::~ConditionSys() { PF_DELETE((CONDITION_VARIABLE*)cond); }
   void ConditionSys::wait( MutexSys& mutex ) { SleepConditionVariableCS((CONDITION_VARIABLE*)cond, (CRITICAL_SECTION*)mutex.mutex, INFINITE); }
   void ConditionSys::broadcast() { WakeAllConditionVariable((CONDITION_VARIABLE*)cond); }
 }
@@ -35,8 +35,8 @@ namespace pf
 #include <pthread.h>
 namespace pf
 {
-  ConditionSys::ConditionSys () { cond = NEW(pthread_cond_t); pthread_cond_init((pthread_cond_t*)cond,NULL); }
-  ConditionSys::~ConditionSys() { DELETE((pthread_cond_t*)cond); }
+  ConditionSys::ConditionSys () { cond = PF_NEW(pthread_cond_t); pthread_cond_init((pthread_cond_t*)cond,NULL); }
+  ConditionSys::~ConditionSys() { PF_DELETE((pthread_cond_t*)cond); }
   void ConditionSys::wait(MutexSys& mutex) { pthread_cond_wait((pthread_cond_t*)cond, (pthread_mutex_t*)mutex.mutex); }
   void ConditionSys::broadcast() { pthread_cond_broadcast((pthread_cond_t*)cond); }
 }
