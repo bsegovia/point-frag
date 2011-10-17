@@ -676,6 +676,14 @@ namespace pf {
 
       // Handle the tasks directly passed by the user
       if (nextToRun) assert(nextToRun->state == TaskState::NEW);
+
+      // Careful with affinities: we can only run the task on one given thread
+      const uint32 affinity = nextToRun->getAffinity();
+      if (UNLIKELY(affinity < this->queueNum))
+        if (affinity != this->getThreadID()) {
+          nextToRun->scheduled();
+          nextToRun = NULL;
+        }
       task = nextToRun;
       if (task) task->state = TaskState::READY;
     } while (task);
