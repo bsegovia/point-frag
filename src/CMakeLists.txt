@@ -1,8 +1,10 @@
 include (FindGLUT)
-include_directories (${GLUT_INCLUDE_PATH})
+include_directories (${SDL_INCLUDE_PATH})
 set (SRC
   app/camera.cpp
   app/app.cpp
+  app/event.cpp
+  app/frame.cpp
   sys/filename.cpp
   sys/library.cpp
   sys/thread.cpp

@@ -141,6 +141,9 @@
 /*! Maximum time in milliseconds the thread can be swicthed off */
 #define PF_TASK_MAX_YIELD_TIME 1024
 
+/*! Main thread (the one that the system gives us) is always 0 */
+#define PF_TASK_MAIN_THREAD 0
+
 /*! Maximum time the thread is yielded */
 namespace pf {
 

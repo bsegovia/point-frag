@@ -19,15 +19,15 @@ namespace pf
 
 /*! We instantiate all GL functions here */
 #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) PROTOTYPE FIELD;
-#include "ogl100.hxx"
-#include "ogl110.hxx"
-#include "ogl120.hxx"
-#include "ogl130.hxx"
-#include "ogl150.hxx"
-#include "ogl200.hxx"
-#include "ogl300.hxx"
-#include "ogl310.hxx"
-#include "ogl320.hxx"
+#include "GL/ogl100.hxx"
+#include "GL/ogl110.hxx"
+#include "GL/ogl120.hxx"
+#include "GL/ogl130.hxx"
+#include "GL/ogl150.hxx"
+#include "GL/ogl200.hxx"
+#include "GL/ogl300.hxx"
+#include "GL/ogl310.hxx"
+#include "GL/ogl320.hxx"
 #undef DECL_GL_PROC
 
     /*! We count all OGL allocations by overriding all OGL allocation and

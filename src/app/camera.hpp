@@ -2,11 +2,13 @@
 #define __PF_CAMERA_HPP__
 
 #include "math/matrix.hpp"
+#include "sys/tasking.hpp"
 
 namespace pf
 {
   /*! Simple FPS like camera */
-  struct FlyCamera {
+  class FlyCamera : public RefCount
+  {
   public:
     FlyCamera(const vec3f &pos_ = vec3f(0.f,1.f,-2.f),
               const vec3f &up_ = vec3f(0.f,-1.f,0.f),
@@ -15,6 +17,7 @@ namespace pf
               float ratio_ = 1.f,
               float near_ = 0.01f,
               float far_ = 100.f);
+    FlyCamera(const FlyCamera &other);
     /*! Update the orientation of the camera */
     void updateOrientation(float dx, float dy);
     /*! Update positions along x, y and z axis */
@@ -27,6 +30,25 @@ namespace pf
     }
     vec3f pos, up, view, lookAt;
     float fov, ratio, near, far;
+    float speed;           //!< "Translation" speed [m/s]
+    float angularSpeed;    //!< "Rotation" speed [radian/pixel/s]
+    static const float defaultSpeed;
+    static const float defaultAngularSpeed;
+  };
+
+  /*! Handle mouse, keyboard ... */
+  class InputEvent;
+
+  /*! Update the camera */
+  class TaskCamera : public Task
+  {
+  public:
+    /*! Previous events are used to get delta values */
+    TaskCamera(Ref<FlyCamera> cam, Ref<InputEvent> event);
+    /*! Compute the new camera position */
+    virtual Task *run(void);
+    Ref<FlyCamera> cam;    //!< Camera to update
+    Ref<InputEvent> event; //!< Event to process
   };
 }
 

@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "camera.hpp"
 #include "models/obj.hpp"
 #include "math/vec.hpp"
@@ -17,7 +33,7 @@
 
 using namespace pf;
 
-static int w = 1024, h = 1024;
+static int w = 800, h = 600;
 static const size_t MAX_KEYS = 256;
 static bool keys[MAX_KEYS];
 static Renderer *renderer = NULL;
@@ -127,8 +143,6 @@ static void idle(void) { glutPostRedisplay(); }
 static void entry(int state)
 {
   if (state == GLUT_LEFT) {
-//    for (size_t i = 0; i < MAX_KEYS; ++i)
-//      keys[i] = false;
     glutWarpPointer(w/2,h/2);
     isMouseInit = false;
   }
@@ -163,10 +177,10 @@ int main(int argc, char **argv)
 
   ogl = renderer = PF_NEW(Renderer);
   renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
-  glutDisplayFunc(display);
 
   displayTime = getSeconds();
 
+  glutDisplayFunc(display);
   glutIdleFunc(idle); 
   glutReshapeFunc(reshape);
   glutEntryFunc(entry);
@@ -176,7 +190,11 @@ int main(int argc, char **argv)
   glutKeyboardFunc(keyDown);
   glutKeyboardUpFunc(keyUp);
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-  glutMainLoop();
+
+  while (keys[27] == 0) {
+    glutMainLoopEvent();
+    display();
+  }
 
   PF_DELETE(renderer);
   ogl = renderer = NULL;

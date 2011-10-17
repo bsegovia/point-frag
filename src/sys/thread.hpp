@@ -14,48 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_THREAD_H__
-#define __PF_THREAD_H__
+#ifndef __PF_THREAD_HPP__
+#define __PF_THREAD_HPP__
 
 #include "sys/platform.hpp"
 
 namespace pf
 {
-  /*! type for thread */
+  /*! Type for thread */
   typedef struct opaque_thread_t* thread_t;
 
-  /*! signature of thread start function */
+  /*! Signature of thread start function */
   typedef void (*thread_func)(void*);
 
-  /*! creates a hardware thread running on specific logical thread */
+  /*! Creates a hardware thread running on specific logical thread */
   thread_t createThread(thread_func f, void* arg, size_t stack_size = 0, int affinity = -1);
 
-  /*! set affinity of the calling thread */
+  /*! Set affinity of the calling thread */
   void setAffinity(int affinity);
 
-  /*! the thread calling this function gets yielded for a number of seconds */
+  /*! The thread calling this function gets yielded for a number of seconds */
   void yield(int time = 0);
 
-  /*! waits until the given thread has terminated */
+  /*! Waits until the given thread has terminated */
   void join(thread_t tid);
 
-  /*! destroy handle of a thread */
+  /*! Destroy handle of a thread */
   void destroyThread(thread_t tid);
 
-  /*! type for handle to thread local storage */
+  /*! Type for handle to thread local storage */
   typedef struct opaque_tls_t* tls_t;
 
-  /*! creates thread local storage */
+  /*! Creates thread local storage */
   tls_t createTls();
 
-  /*! set the thread local storage pointer */
+  /*! Set the thread local storage pointer */
   void setTls(tls_t tls, void* const ptr);
 
-  /*! return the thread local storage pointer */
+  /*! Return the thread local storage pointer */
   void* getTls(tls_t tls);
 
-  /*! destroys thread local storage identifier */
+  /*! Destroys thread local storage identifier */
   void destroyTls(tls_t tls);
 }
 
-#endif
+#endif /* __PF_THREAD_HPP__ */
+
