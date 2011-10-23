@@ -14,8 +14,22 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-namespace pf {
+#include "sys/tasking.hpp"
 
+namespace pf
+{
+  class FlyCamera;
+  class InputEvent;
 
-}
+  /*! Responsible to display everything */
+  class TaskRender : public Task
+  {
+  public:
+    INLINE TaskRender(FlyCamera &cam, InputEvent &event) :
+      cam(&cam), event(&event) {}
+    virtual Task *run(void);
+    Ref<FlyCamera> cam;
+    Ref<InputEvent> event;
+  };
+} /* namespace pf */
 

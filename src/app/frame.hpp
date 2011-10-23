@@ -19,8 +19,8 @@
 
 #include "sys/tasking.hpp"
 
-namespace pf {
-
+namespace pf
+{
   class FlyCamera;
   class InputEvent;
 

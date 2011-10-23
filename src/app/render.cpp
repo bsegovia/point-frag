@@ -14,4 +14,53 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "camera.hpp"
+#include "render.hpp"
+#include "event.hpp"
+#include "models/obj.hpp"
+#include "renderer/texture.hpp"
+#include "renderer/renderobj.hpp"
+#include "renderer/renderer.hpp"
+
+#include <GL/freeglut.h>
+
+namespace pf
+{
+  extern Renderer *renderer;
+  extern Ref<RenderObj> renderObj;
+
+#define OGL_NAME ((Renderer*)ogl)
+
+  Task* TaskRender::run(void)
+  {
+    // Transform matrix for the current point of view
+    const mat4x4f MVP = cam->getMatrix();
+
+    // Set the display viewport
+    R_CALL (Viewport, 0, 0, event->w, event->h);
+    R_CALL (Enable, GL_DEPTH_TEST);
+    R_CALL (Enable, GL_CULL_FACE);
+    R_CALL (CullFace, GL_FRONT);
+    R_CALL (DepthFunc, GL_LEQUAL);
+
+    // Clear color buffer with black
+    R_CALL (ClearColor, 0.0f, 0.0f, 0.0f, 1.0f);
+    R_CALL (ClearDepth, 1.0f);
+    R_CALL (Clear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Display the objects with their textures
+    R_CALL (UseProgram, renderer->diffuse.program);
+    R_CALL (UniformMatrix4fv, renderer->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
+    renderObj->display();
+    R_CALL (UseProgram, 0);
+
+    // Display all the bounding boxes
+    R_CALL (setMVP, MVP);
+    R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
+    glutSwapBuffers();
+  }
+
+#undef OGL_NAME
+
+} /* namespace pf */
 

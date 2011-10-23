@@ -19,6 +19,8 @@
 #include "math/vec.hpp"
 #include "math/matrix.hpp"
 #include "math/bbox.hpp"
+#include "sys/alloc.hpp"
+#include "sys/tasking.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/renderobj.hpp"
 #include "renderer/renderer.hpp"
@@ -36,8 +38,10 @@ using namespace pf;
 static int w = 800, h = 600;
 static const size_t MAX_KEYS = 256;
 static bool keys[MAX_KEYS];
-static Renderer *renderer = NULL;
+namespace pf {
+Renderer *renderer = NULL;
 Ref<RenderObj> renderObj = NULL;
+}
 
 #define OGL_NAME ((Renderer*)ogl)
 
@@ -71,14 +75,6 @@ static double updateTime(void)
 
 static void updateCamera(void)
 {
-  if (keys[27] == true) {
-    renderObj = NULL;
-    PF_DELETE(renderer);
-    ogl = renderer = NULL;
-    MemDebuggerDumpAlloc();
-    exit(0);
-  }
-
   // Get the time elapsed
   const double dt = updateTime();
 
@@ -138,7 +134,6 @@ static void reshape(int _w, int _h) {
   w = _w; h = _h;
   renderer->resize(w, h);
 }
-static void idle(void) { glutPostRedisplay(); }
 
 static void entry(int state)
 {
@@ -166,6 +161,8 @@ static void motion(int x, int y)
 int main(int argc, char **argv)
 {
   MemDebuggerStart();
+  TaskingSystemStart();
+
   glutInitWindowSize(w, h);
   glutInitWindowPosition(64, 64);
   glutInit(&argc, argv);
@@ -180,8 +177,6 @@ int main(int argc, char **argv)
 
   displayTime = getSeconds();
 
-  glutDisplayFunc(display);
-  glutIdleFunc(idle); 
   glutReshapeFunc(reshape);
   glutEntryFunc(entry);
   glutMouseFunc(mouse);
@@ -196,8 +191,11 @@ int main(int argc, char **argv)
     display();
   }
 
+  renderObj = NULL;
   PF_DELETE(renderer);
   ogl = renderer = NULL;
+  TaskingSystemEnd();
+  MemDebuggerDumpAlloc();
   return 0;
 }
 #undef OGL_NAME

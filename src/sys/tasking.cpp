@@ -760,6 +760,7 @@ namespace pf {
   }
 
   void TaskingSystemEnd(void) {
+    TaskingSystemInterrupt();
     PF_SAFE_DELETE(scheduler);
     PF_SAFE_DELETE(allocator);
     scheduler = NULL;

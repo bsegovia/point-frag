@@ -22,12 +22,12 @@
 
 namespace pf
 {
-  /*! regular allocation (counted if memory debugger is used) */
+  /*! regular allocation */
   void* malloc(size_t size);
   void* realloc(void *ptr, size_t size);
   void  free(void *ptr);
 
-  /*! aligned malloc (counted if memory debugger is used) */
+  /*! aligned malloc */
   void* alignedMalloc(size_t size, size_t align = 64);
   void  alignedFree(void* ptr);
 

@@ -5,6 +5,7 @@ set (SRC
   app/app.cpp
   app/event.cpp
   app/frame.cpp
+  app/render.cpp
   sys/filename.cpp
   sys/library.cpp
   sys/thread.cpp
