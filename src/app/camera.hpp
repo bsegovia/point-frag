@@ -34,6 +34,7 @@ namespace pf
     float angularSpeed;    //!< "Rotation" speed [radian/pixel/s]
     static const float defaultSpeed;
     static const float defaultAngularSpeed;
+    static const float acosMinAngle;
   };
 
   /*! Handle mouse, keyboard ... */
@@ -43,12 +44,10 @@ namespace pf
   class TaskCamera : public Task
   {
   public:
-    /*! Previous events are used to get delta values */
-    TaskCamera(Ref<FlyCamera> cam, Ref<InputEvent> event);
-    /*! Compute the new camera position */
+    TaskCamera(FlyCamera *cam, InputEvent *event);
     virtual Task *run(void);
     Ref<FlyCamera> cam;    //!< Camera to update
-    Ref<InputEvent> event; //!< Event to process
+    Ref<InputEvent> event; //!< Current event state
   };
 }
 

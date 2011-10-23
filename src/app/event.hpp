@@ -31,10 +31,10 @@ namespace pf {
       const int bit = key % 32;
       return (this->keys[entry] & (1u << bit)) != 0;
     }
-    INLINE void setKey(int32 key) {
+    INLINE void setKey(int32 key, int value) {
       const int entry = key / 32; // int32 == 32 bits
       const int bit = key % 32;
-      if (key)
+      if (value)
         this->keys[entry] |=  (1u << bit);
       else
         this->keys[entry] &= ~(1u << bit);
@@ -43,12 +43,13 @@ namespace pf {
     enum { KEY_ARRAY_SIZE = MAX_KEYS / sizeof(int32) };
     double time;                //!< Current time when capturing the events
     double dt;                  //!< Delta from the previous frame
-    int32 keys[KEY_ARRAY_SIZE]; //!< Bitfield saying if key is pressed?
     int mouseX, mouseY;         //!< Absolute position of the mouse
     int mouseXRel, mouseYRel;   //!< Position of the mouse (relative to previous frame)
     int w, h;                   //!< Dimension of the window (if changed)
     char isMouseInit:1;         //!< Typically false when the mouse exits the windows
     char isResized:1;           //!< True if the user resized the window
+  private:
+    int32 keys[KEY_ARRAY_SIZE]; //!< Bitfield saying if key is pressed?
   };
 
   /*! Record all events (keyboard, mouse, resizes) */
@@ -56,7 +57,7 @@ namespace pf {
   {
   public:
     /*! Previous events are used to get delta values */
-    TaskEvent(Ref<InputEvent> current, Ref<InputEvent> previous = NULL);
+    TaskEvent(InputEvent *current, InputEvent *previous = NULL);
 
     /*! Register all events relatively to the previous ones (if any) */
     virtual Task *run(void);

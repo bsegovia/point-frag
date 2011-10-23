@@ -163,7 +163,7 @@ namespace pf {
     /*! Interrupt main thread only */
     INLINE void stopMain(void) { deadMain = true; }
     /*! Number of threads running in the scheduler (not including main) */
-    INLINE uint32 getThreadNum(void) { return uint32(this->threadNum); }
+    INLINE uint32 getWorkerNum(void) { return uint32(this->workerNum); }
     /*! ID of the calling thread in the tasking system */
     INLINE uint32 getThreadID(void) { return uint32(this->threadID); }
     /*! Try to get a task from all the current queues */
@@ -198,8 +198,8 @@ namespace pf {
     TaskAffinityQueue<queueSize> *afQueues;    //!< 1 queue per thread
     FastRand *random;             //!< 1 random generator per thread
     thread_t *threads;            //!< All threads currently running
-    size_t threadNum;             //!< Total number of threads running
-    size_t queueNum;              //!< Number of queues (should be threadNum+1)
+    size_t workerNum;             //!< Total number of threads running
+    size_t queueNum;              //!< Number of queues (should be workerNum+1)
     volatile bool dead;           //!< The tasking system should quit
     volatile bool deadMain;       //!< The main thread should return
   };
@@ -526,7 +526,7 @@ namespace pf {
   {
     threadID = uint32(thread->tid);
     TaskScheduler *This = &thread->scheduler;
-    const int maxInactivityNum = (This->getThreadNum()+1) * PF_TASK_TRIES_BEFORE_YIELD;
+    const int maxInactivityNum = (This->getWorkerNum()+1) * PF_TASK_TRIES_BEFORE_YIELD;
     int inactivityNum = 0;
     int yieldTime = 0;
 
@@ -558,14 +558,14 @@ namespace pf {
   template void TaskScheduler::threadFunction<false>(TaskScheduler::Thread*);
   template void TaskScheduler::threadFunction<true>(TaskScheduler::Thread*);
 
-  TaskScheduler::TaskScheduler(int threadNum_) :
+  TaskScheduler::TaskScheduler(int workerNum_) :
     wsQueues(NULL), afQueues(NULL), threads(NULL), dead(false), deadMain(false)
   {
-    if (threadNum_ < 0) threadNum_ = getNumberOfLogicalThreads() - 1;
-    this->threadNum = threadNum_;
+    if (workerNum_ < 0) workerNum_ = getNumberOfLogicalThreads() - 1;
+    this->workerNum = workerNum_;
 
     // We have a work queue for the main thread too
-    this->queueNum = threadNum+1;
+    this->queueNum = workerNum+1;
     this->wsQueues = PF_NEW_ARRAY(TaskWorkStealingQueue<queueSize>, queueNum);
     this->afQueues = PF_NEW_ARRAY(TaskAffinityQueue<queueSize>, queueNum);
 
@@ -573,10 +573,10 @@ namespace pf {
     this->random = PF_NEW_ARRAY(FastRand, queueNum);
 
     // Only if we have dedicated worker threads
-    if (threadNum > 0) {
-      this->threads = PF_NEW_ARRAY(thread_t, threadNum);
+    if (workerNum > 0) {
+      this->threads = PF_NEW_ARRAY(thread_t, workerNum);
       const size_t stackSize = 4*MB;
-      for (size_t i = 0; i < threadNum; ++i) {
+      for (size_t i = 0; i < workerNum; ++i) {
         const int affinity = int(i+1);
         Thread *thread = PF_NEW(Thread,i+1,*this);
         thread_func threadFunc = (thread_func) threadFunction<false>;
@@ -606,7 +606,7 @@ namespace pf {
 
   TaskScheduler::~TaskScheduler(void) {
     if (threads)
-      for (size_t i = 0; i < threadNum; ++i)
+      for (size_t i = 0; i < workerNum; ++i)
         join(threads[i]);
     PF_SAFE_DELETE_ARRAY(threads);
 #if PF_TASK_STATICTICS
@@ -675,15 +675,18 @@ namespace pf {
       if (toRelease->refDec()) PF_DELETE(toRelease);
 
       // Handle the tasks directly passed by the user
-      if (nextToRun) assert(nextToRun->state == TaskState::NEW);
+      if (nextToRun) {
+        assert(nextToRun->state == TaskState::NEW);
 
-      // Careful with affinities: we can only run the task on one given thread
-      const uint32 affinity = nextToRun->getAffinity();
-      if (UNLIKELY(affinity < this->queueNum))
-        if (affinity != this->getThreadID()) {
-          nextToRun->scheduled();
-          nextToRun = NULL;
+        // Careful with affinities: we can run the task on one specific thread
+        const uint32 affinity = nextToRun->getAffinity();
+        if (UNLIKELY(affinity < this->queueNum)) {
+          if (affinity != this->getThreadID()) {
+            nextToRun->scheduled();
+            nextToRun = NULL;
+          }
         }
+      }
       task = nextToRun;
       if (task) task->state = TaskState::READY;
     } while (task);
@@ -756,7 +759,7 @@ namespace pf {
   void TaskingSystemStart(void) {
     FATAL_IF (scheduler != NULL, "scheduler is already running");
     scheduler = PF_NEW(TaskScheduler);
-    allocator = PF_NEW(TaskAllocator, scheduler->getThreadNum()+1);
+    allocator = PF_NEW(TaskAllocator, scheduler->getWorkerNum()+1);
   }
 
   void TaskingSystemEnd(void) {
@@ -784,7 +787,7 @@ namespace pf {
 
   uint32 TaskingSystemGetThreadNum(void) {
     FATAL_IF (scheduler == NULL, "scheduler not started");
-    return scheduler->getThreadNum() + 1;
+    return scheduler->getWorkerNum() + 1;
   }
 
   uint32 TaskingSystemGetThreadID(void) {

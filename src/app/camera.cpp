@@ -5,6 +5,7 @@ namespace pf {
 
   const float FlyCamera::defaultSpeed = 1.f;
   const float FlyCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 100.f;
+  const float FlyCamera::acosMinAngle = 0.95f;
 
   FlyCamera::FlyCamera(const vec3f &pos_,
                        const vec3f &up_,
@@ -27,7 +28,7 @@ namespace pf {
     this->near = other.near;
     this->far = other.far;
     this->speed = other.speed;
-    this->angularSpeed = other.speed;
+    this->angularSpeed = other.angularSpeed;
   }
 
   void FlyCamera::updateOrientation(float dx, float dy)
@@ -35,15 +36,25 @@ namespace pf {
     vec3f strafevec = cross(up, view);
     const float c0 = cosf(dx);
     const float s0 = sinf(dx);
-    const vec3f nextStrafe0 = c0 * strafevec + s0 * view;
-    const vec3f nextView0 = -s0 * strafevec + c0 * view;
-    view = nextView0;
-    strafevec = nextStrafe0;
+    vec3f nextStrafe0 = c0 * strafevec + s0 * view;
+    vec3f nextView0 = -s0 * strafevec + c0 * view;
+    nextView0 = normalize(nextView0);
+    nextStrafe0 = normalize(nextStrafe0);
+
+    // Limit the angle with the up vector
+    if (abs(dot(nextView0, up)) < acosMinAngle) {
+      view = nextView0;
+      strafevec = nextStrafe0;
+    }
 
     const float c1 = cosf(dy);
     const float s1 = sinf(dy);
-    const vec3f nextView1 = s1 * up + c1 * view;
-    view = nextView1;
+    vec3f nextView1 = s1 * up + c1 * view;
+    nextView1 = normalize(nextView1);
+
+    // Limit the angle with the up vector
+    if (abs(dot(nextView1, up)) < acosMinAngle)
+      view = nextView1;
     lookAt = pos + view;
   }
 
@@ -55,8 +66,8 @@ namespace pf {
     pos += d.z * view;
   }
 
-  TaskCamera::TaskCamera(Ref<FlyCamera> cam, Ref<InputEvent> event) :
-    Task("TaskCameraUpdate"), cam(cam), event(event) { }
+  TaskCamera::TaskCamera(FlyCamera *cam, InputEvent *event) :
+    Task("TaskCamera"), cam(cam), event(event) {}
 
   Task *TaskCamera::run(void)
   {

@@ -20,7 +20,8 @@
 #include "render.hpp"
 #include "sys/alloc.hpp"
 
-namespace pf {
+namespace pf
+{
   Frame::Frame(Frame *previous) {
     if (previous == NULL) {
       this->cam = PF_NEW(FlyCamera);
@@ -31,21 +32,35 @@ namespace pf {
     }
   }
 
-  TaskFrame::TaskFrame(Frame *previous) {
-    this->previous = previous;
-  }
+  TaskFrame::TaskFrame(Frame *previous) { this->previous = previous; }
 
-  Task *TaskFrame::run(void) {
+  Task *TaskFrame::run(void)
+  {
+    // User pressed ESCAPE
+    if (UNLIKELY(previous && previous->event->getKey(27))) {
+      TaskingSystemInterruptMain();
+      return NULL;
+    }
+
+    // Generate the current frame tasks
+    InputEvent *previousEvent = previous ? previous->event.ptr : NULL;
     Frame *current = PF_NEW(Frame, previous.ptr);
-    Task *eventTask = PF_NEW(TaskEvent, current->event, previous->event);
-    Task *cameraTask = PF_NEW(TaskCamera, previous->cam.ptr, previous->event.ptr);
+    Task *eventTask = PF_NEW(TaskEvent, current->event.ptr, previousEvent);
+    Task *cameraTask = PF_NEW(TaskCamera, current->cam.ptr, current->event.ptr);
     Task *renderTask = PF_NEW(TaskRender, current->cam.ptr, current->event.ptr);
     eventTask->starts(cameraTask);
     cameraTask->starts(renderTask);
+    renderTask->ends(this);
     cameraTask->scheduled();
     eventTask->scheduled();
     renderTask->scheduled();
+
+    // Spawn the next frame. Right now there is no overlapping
+    TaskFrame *next = PF_NEW(TaskFrame, current);
+    this->starts(next);
+    next->scheduled();
+
     return NULL;
   }
-}
+} /* namespace pf */
 
