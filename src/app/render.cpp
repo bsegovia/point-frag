@@ -31,6 +31,12 @@ namespace pf
 
 #define OGL_NAME ((Renderer*)ogl)
 
+  TaskRender::TaskRender(FlyCamera *cam, InputEvent *event) :
+    cam(cam), event(event)
+  {
+    this->setAffinity(PF_TASK_MAIN_THREAD);
+  }
+
   Task* TaskRender::run(void)
   {
     // Transform matrix for the current point of view
@@ -58,6 +64,8 @@ namespace pf
     R_CALL (setMVP, MVP);
     R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
     glutSwapBuffers();
+
+    return NULL;
   }
 
 #undef OGL_NAME

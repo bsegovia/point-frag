@@ -25,8 +25,7 @@ namespace pf
   class TaskRender : public Task
   {
   public:
-    INLINE TaskRender(FlyCamera &cam, InputEvent &event) :
-      cam(&cam), event(&event) {}
+    TaskRender(FlyCamera *cam, InputEvent *event);
     virtual Task *run(void);
     Ref<FlyCamera> cam;
     Ref<InputEvent> event;

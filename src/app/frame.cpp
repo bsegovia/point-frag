@@ -17,11 +17,12 @@
 #include "frame.hpp"
 #include "camera.hpp"
 #include "event.hpp"
+#include "render.hpp"
 #include "sys/alloc.hpp"
 
 namespace pf {
   Frame::Frame(Frame *previous) {
-    if (previous) {
+    if (previous == NULL) {
       this->cam = PF_NEW(FlyCamera);
       this->event = PF_NEW(InputEvent);
     } else {
@@ -37,11 +38,13 @@ namespace pf {
   Task *TaskFrame::run(void) {
     Frame *current = PF_NEW(Frame, previous.ptr);
     Task *eventTask = PF_NEW(TaskEvent, current->event, previous->event);
-    Task *cameraTask = PF_NEW(TaskCamera, previous->cam, previous->event);
-    //Task *renderTask = PF_NEW(
+    Task *cameraTask = PF_NEW(TaskCamera, previous->cam.ptr, previous->event.ptr);
+    Task *renderTask = PF_NEW(TaskRender, current->cam.ptr, current->event.ptr);
     eventTask->starts(cameraTask);
+    cameraTask->starts(renderTask);
     cameraTask->scheduled();
     eventTask->scheduled();
+    renderTask->scheduled();
     return NULL;
   }
 }

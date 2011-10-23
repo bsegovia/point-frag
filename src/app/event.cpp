@@ -18,8 +18,8 @@
 #include "sys/mutex.hpp"
 #include <GL/freeglut.h>
 
-namespace pf {
-
+namespace pf
+{
   /*! Only way to to use GLUT is to use this global */
   static TaskEvent *taskEvent = NULL;
 
