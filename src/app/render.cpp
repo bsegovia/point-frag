@@ -31,8 +31,8 @@ namespace pf
 
 #define OGL_NAME ((Renderer*)ogl)
 
-  TaskRender::TaskRender(FlyCamera *cam, InputEvent *event) :
-    cam(cam), event(event)
+  TaskRender::TaskRender(FlyCamera &cam, InputEvent &event) :
+    cam(&cam), event(&event)
   {
     this->setAffinity(PF_TASK_MAIN_THREAD);
   }

@@ -16,6 +16,7 @@ set (SRC
   sys/condition.cpp
   sys/platform.cpp
   sys/string.cpp
+  sys/logging.cpp
   image/stb_image.cpp
   models/obj.cpp
   renderer/ogl.cpp

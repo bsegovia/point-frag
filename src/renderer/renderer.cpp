@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "sys/logging.hpp"
 #include <cstring>
 
 namespace pf
@@ -342,6 +343,7 @@ namespace pf
   }
 
   Renderer::Renderer(void) {
+    PF_MSG_V("Renderer: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
     this->initQuad();
@@ -353,6 +355,7 @@ namespace pf
   }
 
   Renderer::~Renderer(void) {
+    PF_MSG_V("Renderer: destruction");
     this->destroyGBuffer();
     this->destroyDiffuse();
     this->destroyPlain();
@@ -365,5 +368,5 @@ namespace pf
   }
 
 #undef OGL_NAME
-}
+} /* namespace pf */
 

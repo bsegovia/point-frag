@@ -19,25 +19,26 @@
 
 #include "sys/tasking.hpp"
 
-namespace pf {
-
+namespace pf
+{
   /*! Contains the fields processed by the event handler */
   class InputEvent : public RefCount
   {
   public:
-    InputEvent(InputEvent *previous = NULL);
+    InputEvent(const InputEvent &previous);
+    InputEvent(void);
     INLINE bool getKey(int32 key) {
-      const int entry = key / 32; // int32 == 32 bits
-      const int bit = key % 32;
+      const int entry = key / 32; // which bitfield? (int32 == 32 bits)
+      const int bit = key % 32;   // which bit in the bitfield?
       return (this->keys[entry] & (1u << bit)) != 0;
     }
-    INLINE void setKey(int32 key, int value) {
-      const int entry = key / 32; // int32 == 32 bits
-      const int bit = key % 32;
-      if (value)
-        this->keys[entry] |=  (1u << bit);
-      else
-        this->keys[entry] &= ~(1u << bit);
+    INLINE void upKey(int32 key) {
+      const int entry = key / 32, bit = key % 32;
+      this->keys[entry] &= ~(1u << bit);
+    }
+    INLINE void downKey(int32 key) {
+      const int entry = key / 32, bit = key % 32;
+      this->keys[entry] |=  (1u << bit);
     }
     enum { MAX_KEYS = 256u };
     enum { KEY_ARRAY_SIZE = MAX_KEYS / sizeof(int32) };
@@ -57,7 +58,7 @@ namespace pf {
   {
   public:
     /*! Previous events are used to get delta values */
-    TaskEvent(InputEvent *current, InputEvent *previous = NULL);
+    TaskEvent(InputEvent &current, InputEvent &previous);
 
     /*! Register all events relatively to the previous ones (if any) */
     virtual Task *run(void);
@@ -72,9 +73,10 @@ namespace pf {
     static void motion(int x, int y);
 
     /*! Both events are needed to handle deltas */
-    Ref<InputEvent> current, previous;
+    Ref<InputEvent> current;
+    Ref<InputEvent> previous;
   };
-}
+} /* namespace pf */
 
 #endif /* __PF_EVENT_HPP__ */
 

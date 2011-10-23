@@ -23,38 +23,40 @@ namespace pf
   /*! Only way to to use GLUT is to use this global */
   static TaskEvent *taskEvent = NULL;
 
-  InputEvent::InputEvent(InputEvent *previous)
+  InputEvent::InputEvent(void)
+  {
+    this->mouseXRel = this->mouseYRel = 0;
+    this->mouseX = this->mouseY = 0;
+    this->isMouseInit = 0;
+    this->w = this->h = 0;
+    for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
+  }
+
+  InputEvent::InputEvent(const InputEvent &previous)
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->isResized = 0;
-    if (previous) {
-      this->w = previous->w;
-      this->h = previous->h;
-      for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
-        this->keys[i] = previous->keys[i];
-      this->isMouseInit = previous->isMouseInit;
-      this->mouseX = previous->mouseX;
-      this->mouseY = previous->mouseY;
-    } else {
-      this->w = this->h = 0;
-      this->isMouseInit = 0;
-      for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
-    }
+    this->w = previous.w;
+    this->h = previous.h;
+    for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
+      this->keys[i] = previous.keys[i];
+    this->isMouseInit = previous.isMouseInit;
+    this->mouseX = previous.mouseX;
+    this->mouseY = previous.mouseY;
   }
 
-  TaskEvent::TaskEvent(InputEvent *current, InputEvent *previous) :
-    Task("TaskEvent"), current(current), previous(previous)
+  TaskEvent::TaskEvent(InputEvent &current, InputEvent &previous) :
+    Task("TaskEvent"), current(&current), previous(&previous)
   {
-    assert(current);
     this->setAffinity(PF_TASK_MAIN_THREAD);
   }
 
   void TaskEvent::keyDown(unsigned char key, int x, int y) {
-    taskEvent->current->setKey(key, 1);
+    taskEvent->current->downKey(key);
   }
 
   void TaskEvent::keyUp(unsigned char key, int x, int y) {
-    taskEvent->current->setKey(key, 0);
+    taskEvent->current->upKey(key);
   }
 
   void TaskEvent::mouse(int button, int state, int x, int y) { }
@@ -67,20 +69,16 @@ namespace pf
 
   void TaskEvent::entry(int state) {
     if (state == GLUT_LEFT) {
-      glutWarpPointer(taskEvent->current->w/2,taskEvent->current->h/2);
+      taskEvent->current->mouseX = taskEvent->current->w / 2;
+      taskEvent->current->mouseY = taskEvent->current->h / 2;
+      glutWarpPointer(taskEvent->current->mouseX, taskEvent->current->mouseY);
       taskEvent->current->isMouseInit = 0;
     }
   }
 
   void TaskEvent::motion(int x, int y) {
-    if (taskEvent->previous == false ||
-        taskEvent->previous->isMouseInit == 0) {
-      taskEvent->current->mouseYRel = 0;
-      taskEvent->current->mouseXRel = 0;
-    } else {
-      taskEvent->current->mouseXRel = x - taskEvent->previous->mouseX;
-      taskEvent->current->mouseYRel = y - taskEvent->previous->mouseY;
-    }
+    taskEvent->current->mouseXRel = x - taskEvent->previous->mouseX;
+    taskEvent->current->mouseYRel = y - taskEvent->previous->mouseY;
     taskEvent->current->isMouseInit = 1;
     taskEvent->current->mouseX = x;
     taskEvent->current->mouseY = y;
@@ -100,12 +98,8 @@ namespace pf
     if (UNLIKELY(taskEvent == NULL)) TaskEvent::init();
     taskEvent = this;
     this->current->time = getSeconds();
-    if (this->previous)
-      this->current->dt = this->current->time - this->previous->time;
-    else
-      this->current->dt = 0.f;
+    this->current->dt = this->current->time - this->previous->time;
     glutMainLoopEvent();
-    usleep(10);
     return NULL;
   }
 }

@@ -44,7 +44,7 @@ namespace pf
   class TaskCamera : public Task
   {
   public:
-    TaskCamera(FlyCamera *cam, InputEvent *event);
+    TaskCamera(FlyCamera &cam, InputEvent &event);
     virtual Task *run(void);
     Ref<FlyCamera> cam;    //!< Camera to update
     Ref<InputEvent> event; //!< Current event state

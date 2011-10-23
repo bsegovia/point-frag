@@ -28,7 +28,9 @@ namespace pf
   class Frame : public RefCount
   {
   public:
-    Frame(Frame *previous = NULL);
+    /*! Used to create the next frame */
+    Frame(Frame &previous);
+    Frame(void);
     Ref<FlyCamera> cam;    //!< Camera for this frame
     Ref<InputEvent> event; //!< Input as captured for this frame
   };
@@ -38,7 +40,7 @@ namespace pf
   {
   public:
     /*! Frames are chained one after other */
-    TaskFrame(Frame *previous = NULL);
+    TaskFrame(Frame &previous);
     /*! Will basically spawn all the other tasks */
     virtual Task *run(void);
     Ref<Frame> previous;

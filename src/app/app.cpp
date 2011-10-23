@@ -17,6 +17,7 @@
 #include "frame.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
+#include "sys/logging.hpp"
 #include "renderer/renderobj.hpp"
 #include "renderer/renderer.hpp"
 
@@ -24,44 +25,77 @@
 
 using namespace pf;
 
-namespace pf {
+namespace pf
+{
   Renderer *renderer = NULL;
   Ref<RenderObj> renderObj = NULL;
-}
+  LoggerStream *coutStream = NULL;
 
-void GameStart(int argc, char **argv)
-{
-  glutInitWindowSize(800, 600);
-  glutInitWindowPosition(64, 64);
-  glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-  glutInitContextVersion(3, 3);
-  glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-  glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-  glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-  glutCreateWindow(argv[0]);
-  ogl = renderer = PF_NEW(Renderer);
-  renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
-}
+  class CoutStream : public LoggerStream
+  {
+  public:
+    virtual LoggerStream& operator<< (const std::string &str) {
+      std::cout << str;
+      return *this;
+    }
+  };
 
-void GameEnd()
-{
-  renderObj = NULL;
-  PF_DELETE(renderer);
-  ogl = renderer = NULL;
+  void LoggerStart(void)
+  {
+    logger = PF_NEW(Logger);
+    coutStream = PF_NEW(CoutStream);
+    logger->insert(*coutStream);
+  }
+
+  void LoggerEnd(void)
+  {
+    logger->remove(*coutStream);
+    PF_DELETE(coutStream);
+    PF_DELETE(logger);
+    logger = NULL;
+  }
+
+  void GameStart(int argc, char **argv)
+  {
+    PF_MSG_V("GLUT: initialization");
+    glutInitWindowSize(800, 600);
+    glutInitWindowPosition(64, 64);
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitContextVersion(3, 3);
+    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+    glutCreateWindow(argv[0]);
+    ogl = renderer = PF_NEW(Renderer);
+    renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
+  }
+
+  void GameEnd()
+  {
+    renderObj = NULL;
+    PF_DELETE(renderer);
+    ogl = renderer = NULL;
+  }
 }
 
 int main(int argc, char **argv)
 {
   MemDebuggerStart();
   TaskingSystemStart();
+  LoggerStart();
   GameStart(argc, argv);
 
-  Task *frame = PF_NEW(TaskFrame, NULL);
-  frame->scheduled();
+  // We create a dummy frame such that a previous frame always exists in the
+  // system. This makes everything a lot easier to handle. We do not destroy it
+  // since it is referenced counted
+  Frame *dummyFrame = PF_NEW(Frame);
+  Task *frameTask = PF_NEW(TaskFrame, *dummyFrame);
+  frameTask->scheduled();
   TaskingSystemEnter();
 
   GameEnd();
+  LoggerEnd();
   TaskingSystemEnd();
   MemDebuggerDumpAlloc();
   return 0;

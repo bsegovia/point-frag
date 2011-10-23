@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_CONSTANTS_H__
-#define __PF_CONSTANTS_H__
+#ifndef __PF_CONSTANTS_HPP__
+#define __PF_CONSTANTS_HPP__
 
 #ifndef NULL
 #define NULL 0
@@ -138,4 +138,5 @@ namespace pf
   static const size_t GB = KB*MB;
 }
 
-#endif
+#endif /* __PF_CONSTANTS_HPP__ */
+
