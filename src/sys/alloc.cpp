@@ -38,12 +38,12 @@ namespace pf
     INLINE AllocData(int fileName_, int functionName_, int line_, intptr_t alloc_) :
       fileName(fileName_), functionName(functionName_), line(line_), alloc(alloc_) {}
     int fileName, functionName, line;
-	intptr_t alloc;
+    intptr_t alloc;
   };
 
   /*! Store allocation information */
-  struct MemoryDebugger {
-    MemoryDebugger(void) : unfreedNum(0), allocNum(0) {}
+  struct MemDebugger {
+    MemDebugger(void) : unfreedNum(0), allocNum(0) {}
     void* insertAlloc(void *ptr, const char *file, const char *function, int line);
     void removeAlloc(void *ptr);
     void dumpAlloc(void);
@@ -60,7 +60,7 @@ namespace pf
     MutexSys mutex;
   };
 
-  void* MemoryDebugger::insertAlloc(void *ptr, const char *file, const char *function, int line)
+  void* MemDebugger::insertAlloc(void *ptr, const char *file, const char *function, int line)
   {
     if (ptr == NULL) return ptr;
     Lock<MutexSys> lock(mutex);
@@ -85,7 +85,7 @@ namespace pf
     return ptr;
   }
 
-  void MemoryDebugger::removeAlloc(void *ptr)
+  void MemDebugger::removeAlloc(void *ptr)
   {
     if (ptr == NULL) return;
     Lock<MutexSys> lock(mutex);
@@ -95,7 +95,7 @@ namespace pf
     unfreedNum--;
   }
 
-  void MemoryDebugger::dumpAlloc(void) {
+  void MemDebugger::dumpAlloc(void) {
     std::cerr << "Unfreed number: " << unfreedNum << std::endl;
     for (auto it = allocMap.begin(); it != allocMap.end(); ++it) {
       const AllocData &data = it->second;
@@ -108,25 +108,24 @@ namespace pf
   }
 
   /*! Declare C like interface functions here */
-  static MemoryDebugger *memoryDebugger = NULL;
-  void* insertAlloc(void *ptr, const char *file, const char *function, int line) {
-    if (memoryDebugger) return memoryDebugger->insertAlloc(ptr, file, function, line);
+  static MemDebugger *memDebugger = NULL;
+  void* MemDebuggerInsertAlloc(void *ptr, const char *file, const char *function, int line) {
+    if (memDebugger) return memDebugger->insertAlloc(ptr, file, function, line);
     return ptr;
   }
-  void removeAlloc(void *ptr) {
-    if (memoryDebugger) memoryDebugger->removeAlloc(ptr);
+  void MemDebuggerRemoveAlloc(void *ptr) {
+    if (memDebugger) memDebugger->removeAlloc(ptr);
   }
-  void dumpAlloc(void) {
-    if (memoryDebugger) memoryDebugger->dumpAlloc();
+  void MemDebuggerDumpAlloc(void) {
+    if (memDebugger) memDebugger->dumpAlloc();
   }
-  void startMemoryDebugger(void) {
-    if (memoryDebugger)
-      endMemoryDebugger();
-    memoryDebugger = new MemoryDebugger;
+  void MemDebuggerStart(void) {
+    if (memDebugger) MemDebuggerEnd();
+    memDebugger = new MemDebugger;
   }
-  void endMemoryDebugger(void) {
-    MemoryDebugger *_debug = memoryDebugger;
-    memoryDebugger = NULL;
+  void MemDebuggerEnd(void) {
+    MemDebugger *_debug = memDebugger;
+    memDebugger = NULL;
     delete _debug;
   }
 #endif /* PF_DEBUG_MEMORY */

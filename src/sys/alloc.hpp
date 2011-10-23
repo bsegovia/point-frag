@@ -31,39 +31,53 @@ namespace pf
   void* alignedMalloc(size_t size, size_t align = 64);
   void  alignedFree(void* ptr);
 
-  /*! Used to count memory allocations */
+  /*! Monitor memory allocations */
 #if PF_DEBUG_MEMORY
-  void* insertAlloc(void*, const char*, const char*, int);
-  void  removeAlloc(void *ptr);
-  void  dumpAlloc(void);
-  void  startMemoryDebugger(void);
-  void  endMemoryDebugger(void);
+  void* MemDebuggerInsertAlloc(void*, const char*, const char*, int);
+  void  MemDebuggerRemoveAlloc(void *ptr);
+  void  MemDebuggerDumpAlloc(void);
+  void  MemDebuggerStart(void);
+  void  MemDebuggerEnd(void);
 #else
-  INLINE void* insertAlloc(void *ptr, const char*, const char*, int) {return ptr;}
-  INLINE void  removeAlloc(void *ptr) {}
-  INLINE void  dumpAlloc(void) {}
-  INLINE void  startMemoryDebugger(void) {}
-  INLINE void  endMemoryDebugger(void) {}
+  INLINE void* MemDebuggerInsertAlloc(void *ptr, const char*, const char*, int) {return ptr;}
+  INLINE void  MemDebuggerRemoveAlloc(void *ptr) {}
+  INLINE void  MemDebuggerDumpAlloc(void) {}
+  INLINE void  MemDebuggerStart(void) {}
+  INLINE void  MemDebuggerEnd(void) {}
 #endif /* PF_DEBUG_MEMORY */
 
   /*! Properly handle the allocated type */
   template <typename T>
-  T* _insertAlloc(T *ptr, const char *file, const char *function, int line) {
-    insertAlloc(ptr, file, function, line);
+  T* _MemDebuggerInsertAlloc(T *ptr, const char *file, const char *function, int line) {
+    MemDebuggerInsertAlloc(ptr, file, function, line);
     return ptr;
   }
 }
 
 /*! Macros to handle allocation position */
-#define PF_NEW(T,...)         _insertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
-#define PF_NEW_ARRAY(T,N,...) _insertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
-#define PF_DELETE(X)          do { removeAlloc(X); delete X; } while (0)
-#define PF_DELETE_ARRAY(X)    do { removeAlloc(X); delete[] X; } while (0)
-#define PF_MALLOC(SZ)         insertAlloc(malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
-#define PF_REALLOC(X,SZ)      do { assert(0); FATAL("unsupported macro"); } while (0)
-#define PF_FREE(X)            do { removeAlloc(X); free(X); } while (0)
-#define PF_ALIGNED_FREE(X)    do { removeAlloc(X); alignedFree(X); } while (0)
-#define PF_ALIGNED_MALLOC(SZ,ALIGN) insertAlloc(alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
+#define PF_NEW(T,...)               \
+  _MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+
+#define PF_NEW_ARRAY(T,N,...)       \
+  _MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+
+#define PF_DELETE(X)                \
+  do { MemDebuggerRemoveAlloc(X); delete X; } while (0)
+
+#define PF_DELETE_ARRAY(X)          \
+  do { MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
+
+#define PF_MALLOC(SZ)               \
+  MemDebuggerInsertAlloc(malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
+
+#define PF_FREE(X)                  \
+  do { MemDebuggerRemoveAlloc(X); free(X); } while (0)
+
+#define PF_ALIGNED_FREE(X)          \
+  do { MemDebuggerRemoveAlloc(X); alignedFree(X); } while (0)
+
+#define PF_ALIGNED_MALLOC(SZ,ALIGN) \
+  MemDebuggerInsertAlloc(alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
 
 #endif /* __PF_ALLOC_HPP__ */
 

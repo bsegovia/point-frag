@@ -75,7 +75,7 @@ static void updateCamera(void)
     renderObj = NULL;
     PF_DELETE(renderer);
     ogl = renderer = NULL;
-    dumpAlloc();
+    MemDebuggerDumpAlloc();
     exit(0);
   }
 
@@ -165,7 +165,7 @@ static void motion(int x, int y)
 
 int main(int argc, char **argv)
 {
-  startMemoryDebugger();
+  MemDebuggerStart();
   glutInitWindowSize(w, h);
   glutInitWindowPosition(64, 64);
   glutInit(&argc, argv);
