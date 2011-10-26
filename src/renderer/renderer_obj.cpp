@@ -1,5 +1,5 @@
-#include "renderer/renderobj.hpp"
-#include "renderer/renderer.hpp"
+#include "renderer/renderer_obj.hpp"
+#include "renderer/renderer_driver.hpp"
 #include "models/obj.hpp"
 #include "sys/logging.hpp"
 

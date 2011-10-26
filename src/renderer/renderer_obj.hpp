@@ -1,5 +1,5 @@
-#ifndef __RENDEROBJ_HPP__
-#define __RENDEROBJ_HPP__
+#ifndef __RENDERER_OBJ_HPP__
+#define __RENDERER_OBJ_HPP__
 
 #include "renderer/texture.hpp"
 #include "math/bbox.hpp"
@@ -36,5 +36,5 @@ namespace pf
   };
 }
 
-#endif /* __RENDEROBJ_HPP__ */
+#endif /* __RENDERER_OBJ_HPP__ */
 

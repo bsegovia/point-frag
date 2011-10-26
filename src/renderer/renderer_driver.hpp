@@ -1,9 +1,9 @@
-#ifndef __RENDERER_HPP__
-#define __RENDERER_HPP__
+#ifndef __RENDERER_DRIVER_HPP__
+#define __RENDERER_DRIVER_HPP__
 
 #include "renderer/ogl.hpp"
 #include "renderer/texture.hpp"
-#include "renderer/renderobj.hpp"
+#include "renderer/renderer_obj.hpp"
 #include "math/matrix.hpp"
 #include "math/bbox.hpp"
 #include <unordered_map>
@@ -115,5 +115,5 @@ namespace pf
   extern const size_t defaultPathNum;
 }
 
-#endif /* __RENDERER_HPP__ */
+#endif /* __RENDERER_DRIVER_HPP__ */
 

@@ -2,10 +2,10 @@ include (FindGLUT)
 include_directories (${SDL_INCLUDE_PATH})
 set (SRC
   app/camera.cpp
-  app/app.cpp
-  app/event.cpp
-  app/frame.cpp
-  app/render.cpp
+  app/game.cpp
+  app/game_event.cpp
+  app/game_frame.cpp
+  app/game_render.cpp
   sys/filename.cpp
   sys/library.cpp
   sys/thread.cpp
@@ -21,8 +21,8 @@ set (SRC
   models/obj.cpp
   renderer/ogl.cpp
   renderer/texture.cpp
-  renderer/renderobj.cpp
-  renderer/renderer.cpp)
+  renderer/renderer_obj.cpp
+  renderer/renderer_driver.cpp)
 include_directories (.)
 add_executable (app ${SRC})
 if (UNIX)
