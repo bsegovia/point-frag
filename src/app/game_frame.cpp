@@ -14,27 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "frame.hpp"
+#include "game_frame.hpp"
+#include "game_event.hpp"
+#include "game_render.hpp"
 #include "camera.hpp"
-#include "event.hpp"
-#include "render.hpp"
 #include "sys/alloc.hpp"
 
 namespace pf
 {
-  Frame::Frame(Frame &previous) {
+  GameFrame::GameFrame(GameFrame &previous) {
     this->cam = PF_NEW(FlyCamera, *previous.cam);
     this->event = PF_NEW(InputEvent, *previous.event);
   }
 
-  Frame::Frame(void) {
+  GameFrame::GameFrame(void) {
     this->cam = PF_NEW(FlyCamera);
     this->event = PF_NEW(InputEvent);
   }
 
-  TaskFrame::TaskFrame(Frame &previous_) : previous(&previous_) {}
+  TaskGameFrame::TaskGameFrame(GameFrame &previous_) : previous(&previous_) {}
 
-  Task *TaskFrame::run(void)
+  Task *TaskGameFrame::run(void)
   {
     // User pressed ESCAPE
     if (UNLIKELY(previous->event->getKey(27) == true)) {
@@ -43,10 +43,10 @@ namespace pf
     }
 
     // Generate the current frame tasks
-    Frame *current = PF_NEW(Frame, *previous);
+    GameFrame *current = PF_NEW(GameFrame, *previous);
     Task *eventTask = PF_NEW(TaskEvent, *current->event, *previous->event);
     Task *cameraTask = PF_NEW(TaskCamera, *current->cam, *current->event);
-    Task *renderTask = PF_NEW(TaskRender, *current->cam, *current->event);
+    Task *renderTask = PF_NEW(TaskGameRender, *current->cam, *current->event);
     eventTask->starts(cameraTask);
     cameraTask->starts(renderTask);
     renderTask->ends(this);
@@ -55,7 +55,7 @@ namespace pf
     renderTask->scheduled();
 
     // Spawn the next frame. Right now there is no overlapping
-    TaskFrame *next = PF_NEW(TaskFrame, *current);
+    TaskGameFrame *next = PF_NEW(TaskGameFrame, *current);
     this->starts(next);
     next->scheduled();
 

@@ -14,12 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "frame.hpp"
+#include "game_frame.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
 #include "sys/logging.hpp"
-#include "renderer/renderobj.hpp"
-#include "renderer/renderer.hpp"
+#include "renderer/renderer_obj.hpp"
+#include "renderer/renderer_driver.hpp"
 
 #include <GL/freeglut.h>
 
@@ -91,8 +91,8 @@ int main(int argc, char **argv)
   // We create a dummy frame such that a previous frame always exists in the
   // system. This makes everything a lot easier to handle. We do not destroy it
   // since it is referenced counted
-  Frame *dummyFrame = PF_NEW(Frame);
-  Task *frameTask = PF_NEW(TaskFrame, *dummyFrame);
+  GameFrame *dummyFrame = PF_NEW(GameFrame);
+  Task *frameTask = PF_NEW(TaskGameFrame, *dummyFrame);
   frameTask->scheduled();
   TaskingSystemEnter();
 

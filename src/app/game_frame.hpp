@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifndef __PF_FRAME_HPP__
+#define __PF_FRAME_HPP__
+
 #include "sys/tasking.hpp"
 
 namespace pf
@@ -21,14 +24,28 @@ namespace pf
   class FlyCamera;
   class InputEvent;
 
-  /*! Responsible to display everything */
-  class TaskRender : public Task
+  /*! Stores the data required for the frame */
+  class GameFrame : public RefCount
   {
   public:
-    TaskRender(FlyCamera &cam, InputEvent &event);
-    virtual Task *run(void);
-    Ref<FlyCamera> cam;
-    Ref<InputEvent> event;
+    /*! Used to create the next frame */
+    GameFrame(GameFrame &previous);
+    GameFrame(void);
+    Ref<FlyCamera> cam;    //!< Camera for this frame
+    Ref<InputEvent> event; //!< Input as captured for this frame
   };
-} /* namespace pf */
+
+  /*! Responsible to handle the complete frame */
+  class TaskGameFrame : public Task
+  {
+  public:
+    /*! GameFrames are chained one after other */
+    TaskGameFrame(GameFrame &previous);
+    /*! Will basically spawn all the other tasks */
+    virtual Task *run(void);
+    Ref<GameFrame> previous;
+  };
+}
+
+#endif /* __PF_FRAME_HPP__ */
 

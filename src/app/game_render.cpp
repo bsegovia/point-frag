@@ -15,12 +15,12 @@
 // ======================================================================== //
 
 #include "camera.hpp"
-#include "render.hpp"
-#include "event.hpp"
+#include "game_render.hpp"
+#include "game_event.hpp"
 #include "models/obj.hpp"
 #include "renderer/texture.hpp"
-#include "renderer/renderobj.hpp"
-#include "renderer/renderer.hpp"
+#include "renderer/renderer_obj.hpp"
+#include "renderer/renderer_driver.hpp"
 
 #include <GL/freeglut.h>
 
@@ -31,13 +31,13 @@ namespace pf
 
 #define OGL_NAME ((RendererDriver*)ogl)
 
-  TaskRender::TaskRender(FlyCamera &cam, InputEvent &event) :
+  TaskGameRender::TaskGameRender(FlyCamera &cam, InputEvent &event) :
     cam(&cam), event(&event)
   {
     this->setAffinity(PF_TASK_MAIN_THREAD);
   }
 
-  Task* TaskRender::run(void)
+  Task* TaskGameRender::run(void)
   {
     // Transform matrix for the current point of view
     const mat4x4f MVP = cam->getMatrix();

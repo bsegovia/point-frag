@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "event.hpp"
+#include "game_event.hpp"
 #include "sys/mutex.hpp"
 #include <GL/freeglut.h>
 
