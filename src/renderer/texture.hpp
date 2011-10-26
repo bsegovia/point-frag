@@ -32,7 +32,7 @@ namespace pf
   };
 
   /*! States of the texture. This also includes the loading task itself. This
-   *  will allow any other tasks (including tasks that did not issue the task to
+   *  will allow any other tasks (including tasks that did not issue the load) to
    *  wait for it if required
    */
   struct TextureState
@@ -51,7 +51,7 @@ namespace pf
   /*! The texture streamer is responsible of loading asynchronously the
    *  textures. This is the centralized place to decide what is going on when
    *  loading many textures possibly at the same time from many threads.
-   *  It also *  stores the textures themselves
+   *  It also stores the textures themselves
    */
   class TextureStreamer
   {

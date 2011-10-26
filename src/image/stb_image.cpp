@@ -300,6 +300,7 @@ extern int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const cha
 
 
 // define faster low-level operations (typically SIMD support)
+#define STBI_SIMD
 #ifdef STBI_SIMD
 typedef void (*stbi_idct_8x8)(stbi_uc *out, int out_stride, short data[64], unsigned short *dequantize);
 // compute an integer IDCT on "input"
@@ -1355,7 +1356,7 @@ static int parse_entropy_coded_data(jpeg *z)
    if (z->scan_n == 1) {
       int i,j;
       #ifdef STBI_SIMD
-      __declspec(align(16))
+      ALIGNED(16)
       #endif
       short data[64];
       int n = z->order[0];
@@ -1876,7 +1877,7 @@ static uint8 *load_jpeg_image(jpeg *z, int *out_x, int *out_y, int *comp, int re
             uint8 *y = coutput[0];
             if (z->s->img_n == 3) {
                #ifdef STBI_SIMD
-               stbi_YCbCr_installed(out, y, coutput[1], coutput[2], z->s.img_x, n);
+               stbi_YCbCr_installed(out, y, coutput[1], coutput[2], z->s->img_x, n);
                #else
                YCbCr_to_RGB_row(out, y, coutput[1], coutput[2], z->s->img_x, n);
                #endif
