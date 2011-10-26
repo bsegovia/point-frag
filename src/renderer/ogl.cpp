@@ -1,9 +1,10 @@
 #include "ogl.hpp"
 #include "sys/platform.hpp"
+#include "sys/logging.hpp"
 #include "sys/string.hpp"
 #include "math/math.hpp"
-#include "GL/freeglut.h"
 
+#include <GL/freeglut.h>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -52,7 +53,7 @@ namespace pf
 // Get driver dependent constants
 #define GET_CST(ENUM, FIELD)                        \
     this->GetIntegerv(ENUM, &this->FIELD);          \
-    fprintf(stdout, #ENUM " == %i\n", this->FIELD);
+    PF_MSG("OGL: " #ENUM << " == " << this->FIELD);
     GET_CST(GL_MAX_COLOR_ATTACHMENTS, maxColorAttachmentNum);
     GET_CST(GL_MAX_TEXTURE_SIZE, maxTextureSize);
     GET_CST(GL_MAX_TEXTURE_IMAGE_UNITS, maxTextureUnit);
@@ -86,19 +87,18 @@ namespace pf
       default: errString = "GL_UNKNOWN";
     }
 #undef MAKE_ERR_STRING
-    fprintf(stderr, "OpenGL err(%s): %s\n", errString.c_str(), title ? title : "");
+    PF_ERROR_V("OGL: " << errString << "): " << (title ? title : ""));
     return err == GL_NO_ERROR;
   }
 
   bool OGL::checkFramebuffer(GLuint frameBufferName) const
   {
     GLenum status = this->CheckFramebufferStatus(GL_FRAMEBUFFER);
-#define MAKE_ERR(ENUM)                            \
-  case ENUM:                                      \
-    fprintf(stderr, "OpenGL Error(%s)\n", #ENUM); \
+#define MAKE_ERR(ENUM)            \
+  case ENUM:                      \
+    PF_ERROR_V("OGL: " << #ENUM); \
     break;
-    switch (status)
-    {
+    switch (status) {
       MAKE_ERR(GL_FRAMEBUFFER_UNDEFINED);
       MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT);
       MAKE_ERR(GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT);
@@ -123,11 +123,11 @@ namespace pf
 
     if (result == GL_FALSE) {
       int infoLogLength;
-      fprintf(stderr, "Validate program\n");
+      PF_ERROR_V("OGL: program validation failed\n");
       this->GetProgramiv(programName, GL_INFO_LOG_LENGTH, &infoLogLength);
-      std::vector<char> Buffer(infoLogLength);
-      this->GetProgramInfoLog(programName, infoLogLength, NULL, &Buffer[0]);
-      fprintf(stderr, "%s\n", &Buffer[0]);
+      std::vector<char> buffer(infoLogLength);
+      this->GetProgramInfoLog(programName, infoLogLength, NULL, &buffer[0]);
+      PF_ERROR_V("OGL: " << &buffer[0]);
     }
 
     return result == GL_TRUE;
@@ -142,11 +142,13 @@ namespace pf
       return false;
 
     this->GetProgramiv(programName, GL_LINK_STATUS, &result);
-    fprintf(stderr, "Linking program\n");
-    this->GetProgramiv(programName, GL_INFO_LOG_LENGTH, &infoLogLength);
-    std::vector<char> Buffer(max(infoLogLength, int(1)));
-    this->GetProgramInfoLog(programName, infoLogLength, NULL, &Buffer[0]);
-    fprintf(stderr, "%s\n", &Buffer[0]);
+    if (result == GL_FALSE) {
+      PF_ERROR_V("OGL: failed to link program");
+      this->GetProgramiv(programName, GL_INFO_LOG_LENGTH, &infoLogLength);
+      std::vector<char> buffer(max(infoLogLength, int(1)));
+      this->GetProgramInfoLog(programName, infoLogLength, NULL, &buffer[0]);
+      PF_ERROR_V("OGL: " << &buffer[0]);
+    }
 
     return result == GL_TRUE;
   }
@@ -161,10 +163,10 @@ namespace pf
     o->GetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
     o->GetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (result == GL_FALSE) {
-      std::vector<char> Buffer(infoLogLength);
-      o->GetShaderInfoLog(shaderName, infoLogLength, NULL, &Buffer[0]);
-      fprintf(stderr, "Compiling shader\n%s...\n", source.c_str());
-      fprintf(stderr, "%s\n", &Buffer[0]);
+      std::vector<char> buffer(infoLogLength);
+      o->GetShaderInfoLog(shaderName, infoLogLength, NULL, &buffer[0]);
+      PF_ERROR_V("OGL: failed to compile shader\n" << source);
+      PF_ERROR_V("OGL: " << &buffer[0]);
     }
     return result == GL_TRUE;
   }

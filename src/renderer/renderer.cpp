@@ -52,14 +52,14 @@ namespace pf
     if (useVertex) {
       const FileName path = FileName(prefix + ".vert");
       R_CALLR (vertexName, createShader, GL_VERTEX_SHADER, path);
-      FATAL_IF (geometryName == 0, "Unable to create program");
+      FATAL_IF (vertexName == 0, "Unable to create program");
       R_CALL (AttachShader, program, vertexName);
       R_CALL (DeleteShader, vertexName);
     }
     if (useFragment) {
       const FileName path = FileName(prefix + ".frag");
       R_CALLR (fragmentName, createShader, GL_FRAGMENT_SHADER, path);
-      FATAL_IF (geometryName == 0, "Unable to create program");
+      FATAL_IF (fragmentName == 0, "Unable to create program");
       R_CALL (AttachShader, program, fragmentName);
       R_CALL (DeleteShader, fragmentName);
     }
@@ -71,6 +71,7 @@ namespace pf
       R_CALL (DeleteShader, geometryName);
     }
     R_CALL (LinkProgram, program);
+    this->validateProgram(program);
     return program;
   }
 

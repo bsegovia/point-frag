@@ -16,15 +16,15 @@ namespace pf
     friend class Renderer;
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
-    Renderer &renderer;   /*! A RenderObj belongs to a renderer */
-    GLuint vertexArray;   /*! Vertex declaration */
-    GLuint arrayBuffer;   /*! Vertex data (positions, normals...) */
-    GLuint elementBuffer; /*! Indices */
-    GLuint grpNum;        /*! Number of groups in the model */
-    GLuint topology;      /*! Mostly triangle or triangle strip */
-    Ref<Texture2D> *tex;  /*! One texture per group of triangles */
-    BBox3f *bbox;         /*! One bounding box for each group */
-    Group *grp;           /*! Indices of each group */
+    Renderer &renderer;   //!< A RenderObj belongs to a renderer
+    GLuint vertexArray;   //!< Vertex declaration
+    GLuint arrayBuffer;   //!< Vertex data (positions, normals...)
+    GLuint elementBuffer; //!< Indices
+    GLuint grpNum;        //!< Number of groups in the model
+    GLuint topology;      //!< Mostly triangle or triangle strip
+    Ref<Texture2D> *tex;  //!< One texture per group of triangles
+    BBox3f *bbox;         //!< One bounding box for each group
+    Group *grp;           //!< Indices of each group
     /*! Valid means it is in GL */
     INLINE bool isValid(void) { return this->grpNum > 0; }
     /*! Display it using the renderer */

@@ -958,7 +958,7 @@ Obj::load(const FileName &fileName)
 #define COPY_FIELD(NAME)                                \
   if (from.NAME) {                                      \
     const size_t len = std::strlen(from.NAME);          \
-    to.NAME = PF_NEW_ARRAY(char, len + 1);                 \
+    to.NAME = PF_NEW_ARRAY(char, len + 1);              \
     memcpy(to.NAME, from.NAME, std::strlen(from.NAME)); \
     to.NAME[len] = 0;                                   \
     patchName(to.NAME);                                 \

@@ -60,7 +60,6 @@ namespace pf {
       for (uint32 i = 0; i < TaskPriority::NUM; ++i) head[i] = tail[i] = 0;
     }
 
-  protected:
     /*! Return the bit mask of the four queues:
      *  - 1 if there is any task
      *  - 0 if empty
@@ -78,6 +77,7 @@ namespace pf {
       return _mm_movemask_ps(_mm_castsi128_ps(len));
     }
 
+  protected:
     Task * tasks[TaskPriority::NUM][elemNum]; //!< All tasks currently stored
     MutexActive mutex;                        //!< Not lock-free right now
     union {
@@ -85,7 +85,7 @@ namespace pf {
       volatile int32 x[TaskPriority::NUM];
       volatile __m128i v;
     } head, tail;
-	ALIGNED_CLASS;
+    ALIGNED_CLASS;
   };
 
   /*! For work stealing:
@@ -623,18 +623,31 @@ namespace pf {
   THREAD uint32 TaskScheduler::threadID = 0;
 
   Task* TaskScheduler::getTask() {
-    // Task with affinities have the priority
-    Task *task = this->afQueues[this->threadID].get();
-    if (task)
-      return task;
-    // Then, our own tasks
-    else if ((task = this->wsQueues[this->threadID].get()) != NULL)
-      return task;
-    // Then, we try to steal some task from another thread
-    else {
+    Task *task = NULL;
+    int32 afMask = this->afQueues[this->threadID].getActiveMask();
+    int32 wsMask = this->wsQueues[this->threadID].getActiveMask();
+    // There is one task in our own queues. We try to pick up the one with the
+    // highest priority accross the 2 queues
+    if (wsMask | afMask) {
+      // Avoid the zero corner case by adding a 1 in the last bit
+      wsMask |= 0x1u << 31u;
+      afMask |= 0x1u << 31u;
+      // Case 0: Go in the work stealing queue
+      if (__bsf(wsMask) < __bsf(afMask)) {
+        task = this->wsQueues[this->threadID].get();
+        if (task) return task;
+      // Case 1: Go in the affinity queue
+      } else {
+        task = this->afQueues[this->threadID].get();
+        if (task) return task;
+      }
+    }
+    if (task == NULL) {
+      // Case 2: try to steal some task from another thread
       const unsigned long index = this->random[this->threadID].rand()%queueNum;
       return this->wsQueues[index].steal();
     }
+    return task;
   }
 
   void TaskScheduler::runTask(Task *task) {

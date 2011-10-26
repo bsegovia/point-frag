@@ -111,9 +111,9 @@ namespace pf
 #define PF_MSG_V(MSG) (*logger << MSG << PF_INFO << "\n" << loggerFlush)
 
 /*! Regular macros: just the user message */
-#define PF_WARNING(MSG) (*logger << MSG << "\n" << loggerFlush;
-#define PF_ERROR(MSG) (*logger << MSG << "\n" << loggerFlush;
-#define PF_MSG(MSG) (*logger << MSG << "\n" << loggerFlush;
+#define PF_WARNING(MSG) (*logger << MSG << "\n" << loggerFlush)
+#define PF_ERROR(MSG) (*logger << MSG << "\n" << loggerFlush)
+#define PF_MSG(MSG) (*logger << MSG << "\n" << loggerFlush)
 
 #endif /* __PF_LOGGING_HPP__ */
 

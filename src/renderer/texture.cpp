@@ -54,8 +54,8 @@ namespace pf
     if (img != NULL) {
       // Revert TGA images
       this->fmt = GL_RGBA;
-      if (fileName.ext() == "tga")
-        revertTGA(img, w, h, comp);
+      //if (fileName.ext() == "tga") TODO check the image loader
+      revertTGA(img, w, h, comp);
       const int levelNum = (int) max(log2(float(w)), log2(float(h)));
       switch (comp) {
         case 3: this->fmt = GL_RGB; break;

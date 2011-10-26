@@ -98,12 +98,10 @@
  * strategy by *multiplexing* queues:
  * 0 - If the user returns a task to run, we run it regardless anything else in
  *     the system
- * 1 - Then, we try to pick a task from our own affinity queues. The highest
- *     priority task from these queues is picked up first
- * 2 - If no task was found in 1, we try to pick a task from our own work
- *     stealing queue. Here once again, we pick up the highest priority task
- *     since the four queues (from low to critical) are multiplexed
- * 3 - If no task was found in 2, we try to steal a task from a random other
+ * 1 - The scheduler then explores both private queues and tries to pick up the
+ *     one with the largest priority across the two queues. If tasks of equal
+ *     priority are found in both queues, the affinity queue is preferred
+ * 2 - If no task was found in 2, we try to steal a task from a random other
  *     queue. Here also, we take the one with the highest priority
  *
  * Therefore, the priorities are in that order:
@@ -111,12 +109,12 @@
  *
  * User-Returned Task [regardless the priority] >
  * Affinity-Queue::critical Task                >
- * Affinity-Queue::high Task                    >
- * Affinity-Queue::normal Task                  >
- * Affinity-Queue::low Task                     >
  * Self-Work-Stealing-Queue::critical Task      >
+ * Affinity-Queue::high Task                    >
  * Self-Work-Stealing-Queue::high Task          >
+ * Affinity-Queue::normal Task                  >
  * Self-Work-Stealing-Queue::normal Task        >
+ * Affinity-Queue::low Task                     >
  * Self-Work-Stealing-Queue::low Task           >
  * Victim-Work-Stealing-Queue::critical Task    >
  * Victim-Work-Stealing-Queue::high Task        >
@@ -143,6 +141,9 @@
 
 /*! Main thread (the one that the system gives us) is always 0 */
 #define PF_TASK_MAIN_THREAD 0
+
+/*! No affinity means that the task can rn anywhere */
+#define PF_TASK_NO_AFFINITY 0xffffu
 
 /*! Maximum time the thread is yielded */
 namespace pf {
@@ -275,7 +276,7 @@ namespace pf {
   INLINE Task::Task(const char *taskName) :
     name(taskName),
     toStart(1), toEnd(1),
-    affinity(0xffffu),
+    affinity(PF_TASK_NO_AFFINITY),
     priority(uint8(TaskPriority::NORMAL)),
     state(uint8(TaskState::NEW))
   {

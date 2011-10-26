@@ -56,12 +56,12 @@ namespace pf
 
     /*! FBO (and related buffers) for deferred shading */
     struct {
-      GLuint fbo;          /*! FBO with all buffers binded*/
-      GLuint diffuse_exp;  /*! diffuse color + spec exponent */
-      GLuint radiance;     /*! radiance value*/
-      GLuint pxpypz_nx;    /*! xyz position + normal.x */
-      GLuint vxvy_nynz;    /*! velocity + normal.y + normal.z */
-      GLuint zbuffer;      /*! depth stencil */
+      GLuint fbo;         //!< FBO with all buffers binded
+      GLuint diffuse_exp; //!< diffuse color + spec exponent
+      GLuint radiance;    //!< radiance value
+      GLuint pxpypz_nx;   //!< xyz position + normal.x
+      GLuint vxvy_nynz;   //!< velocity + normal.y + normal.z
+      GLuint zbuffer;     //!< depth stencil
     } gbuffer;
     void initGBuffer(int w, int h);
     void destroyGBuffer(void);

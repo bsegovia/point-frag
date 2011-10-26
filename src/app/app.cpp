@@ -66,7 +66,9 @@ namespace pf
     glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
     glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+    PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
+
     ogl = renderer = PF_NEW(Renderer);
     renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
   }
