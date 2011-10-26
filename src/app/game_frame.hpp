@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_FRAME_HPP__
-#define __PF_FRAME_HPP__
+#ifndef __PF_GAME_FRAME_HPP__
+#define __PF_GAME_FRAME_HPP__
 
 #include "sys/tasking.hpp"
 
@@ -47,5 +47,5 @@ namespace pf
   };
 }
 
-#endif /* __PF_FRAME_HPP__ */
+#endif /* __PF_GAME_FRAME_HPP__ */
 

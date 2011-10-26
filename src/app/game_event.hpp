@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_EVENT_HPP__
-#define __PF_EVENT_HPP__
+#ifndef __PF_GAME_EVENT_HPP__
+#define __PF_GAME_EVENT_HPP__
 
 #include "sys/tasking.hpp"
 
@@ -78,5 +78,5 @@ namespace pf
   };
 } /* namespace pf */
 
-#endif /* __PF_EVENT_HPP__ */
+#endif /* __PF_GAME_EVENT_HPP__ */
 
