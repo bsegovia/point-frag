@@ -26,10 +26,10 @@
 
 namespace pf
 {
-  extern Renderer *renderer;
-  extern Ref<RenderObj> renderObj;
+  extern RendererDriver *renderer;
+  extern Ref<RendererObj> renderObj;
 
-#define OGL_NAME ((Renderer*)ogl)
+#define OGL_NAME ((RendererDriver*)ogl)
 
   TaskRender::TaskRender(FlyCamera &cam, InputEvent &event) :
     cam(&cam), event(&event)

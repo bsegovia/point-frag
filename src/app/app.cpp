@@ -27,8 +27,8 @@ using namespace pf;
 
 namespace pf
 {
-  Renderer *renderer = NULL;
-  Ref<RenderObj> renderObj = NULL;
+  RendererDriver *renderer = NULL;
+  Ref<RendererObj> renderObj = NULL;
   LoggerStream *coutStream = NULL;
 
   class CoutStream : public LoggerStream
@@ -69,8 +69,8 @@ namespace pf
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
 
-    ogl = renderer = PF_NEW(Renderer);
-    renderObj = PF_NEW(RenderObj, *renderer, "f000.obj");
+    ogl = renderer = PF_NEW(RendererDriver);
+    renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
   }
 
   void GameEnd()

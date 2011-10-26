@@ -13,20 +13,20 @@
 namespace pf
 {
   /*! Will basically render everything */
-  class Renderer : public OGL
+  class RendererDriver : public OGL
   {
   public:
     /*! Constructor */
-    Renderer(void);
+    RendererDriver(void);
     /*! Destructor */
-    virtual ~Renderer(void);
+    virtual ~RendererDriver(void);
     /*! Call it when window size changes */
     void resize(int w, int h);
 
     /*! Display bounding boxes in wireframe */
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
     /*! Display a model */
-    void displayRenderObj(const RenderObj &model);
+    void displayRendererObj(const RendererObj &model);
 
     /*! Get the texture by name (return NULL if not found) */
     INLINE Ref<Texture2D> getTexture(const char *name) const {

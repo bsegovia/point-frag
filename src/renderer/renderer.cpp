@@ -20,7 +20,7 @@ namespace pf
   };
   const size_t defaultPathNum = ARRAY_ELEM_NUM(defaultPath);
 
-  Ref<Texture2D> loadDefaultTexture(Renderer &renderer) {
+  Ref<Texture2D> loadDefaultTexture(RendererDriver &renderer) {
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const std::string prefix = defaultPath[i];
       Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, prefix + "Maps/chess.tga");
@@ -31,7 +31,7 @@ namespace pf
     return NULL;
   }
 
-  GLuint Renderer::makeGBufferTexture(int internal, int w, int h, int data, int type) {
+  GLuint RendererDriver::makeGBufferTexture(int internal, int w, int h, int data, int type) {
     GLuint tex = 0;
     R_CALL (GenTextures, 1, &tex);
     R_CALL (BindTexture, GL_TEXTURE_2D, tex);
@@ -41,7 +41,7 @@ namespace pf
     return tex;
   }
 
-  GLuint Renderer::buildProgram(const std::string &prefix,
+  GLuint RendererDriver::buildProgram(const std::string &prefix,
                                 bool useVertex,
                                 bool useGeometry,
                                 bool useFragment)
@@ -75,7 +75,7 @@ namespace pf
     return program;
   }
 
-  GLuint Renderer::buildProgram(const char *vertSource,
+  GLuint RendererDriver::buildProgram(const char *vertSource,
                                 const char *geomSource,
                                 const char *fragSource)
   {
@@ -101,7 +101,7 @@ namespace pf
     return program;
   }
 
-  void Renderer::initGBuffer(int w, int h) {
+  void RendererDriver::initGBuffer(int w, int h) {
     R_CALL (ActiveTexture, GL_TEXTURE0);
     this->gbuffer.diffuse_exp = makeGBufferTexture(GL_RGBA16F, w, h, GL_RGBA, GL_UNSIGNED_BYTE);
     this->gbuffer.radiance = makeGBufferTexture(GL_RGBA16F, w, h, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -118,7 +118,7 @@ namespace pf
     R_CALL (FramebufferTexture, GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, this->gbuffer.zbuffer, 0);
     R_CALL (BindFramebuffer, GL_FRAMEBUFFER, 0);
   }
-  void Renderer::destroyGBuffer(void) {
+  void RendererDriver::destroyGBuffer(void) {
     if (this->gbuffer.fbo) R_CALL (DeleteFramebuffers, 1, &this->gbuffer.fbo);
     if (this->gbuffer.diffuse_exp) R_CALL (DeleteTextures, 1, &this->gbuffer.diffuse_exp);
     if (this->gbuffer.radiance) R_CALL (DeleteTextures, 1, &this->gbuffer.radiance);
@@ -154,7 +154,7 @@ namespace pf
     "  c = In.c;\n"
     "}\n"
   };
-  void Renderer::initPlain(void) {
+  void RendererDriver::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
     R_CALL (BindAttribLocation, this->plain.program, ATTR_POSITION, "Position");
     R_CALL (GenBuffers, 1, &this->plain.arrayBuffer);
@@ -168,7 +168,7 @@ namespace pf
     R_CALLR (this->plain.uMVP, GetUniformLocation, this->plain.program, "MVP");
     R_CALLR (this->plain.uCol, GetUniformLocation, this->plain.program, "c");
   }
-  void Renderer::destroyPlain(void) {
+  void RendererDriver::destroyPlain(void) {
     R_CALL (DeleteProgram, this->plain.program);
     R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
     R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
@@ -202,7 +202,7 @@ namespace pf
     "  c = texture(Diffuse, In.t);\n"
     "}\n"
   };
-  void Renderer::initDiffuse(void) {
+  void RendererDriver::initDiffuse(void) {
     this->diffuse.program = buildProgram(diffuseVert, NULL, diffuseFrag);
     R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "Position");
     R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "Texcoord");
@@ -212,7 +212,7 @@ namespace pf
     R_CALL (Uniform1i, this->diffuse.uDiffuse, 0);
     R_CALL (UseProgram, 0);
   }
-  void Renderer::destroyDiffuse(void) {
+  void RendererDriver::destroyDiffuse(void) {
     R_CALL (DeleteProgram, this->diffuse.program);
   }
 
@@ -268,7 +268,7 @@ namespace pf
     QuadVertex(vec2f(-1.0f, 1.0f), vec2f(0.0f, 0.0f)),
     QuadVertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f))
   };
-  void Renderer::initQuad(void) {
+  void RendererDriver::initQuad(void) {
     // Build vertex data
     R_CALL (GenBuffers, 1, &this->quad.arrayBuffer);
     R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->quad.arrayBuffer);
@@ -294,7 +294,7 @@ namespace pf
     R_CALL (Uniform1i, this->quad.uDiffuse, 0);
     R_CALL (UseProgram, 0);
   }
-  void Renderer::destroyQuad(void) {
+  void RendererDriver::destroyQuad(void) {
     R_CALL (DeleteProgram, this->quad.program);
     R_CALL (DeleteVertexArrays, 1, &this->quad.vertexArray);
     R_CALL (DeleteBuffers, 1, &this->quad.arrayBuffer);
@@ -306,7 +306,7 @@ namespace pf
   };
   static const size_t bboxIndexNum = ARRAY_ELEM_NUM(bboxIndex);
 
-  void Renderer::displayBBox(const BBox3f *bbox, int n, const vec4f *col)
+  void RendererDriver::displayBBox(const BBox3f *bbox, int n, const vec4f *col)
   {
     if (n == 0) return;
 
@@ -343,8 +343,8 @@ namespace pf
     PF_DELETE_ARRAY(indices);
   }
 
-  Renderer::Renderer(void) {
-    PF_MSG_V("Renderer: initialization");
+  RendererDriver::RendererDriver(void) {
+    PF_MSG_V("RendererDriver: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
     this->initQuad();
@@ -355,15 +355,15 @@ namespace pf
     this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }
 
-  Renderer::~Renderer(void) {
-    PF_MSG_V("Renderer: destruction");
+  RendererDriver::~RendererDriver(void) {
+    PF_MSG_V("RendererDriver: destruction");
     this->destroyGBuffer();
     this->destroyDiffuse();
     this->destroyPlain();
     this->destroyQuad();
   }
 
-  void Renderer::resize(int w, int h) {
+  void RendererDriver::resize(int w, int h) {
     this->destroyGBuffer();
     this->initGBuffer(w, h);
   }

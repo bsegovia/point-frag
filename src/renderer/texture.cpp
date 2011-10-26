@@ -44,7 +44,7 @@ namespace pf
     }
   }
 
-  Texture2D::Texture2D(Renderer &renderer, const FileName &fileName, bool mipmap)
+  Texture2D::Texture2D(RendererDriver &renderer, const FileName &fileName, bool mipmap)
     : renderer(renderer)
   {
     int comp;

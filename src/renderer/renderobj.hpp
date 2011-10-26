@@ -7,16 +7,16 @@
 
 namespace pf
 {
-  /*! Renderer owns all RenderObj */
-  class Renderer;
+  /*! RendererDriver owns all RendererObj */
+  class RendererDriver;
 
   /*! Entity used for rendering of OBJ models */
-  class RenderObj : public RefCount {
+  class RendererObj : public RefCount {
   public:
-    friend class Renderer;
+    friend class RendererDriver;
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
-    Renderer &renderer;   //!< A RenderObj belongs to a renderer
+    RendererDriver &renderer;   //!< A RendererObj belongs to a renderer
     GLuint vertexArray;   //!< Vertex declaration
     GLuint arrayBuffer;   //!< Vertex data (positions, normals...)
     GLuint elementBuffer; //!< Indices
@@ -30,9 +30,9 @@ namespace pf
     /*! Display it using the renderer */
     void display(void);
     /*! Note that this object actually belongs to a renderer */
-    RenderObj(Renderer &renderer, const FileName &fileName);
+    RendererObj(RendererDriver &renderer, const FileName &fileName);
     /*! Release it (still from a renderer */
-    ~RenderObj(void);
+    ~RendererObj(void);
   };
 }
 

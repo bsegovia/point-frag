@@ -3,6 +3,6 @@
 files=`find . -name '*pp'`
 for f in $files; do
 		cp $f $f.bak
-		cat $f.bak | sed "s/Renderer/RendererDriver/g" > $f
+		cat $f.bak | sed "s/RenderObj/RendererObj/g" > $f
 done
 

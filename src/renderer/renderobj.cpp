@@ -9,11 +9,11 @@ namespace pf
 {
 #define OGL_NAME (&this->renderer)
 
-  RenderObj::RenderObj(Renderer &renderer_, const FileName &fileName) :
+  RendererObj::RendererObj(RendererDriver &renderer_, const FileName &fileName) :
     renderer(renderer_),
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
-    PF_MSG_V("RenderObj: loading .obj file \"" << fileName.base() << "\"");
+    PF_MSG_V("RendererObj: loading .obj file \"" << fileName.base() << "\"");
     Obj *obj = PF_NEW(Obj);
     bool isLoaded = false;
     for (size_t i = 0; i < defaultPathNum; ++i) {
@@ -22,14 +22,14 @@ namespace pf
     }
 
     if (isLoaded) {
-      PF_MSG_V("RenderObj: loading textures");
+      PF_MSG_V("RendererObj: loading textures");
       for (size_t i = 0; i < obj->matNum; ++i) {
         const char *name = obj->mat[i].map_Kd;
         if (name == NULL || strlen(name) == 0)
           continue;
         Ref<Texture2D> tex = renderer.getTexture(name);
         if (tex == false) {
-          PF_MSG_V("RenderObj: loading " << name);
+          PF_MSG_V("RendererObj: loading " << name);
           bool isLoaded = false;
           for (size_t i = 0; i < defaultPathNum; ++i) {
             const FileName dataPath(defaultPath[i]);
@@ -58,10 +58,10 @@ namespace pf
       }
 
       // Compute each object bounding box and group of triangles
-      PF_MSG_V("RenderObj: computing bounding boxes");
+      PF_MSG_V("RendererObj: computing bounding boxes");
       this->grpNum = obj->grpNum;
       this->bbox = PF_NEW_ARRAY(BBox3f, obj->grpNum);
-      this->grp = PF_NEW_ARRAY(RenderObj::Group, this->grpNum);
+      this->grp = PF_NEW_ARRAY(RendererObj::Group, this->grpNum);
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const size_t first = obj->grp[i].first, last = obj->grp[i].last;
         this->grp[i].first = first;
@@ -75,7 +75,7 @@ namespace pf
       }
 
       // Create the vertex buffer
-      PF_MSG_V("RenderObj: creating OGL objects");
+      PF_MSG_V("RendererObj: creating OGL objects");
       const size_t vertexSize = obj->vertNum * sizeof(ObjVertex);
       R_CALL (GenBuffers, 1, &this->arrayBuffer);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
@@ -100,11 +100,11 @@ namespace pf
       R_CALL (GenVertexArrays, 1, &this->vertexArray);
       R_CALL (BindVertexArray, this->vertexArray);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
-      R_CALL (VertexAttribPointer, Renderer::ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), NULL);
-      R_CALL (VertexAttribPointer, Renderer::ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), (void*)offsetof(ObjVertex, t));
+      R_CALL (VertexAttribPointer, RendererDriver::ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), NULL);
+      R_CALL (VertexAttribPointer, RendererDriver::ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), (void*)offsetof(ObjVertex, t));
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-      R_CALL (EnableVertexAttribArray, Renderer::ATTR_POSITION);
-      R_CALL (EnableVertexAttribArray, Renderer::ATTR_TEXCOORD);
+      R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_POSITION);
+      R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_TEXCOORD);
       R_CALL (BindVertexArray, 0);
     }
 
@@ -112,7 +112,7 @@ namespace pf
     PF_DELETE(obj);
   }
 
-  RenderObj::~RenderObj(void) {
+  RendererObj::~RendererObj(void) {
     if (this->isValid()) {
       R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
       R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
@@ -123,7 +123,7 @@ namespace pf
     }
   }
 
-  void RenderObj::display(void) {
+  void RendererObj::display(void) {
     R_CALL (BindVertexArray, this->vertexArray);
     R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);
