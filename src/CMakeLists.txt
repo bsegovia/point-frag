@@ -1,11 +1,11 @@
 include (FindGLUT)
 include_directories (${SDL_INCLUDE_PATH})
 set (SRC
-  app/camera.cpp
-  app/game.cpp
-  app/game_event.cpp
-  app/game_frame.cpp
-  app/game_render.cpp
+  game/camera.cpp
+  game/game.cpp
+  game/game_event.cpp
+  game/game_frame.cpp
+  game/game_render.cpp
   sys/filename.cpp
   sys/library.cpp
   sys/thread.cpp
