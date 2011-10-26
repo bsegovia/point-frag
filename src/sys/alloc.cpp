@@ -96,7 +96,7 @@ namespace pf
   }
 
   void MemDebugger::dumpAlloc(void) {
-    std::cerr << "Unfreed number: " << unfreedNum << std::endl;
+    std::cerr << "MemDebugger: Unfreed number: " << unfreedNum << std::endl;
     for (auto it = allocMap.begin(); it != allocMap.end(); ++it) {
       const AllocData &data = it->second;
       std::cerr << "ALLOC " << data.alloc << ": " <<
@@ -104,7 +104,8 @@ namespace pf
                    "function " << staticStringVector[data.functionName] << ", " <<
                    "line " << data.line << std::endl;
     }
-    std::cerr << staticStringVector.size() << " allocated static strings" << std::endl;
+    std::cerr << "MemDebugger: " << staticStringVector.size()
+              << " allocated static strings" << std::endl;
   }
 
   /*! Declare C like interface functions here */
