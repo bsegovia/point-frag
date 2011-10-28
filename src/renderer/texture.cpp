@@ -1,5 +1,6 @@
 #include "renderer/texture.hpp"
 #include "renderer/renderer_driver.hpp"
+#include "sys/tasking.hpp"
 #include "image/stb_image.hpp"
 #include "math/math.hpp"
 
@@ -94,6 +95,105 @@ namespace pf
 
   Texture2D::~Texture2D(void) {
     if (this->isValid()) R_CALL (DeleteTextures, 1, &this->handle);
+  }
+
+  TextureState TextureStreamer::getTextureState(const char *name) {
+    Lock<MutexSys> lock(mutex);
+    return this->getTextureStateUnlocked(name);
+  }
+
+  TextureState TextureStreamer::getTextureStateUnlocked(const char *name) {
+    auto it = texMap.find(name);
+    if (it == texMap.end())
+      return TextureState();
+    else
+      return it->second;
+  }
+
+  /*! Contain the texture data (format + data) that we will provide to OGL */
+  class TextureLoadData
+  {
+  public:
+    TextureLoadData(const char *name);
+    ~TextureLoadData(void);
+    const char **texels; //!< All mip-map level texels
+    const int *w, *h;    //!< Dimensions of all mip-maps
+    int levelNum;        //!< Number of mip-maps
+    const char *name;    //!< Name of the file containing the data
+  };
+
+  TextureLoadData::TextureLoadData(const char *name)
+  {
+
+  }
+
+  TextureLoadData::~TextureLoadData(void)
+  {
+
+  }
+
+  class TaskTextureLoad;    //!< Load the textures from the disk
+  class TaskTextureLoadOGL; //!< Upload the mip level to OGL
+
+  /*! First task simply loads the texture from memory and build all the
+   *  mip-maps. We store everything in the texture load data
+   */
+  class TaskTextureLoad : public Task
+  {
+  public:
+    INLINE TaskTextureLoad(const char *name, TextureStreamer &streamer) :
+      Task("TaskTextureLoad"), name(name), streamer(streamer) {}
+    virtual Task* run(void);
+    const char *name;          //!< File to load
+    TextureStreamer &streamer; //!< Streamer that handles streaming
+  };
+
+  /*! Second task finishes the work by creating the OGL texture */
+  class TaskTextureLoadOGL : public TaskMain
+  {
+  public:
+    INLINE TaskTextureLoadOGL(TextureLoadData *data) :
+      TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer) {}
+    virtual Task* run(void);
+    TextureLoadData *data;     //!< Data to upload
+    const char *name;          //!< Texture to load
+    TextureStreamer &streamer; //!< Streamer that handles the texture
+  };
+
+  Task *TaskTextureLoad::run(void) {
+    return NULL;
+  }
+
+  Task *TaskTextureLoadOGL::run(void) {
+    Ref<Texture2D> tex = NULL;
+
+    // The data is not needed anymore
+    PF_DELETE(this->data);
+
+    // Update the map to say we are done with this texture. We can now use it
+    Lock<MutexSys> lock(streamer.mutex);
+    auto it = streamer.texMap.find(name);
+    assert(it != streamer.texMap.end());
+    it->second.tex = tex;
+    it->second.value = TextureState::COMPLETE;
+
+    return NULL;
+  }
+
+  Ref<Task> TextureStreamer::loadTexture(const char *name) {
+    Lock<MutexSys> lock(mutex);
+
+    // Somebody already issued a load for it
+    TextureState texState = this->getTextureStateUnlocked(name);
+    if (texState.value == TextureState::LOADING ||
+        texState.value == TextureState::COMPLETE)
+      return texState.loadingTask;
+
+    // Create the task and indicate everybody else that texture is loading
+    Task *loadingTask = PF_NEW(TaskTextureLoad, name, *this);
+    this->texMap[name] = TextureState(TextureState::LOADING, loadingTask);
+    loadingTask->scheduled();
+    return loadingTask;
   }
 }
 #undef OGL_NAME

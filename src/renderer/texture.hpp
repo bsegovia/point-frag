@@ -37,9 +37,12 @@ namespace pf
    */
   struct TextureState
   {
-    INLINE TextureState(void) : loadingTask(NULL), state(NOT_HERE) {}
+    INLINE TextureState(void) : value(NOT_HERE) {}
+    INLINE TextureState(int value, Task *task) :
+      loadingTask(task), value(value) {}
+    Ref<Texture2D> tex;    //!< Texture itself
     Ref<Task> loadingTask; //!< Pointer to the task that issued the load
-    int state;             //!< Current loading state
+    int value;             //!< Current loading state
     enum {
       NOT_HERE = 0, //!< Unknown not in the streamer at all
       LOADING = 1,  //!< Somebody started to load it
@@ -56,27 +59,28 @@ namespace pf
   class TextureStreamer
   {
   public:
-    TextureStreamer(void);
-    ~TextureStreamer(void);
+    INLINE TextureStreamer(void) {}
+    INLINE ~TextureStreamer(void) {}
 
     /*! Indicate the current loading state of the texture */
-    TextureState getTextureState(const char *name) const;
-
+    TextureState getTextureState(const char *name);
     /*! If the texture is not loading, spawn a task and load it. Otherwise,
-     *  return the task that is currently loading it
+     *  return the task that is currently loading it. That may be NULL if the
+     *  task is already loaded
      */
     Ref<Task> loadTexture(const char *name);
 
   private:
-    /*! Sort the texture by name (only its base name is taken into account) */
-    std::unordered_map<std::string, Ref<Texture2D>> texMap;
-    MutexActive texMapMutex;  //!< Serializes texMap accesses
-
     /*! Store for each texture its state */
-    std::unordered_map<std::string, TextureState> texState;
-    MutexActive texStateMutex; //!< Serializes texState accesses
+    std::unordered_map<const char*, TextureState> texMap;
+    /*! Serialize the streamer access */
+    MutexSys mutex;
+    /*! Unlocked for internal use */
+    TextureState getTextureStateUnlocked(const char *name);
+    friend class TaskTextureLoad;    //!< Load the textures from the disk
+    friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
   };
-}
+} /* namespace pf */
 
 #endif /* __PF_TEXTURE_HPP__ */
 
