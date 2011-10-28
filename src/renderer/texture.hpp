@@ -44,9 +44,10 @@ namespace pf
     Ref<Task> loadingTask; //!< Pointer to the task that issued the load
     int value;             //!< Current loading state
     enum {
-      NOT_HERE = 0, //!< Unknown not in the streamer at all
-      LOADING = 1,  //!< Somebody started to load it
-      COMPLETE = 2, //!< It is here!
+      NOT_HERE = 0,  //!< Unknown not in the streamer at all
+      LOADING = 1,   //!< Somebody started to load it
+      COMPLETE = 2,  //!< It is here!
+      NOT_FOUND = 3, //!< The resource was not found
       INVALID_STATE = 0xffffffff
     };
   };
@@ -69,6 +70,8 @@ namespace pf
      *  task is already loaded
      */
     Ref<Task> loadTexture(const char *name);
+    /*! Synchronous version of the loading (TODO remove it) (MAIN THREAD ONLY!!) */
+    TextureState loadTextureSync(const char *name);
 
   private:
     /*! Store for each texture its state */

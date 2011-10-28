@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "renderer/texture.hpp"
 #include "renderer/renderer_driver.hpp"
 #include "sys/tasking.hpp"
@@ -34,7 +50,7 @@ namespace pf
     return dst;
   }
 
-  static void revertTGA(unsigned char *img, int w, int h, int compNum)
+  static void mirror(unsigned char *img, int w, int h, int compNum)
   {
     for (int y = 0; y < h / 2; ++y)
     for (int x = 0; x < w; ++x) {
@@ -56,7 +72,7 @@ namespace pf
       // Revert TGA images
       this->fmt = GL_RGBA;
       //if (fileName.ext() == "tga") TODO check the image loader
-      revertTGA(img, w, h, comp);
+      mirror(img, w, h, comp);
       const int levelNum = (int) max(log2(float(w)), log2(float(h)));
       switch (comp) {
         case 3: this->fmt = GL_RGB; break;

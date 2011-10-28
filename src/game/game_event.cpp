@@ -27,7 +27,6 @@ namespace pf
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->mouseX = this->mouseY = 0;
-    this->isMouseInit = 0;
     this->w = this->h = 0;
     for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
   }
@@ -40,7 +39,6 @@ namespace pf
     this->h = previous.h;
     for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
       this->keys[i] = previous.keys[i];
-    this->isMouseInit = previous.isMouseInit;
     this->mouseX = previous.mouseX;
     this->mouseY = previous.mouseY;
   }
@@ -68,20 +66,30 @@ namespace pf
   }
 
   void TaskEvent::entry(int state) {
+    // Wrap the mouse when the mouse exited
     if (state == GLUT_LEFT) {
       taskEvent->current->mouseX = taskEvent->current->w / 2;
       taskEvent->current->mouseY = taskEvent->current->h / 2;
       glutWarpPointer(taskEvent->current->mouseX, taskEvent->current->mouseY);
-      taskEvent->current->isMouseInit = 0;
     }
   }
 
   void TaskEvent::motion(int x, int y) {
-    taskEvent->current->mouseXRel = x - taskEvent->previous->mouseX;
-    taskEvent->current->mouseYRel = y - taskEvent->previous->mouseY;
-    taskEvent->current->isMouseInit = 1;
-    taskEvent->current->mouseX = x;
-    taskEvent->current->mouseY = y;
+    // Wrap the mouse when too close of the borders
+    if (x <= 1 ||
+        y <= 1 ||
+        x >= taskEvent->current->w - 2 ||
+        y >= taskEvent->current->h - 2) {
+      taskEvent->current->mouseX = taskEvent->current->w / 2;
+      taskEvent->current->mouseY = taskEvent->current->h / 2;
+      glutWarpPointer(taskEvent->current->mouseX, taskEvent->current->mouseY);
+    // Update the position
+    } else {
+      taskEvent->current->mouseXRel = x - taskEvent->previous->mouseX;
+      taskEvent->current->mouseYRel = y - taskEvent->previous->mouseY;
+      taskEvent->current->mouseX = x;
+      taskEvent->current->mouseY = y;
+    }
   }
 
   void TaskEvent::init(void) {

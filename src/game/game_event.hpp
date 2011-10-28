@@ -47,7 +47,6 @@ namespace pf
     int mouseX, mouseY;         //!< Absolute position of the mouse
     int mouseXRel, mouseYRel;   //!< Position of the mouse (relative to previous frame)
     int w, h;                   //!< Dimension of the window (if changed)
-    char isMouseInit:1;         //!< Typically false when the mouse exits the windows
     char isResized:1;           //!< True if the user resized the window
   private:
     int32 keys[KEY_ARRAY_SIZE]; //!< Bitfield saying if key is pressed?

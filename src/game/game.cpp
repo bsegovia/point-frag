@@ -68,6 +68,7 @@ namespace pf
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
+    //glutFullScreen();
 
     ogl = renderer = PF_NEW(RendererDriver);
     renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");

@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #ifndef __RENDERER_DRIVER_HPP__
 #define __RENDERER_DRIVER_HPP__
 
@@ -27,7 +43,7 @@ namespace pf
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
     /*! Display a model */
     void displayRendererObj(const RendererObj &model);
-
+#if 1
     /*! Get the texture by name (return NULL if not found) */
     INLINE Ref<Texture2D> getTexture(const char *name) const {
       assert(name);
@@ -41,7 +57,7 @@ namespace pf
     INLINE void setTexture(const char *name, Ref<Texture2D> &tex) {
       this->texMap[name] = tex;
     }
-
+#endif
     /*! Uniform values used in the renderer */
     INLINE void setDefaultDiffuseCol(vec4f c)  {this->defaultDiffuseCol = c;}
     INLINE void setDefaultSpecularCol(vec4f c) {this->defaultSpecularCol = c;}
