@@ -1,5 +1,21 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "renderer/renderer_obj.hpp"
-#include "renderer/renderer_driver.hpp"
+#include "renderer/renderer.hpp"
 #include "models/obj.hpp"
 #include "sys/logging.hpp"
 
@@ -7,9 +23,9 @@
 
 namespace pf
 {
-#define OGL_NAME (&this->renderer)
+#define OGL_NAME (this->renderer.driver)
 
-  RendererObj::RendererObj(RendererDriver &renderer_, const FileName &fileName) :
+  RendererObj::RendererObj(Renderer &renderer_, const FileName &fileName) :
     renderer(renderer_),
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
@@ -27,7 +43,8 @@ namespace pf
         const char *name = obj->mat[i].map_Kd;
         if (name == NULL || strlen(name) == 0)
           continue;
-        Ref<Texture2D> tex = renderer.getTexture(name);
+#if 0
+        Ref<Texture2D> tex = renderer.getTextureState(name).tex;
         if (tex == false) {
           PF_MSG_V("RendererObj: loading " << name);
           bool isLoaded = false;
@@ -44,6 +61,9 @@ namespace pf
           if (isLoaded == false)
             renderer.setTexture(name, renderer.defaultTex);
         }
+#else
+        renderer.streamer->loadTextureSync(name);
+#endif
       }
 
       // Map each material group to the texture name
@@ -54,7 +74,7 @@ namespace pf
         if (name == NULL || strlen(name) == 0)
           this->tex[i] = renderer.defaultTex;
         else
-          this->tex[i] = renderer.getTexture(name);
+          this->tex[i] = renderer.streamer->loadTextureSync(name).tex;
       }
 
       // Compute each object bounding box and group of triangles

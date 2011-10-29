@@ -15,15 +15,17 @@
 // ======================================================================== //
 
 #include "renderer/texture.hpp"
+#include "renderer/renderer.hpp"
 #include "renderer/renderer_driver.hpp"
 #include "sys/tasking.hpp"
+#include "sys/logging.hpp"
 #include "image/stb_image.hpp"
 #include "math/math.hpp"
 
 #include <cstring>
 #include <algorithm>
 
-#define OGL_NAME (&renderer)
+#define OGL_NAME (renderer.driver)
 namespace pf
 {
   static unsigned char *doMipmap(const unsigned char *src,
@@ -61,19 +63,20 @@ namespace pf
     }
   }
 
-  Texture2D::Texture2D(RendererDriver &renderer, const FileName &fileName, bool mipmap)
+  Texture2D::Texture2D(Renderer &renderer, const FileName &fileName, bool mipmap)
     : renderer(renderer)
   {
     int comp;
     unsigned char *img = stbi_load(std::string(fileName).c_str(),
                                    (int*) &this->w, (int*) &this->h, &comp, 0);
     this->fmt = this->minLevel = this->maxLevel = this->handle = 0;
+    uint32 w0 = w, h0 = h;
     if (img != NULL) {
       // Revert TGA images
       this->fmt = GL_RGBA;
       //if (fileName.ext() == "tga") TODO check the image loader
-      mirror(img, w, h, comp);
-      const int levelNum = (int) max(log2(float(w)), log2(float(h)));
+      mirror(img, w0, h0, comp);
+      const int levelNum = (int) max(log2(float(w0)), log2(float(h0)));
       switch (comp) {
         case 3: this->fmt = GL_RGB; break;
         case 4: this->fmt = GL_RGBA; break;
@@ -90,16 +93,16 @@ namespace pf
       R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       int lvl = 0;
       for (;;) {
-        R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w, h, 0, fmt, GL_UNSIGNED_BYTE, img);
+        R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w0, h0, 0, fmt, GL_UNSIGNED_BYTE, img);
         if (lvl >= levelNum || mipmap == false) {
           pf::free(img);
           break;
         } else {
-          const int mmW = max(w/2, 1u), mmH = max(h/2, 1u);
-          unsigned char *mipmap = doMipmap(img, w, h, mmW, mmH, comp);
+          const int mmW = max(w0/2, 1u), mmH = max(h0/2, 1u);
+          unsigned char *mipmap = doMipmap(img, w0, h0, mmW, mmH, comp);
           pf::free(img);
-          w = mmW;
-          h = mmH;
+          w0 = mmW;
+          h0 = mmH;
           img = mipmap;
         }
         ++lvl;
@@ -107,6 +110,7 @@ namespace pf
       R_CALL (BindTexture, GL_TEXTURE_2D, 0);
     } else
       this->w = this->h = 0;
+    this->name = fileName.name();
   }
 
   Texture2D::~Texture2D(void) {
@@ -196,20 +200,43 @@ namespace pf
     return NULL;
   }
 
-  Ref<Task> TextureStreamer::loadTexture(const char *name) {
+  Ref<Task> TextureStreamer::loadTexture(const FileName &name) {
     Lock<MutexSys> lock(mutex);
 
     // Somebody already issued a load for it
-    TextureState texState = this->getTextureStateUnlocked(name);
+    TextureState texState = this->getTextureStateUnlocked(name.c_str());
     if (texState.value == TextureState::LOADING ||
         texState.value == TextureState::COMPLETE)
       return texState.loadingTask;
 
     // Create the task and indicate everybody else that texture is loading
-    Task *loadingTask = PF_NEW(TaskTextureLoad, name, *this);
-    this->texMap[name] = TextureState(TextureState::LOADING, loadingTask);
+    Task *loadingTask = PF_NEW(TaskTextureLoad, name.c_str(), *this);
+    this->texMap[name.c_str()] = TextureState(TextureState::LOADING, loadingTask);
     loadingTask->scheduled();
     return loadingTask;
+  }
+
+  TextureState TextureStreamer::loadTextureSync(const FileName &name) {
+    TextureState state = this->getTextureState(name.c_str());
+    if (state.tex)
+      return TextureState(*state.tex);
+    else {
+      PF_MSG_V("TextureStreamer: loading " << name.str());
+      bool isLoaded = false;
+      for (size_t i = 0; i < defaultPathNum; ++i) {
+        const FileName dataPath(defaultPath[i]);
+        const FileName path = dataPath + name;
+        Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, path);
+        isLoaded = tex->isValid();
+        if (isLoaded) {
+          this->texMap[name.c_str()] = TextureState(*tex);
+          break;
+        }
+      }
+      if (isLoaded == false)
+        this->texMap[name.c_str()] = TextureState(*renderer.defaultTex);
+      return texMap[name.c_str()];
+    }
   }
 }
 #undef OGL_NAME

@@ -11,24 +11,25 @@
 
 namespace pf
 {
-  /*! Its owns all the textures (TODO Change that to Renderer) */
-  class RendererDriver;
+  /*! Its owns all the textures */
+  class Renderer;
 
   /*! Small wrapper around a GL 2D texture */
   struct Texture2D : RefCount
   {
     /*! Create texture from an image. mipmap == true will create the mipmaps */
-    Texture2D(RendererDriver &renderer, const FileName &path, bool mipmap = true);
+    Texture2D(Renderer &renderer, const FileName &path, bool mipmap = true);
     /*! Release it from OGL */
     ~Texture2D(void);
     /*! Valid means it is actually in GL */
     INLINE bool isValid(void) const {return this->handle != 0;}
-    RendererDriver &renderer; //!< Creates this class
-    GLuint handle;            //!< Texture object itself
-    GLuint fmt;               //!< GL format of the texture
-    GLuint w, h;              //!< Dimensions of level 0
-    GLuint minLevel;          //!< Minimum level we loaded
-    GLuint maxLevel;          //!< Maximum level we loaded
+    Renderer &renderer; //!< Creates this class
+    GLuint handle;      //!< Texture object itself
+    GLuint fmt;         //!< GL format of the texture
+    GLuint w, h;        //!< Dimensions of level 0
+    GLuint minLevel;    //!< Minimum level we loaded
+    GLuint maxLevel;    //!< Maximum level we loaded
+    std::string name;
   };
 
   /*! States of the texture. This also includes the loading task itself. This
@@ -40,6 +41,7 @@ namespace pf
     INLINE TextureState(void) : value(NOT_HERE) {}
     INLINE TextureState(int value, Task *task) :
       loadingTask(task), value(value) {}
+    INLINE TextureState(Texture2D &tex) : tex(&tex), value(COMPLETE) {}
     Ref<Texture2D> tex;    //!< Texture itself
     Ref<Task> loadingTask; //!< Pointer to the task that issued the load
     int value;             //!< Current loading state
@@ -60,7 +62,7 @@ namespace pf
   class TextureStreamer
   {
   public:
-    INLINE TextureStreamer(void) {}
+    INLINE TextureStreamer(Renderer &renderer) : renderer(renderer) {}
     INLINE ~TextureStreamer(void) {}
 
     /*! Indicate the current loading state of the texture */
@@ -69,19 +71,20 @@ namespace pf
      *  return the task that is currently loading it. That may be NULL if the
      *  task is already loaded
      */
-    Ref<Task> loadTexture(const char *name);
+    Ref<Task> loadTexture(const FileName &name);
     /*! Synchronous version of the loading (TODO remove it) (MAIN THREAD ONLY!!) */
-    TextureState loadTextureSync(const char *name);
+    TextureState loadTextureSync(const FileName &name);
 
   private:
     /*! Store for each texture its state */
-    std::unordered_map<const char*, TextureState> texMap;
+    std::unordered_map<std::string, TextureState> texMap;
     /*! Serialize the streamer access */
     MutexSys mutex;
     /*! Unlocked for internal use */
     TextureState getTextureStateUnlocked(const char *name);
     friend class TaskTextureLoad;    //!< Load the textures from the disk
     friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
+    Renderer &renderer;              //!< Owner of the streamer
   };
 } /* namespace pf */
 

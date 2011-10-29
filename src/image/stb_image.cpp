@@ -1979,7 +1979,7 @@ stbi_inline static int bit_reverse(int v, int bits)
    return bitreverse16(v) >> (16-bits);
 }
 
-static int zbuild_huffman(zhuffman *z, uint8 *sizelist, int num)
+static int zbuild_huffman(zhuffman *z, const uint8 *sizelist, int num)
 {
    int i,k=0;
    int code, next_code[16], sizes[17];

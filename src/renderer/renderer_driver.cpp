@@ -21,17 +21,6 @@ namespace pf
   };
   const size_t defaultPathNum = ARRAY_ELEM_NUM(defaultPath);
 
-  Ref<Texture2D> loadDefaultTexture(RendererDriver &renderer) {
-    for (size_t i = 0; i < defaultPathNum; ++i) {
-      const std::string prefix = defaultPath[i];
-      Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, prefix + "Maps/chess.tga");
-      if (tex->handle)
-        return tex;
-    }
-    FATAL ("Default texture not found");
-    return NULL;
-  }
-
   GLuint RendererDriver::makeGBufferTexture(int internal, int w, int h, int data, int type) {
     GLuint tex = 0;
     R_CALL (GenTextures, 1, &tex);
@@ -353,7 +342,6 @@ namespace pf
     this->initDiffuse();
     this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
-    this->texMap["defaultTex"] = this->defaultTex = loadDefaultTexture(*this);
   }
 
   RendererDriver::~RendererDriver(void) {

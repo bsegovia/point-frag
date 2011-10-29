@@ -19,7 +19,7 @@
 #include "sys/tasking.hpp"
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
-#include "renderer/renderer_driver.hpp"
+#include "renderer/renderer.hpp"
 
 #include <GL/freeglut.h>
 
@@ -27,7 +27,7 @@ using namespace pf;
 
 namespace pf
 {
-  RendererDriver *renderer = NULL;
+  Renderer *renderer = NULL;
   Ref<RendererObj> renderObj = NULL;
   LoggerStream *coutStream = NULL;
 
@@ -70,7 +70,7 @@ namespace pf
     glutCreateWindow(argv[0]);
     //glutFullScreen();
 
-    ogl = renderer = PF_NEW(RendererDriver);
+    renderer = PF_NEW(Renderer);
     renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
   }
 
@@ -78,7 +78,7 @@ namespace pf
   {
     renderObj = NULL;
     PF_DELETE(renderer);
-    ogl = renderer = NULL;
+    renderer = NULL;
   }
 }
 

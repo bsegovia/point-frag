@@ -194,7 +194,5 @@ namespace pf
 
     return name;
   }
-
-  struct OGL *ogl = NULL;
 }
 

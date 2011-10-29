@@ -14,45 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __RENDERER_HPP__
-#define __RENDERER_HPP__
-
-#include "texture.hpp"
+#include "renderer.hpp"
 #include "renderer_driver.hpp"
+#include "texture.hpp"
 
 namespace pf
 {
-  class RendererObj;
-  class TextureStreamer;
-
-  /*! Renderer front-end. This is the real interface for all other game
-   *  component. It contains all the graphics objects, performs the culling,
-   *  manage the occlusion queuries ...
-   */
-  class Renderer
+  Renderer::Renderer(void)
   {
-  public:
-    Renderer(void);
-    ~Renderer(void);
+    this->driver = PF_NEW(RendererDriver);
+    this->streamer = PF_NEW(TextureStreamer, *this);
+    this->defaultTex = this->streamer->loadTextureSync("Maps/chess.tga").tex;
+    FATAL_IF (defaultTex->isValid() == false, "Default texture not found");
+  }
 
-    /*! Get the texture or possibly a task loading it */
-    INLINE TextureState getTexture(const char *name) {
-      return this->streamer->getTextureState(name);
-    }
-    /*! Simplistic of course but we will do better later */
-    INLINE void display(const RendererObj &obj) {
-      this->driver->displayRendererObj(obj);
-    }
-
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-
-  //private:
-    RendererDriver *driver;    //!< Low-level interface to the graphics API
-    TextureStreamer *streamer; //!< Handles and stores textures
-  };
-
-} /* namespace pf*/
-
-#endif /* __RENDERER_HPP__ */
+  Renderer::~Renderer(void)
+  {
+    this->defaultTex = NULL;
+    PF_DELETE(this->streamer);
+    PF_DELETE(this->driver);
+  }
+} /* namespace pf */
 

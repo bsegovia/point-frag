@@ -20,16 +20,16 @@
 #include "models/obj.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/renderer_obj.hpp"
-#include "renderer/renderer_driver.hpp"
+#include "renderer/renderer.hpp"
 
 #include <GL/freeglut.h>
 
 namespace pf
 {
-  extern RendererDriver *renderer;
+  extern Renderer *renderer;
   extern Ref<RendererObj> renderObj;
 
-#define OGL_NAME ((RendererDriver*)ogl)
+#define OGL_NAME ((RendererDriver*)renderer->driver)
 
   TaskGameRender::TaskGameRender(FlyCamera &cam, InputEvent &event) :
     cam(&cam), event(&event)
@@ -55,8 +55,8 @@ namespace pf
     R_CALL (Clear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Display the objects with their textures
-    R_CALL (UseProgram, renderer->diffuse.program);
-    R_CALL (UniformMatrix4fv, renderer->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
+    R_CALL (UseProgram, renderer->driver->diffuse.program);
+    R_CALL (UniformMatrix4fv, renderer->driver->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
     renderObj->display();
     R_CALL (UseProgram, 0);
 

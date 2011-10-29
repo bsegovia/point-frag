@@ -21,6 +21,7 @@ set (SRC
   models/obj.cpp
   renderer/ogl.cpp
   renderer/texture.cpp
+  renderer/renderer.cpp
   renderer/renderer_obj.cpp
   renderer/renderer_driver.cpp)
 include_directories (.)

@@ -43,7 +43,7 @@ namespace pf
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
     /*! Display a model */
     void displayRendererObj(const RendererObj &model);
-#if 1
+#if 0
     /*! Get the texture by name (return NULL if not found) */
     INLINE Ref<Texture2D> getTexture(const char *name) const {
       assert(name);
@@ -66,9 +66,9 @@ namespace pf
     /*! For vertex arrays */
     static const GLuint ATTR_POSITION = 0;
     static const GLuint ATTR_TEXCOORD = 1;
-    static const GLuint ATTR_COLOR = 2;
-    static const GLuint ATTR_NORMAL = 3;
-    static const GLuint ATTR_TANGENT = 4;
+    static const GLuint ATTR_COLOR    = 2;
+    static const GLuint ATTR_NORMAL   = 3;
+    static const GLuint ATTR_TANGENT  = 4;
 
     /*! FBO (and related buffers) for deferred shading */
     struct {
@@ -108,12 +108,9 @@ namespace pf
     void initDiffuse(void);
     void destroyDiffuse(void);
 
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-
   private:
     /*! Store the texture per name (only its base name is taken into account) */
-    std::unordered_map<std::string, Ref<Texture2D>> texMap;
+    //std::unordered_map<std::string, Ref<Texture2D>> texMap;
     /*! Default colors */
     vec4f defaultDiffuseCol, defaultSpecularCol;
     /*! Model view projection */
