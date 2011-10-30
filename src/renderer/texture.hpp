@@ -17,8 +17,6 @@ namespace pf
   /*! Small wrapper around a GL 2D texture */
   struct Texture2D : RefCount
   {
-    /*! Create texture from an image. mipmap == true will create the mipmaps */
-    Texture2D(Renderer &renderer, const FileName &path, bool mipmap = true);
     /*! Create an empty texture */
     Texture2D(Renderer &renderer);
     /*! Release it from OGL */
@@ -63,8 +61,8 @@ namespace pf
   class TextureStreamer
   {
   public:
-    INLINE TextureStreamer(Renderer &renderer) : renderer(renderer) {}
-    INLINE ~TextureStreamer(void) {}
+    TextureStreamer(Renderer &renderer);
+    ~TextureStreamer(void);
 
     /*! Indicate the current loading state of the texture */
     TextureState getTextureState(const char *name);
@@ -72,9 +70,7 @@ namespace pf
      *  return the task that is currently loading it. That may be NULL if the
      *  task is already loaded
      */
-    Ref<Task> loadTexture(const FileName &name);
-    /*! Synchronous version of the loading (TODO remove it) (MAIN THREAD ONLY!!) */
-    TextureState loadTextureSync(const FileName &name);
+    Ref<Task> createLoadTask(const FileName &name);
 
   private:
     /*! Store for each texture its state */

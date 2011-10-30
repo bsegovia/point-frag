@@ -715,7 +715,7 @@ namespace pf {
   static TaskAllocator *allocator = NULL;
 
   void Task::scheduled(void) {
-    IF_DEBUG(this->state = TaskState::SCHEDULED);
+    this->state = TaskState::SCHEDULED;
     this->toStart--;
     if (this->toStart == 0) scheduler->schedule(*this);
   }
@@ -762,7 +762,6 @@ namespace pf {
   }
 
   void Task::waitForCompletion(void) {
-    assert(this->state != TaskState::NEW);
     while (this->state != TaskState::DONE) {
       Task *someTask = scheduler->getTask();
       if (someTask) scheduler->runTask(someTask);

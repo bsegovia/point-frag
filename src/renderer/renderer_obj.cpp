@@ -25,6 +25,54 @@ namespace pf
 {
 #define OGL_NAME (this->renderer.driver)
 
+  /*! Append the newly loaded texture in the obj (XXX hack make something
+   * better)
+   */
+  class TaskUpdateObjTexture : public Task
+  {
+
+  };
+
+  /*! Load all textures for the given renderer obj */
+  class TaskLoadObjTexture : public Task
+  {
+  public:
+    TaskLoadObjTexture(TextureStreamer &streamer, const Obj *obj) :
+      Task("TaskLoadObjTexture"), streamer(streamer)
+    {
+      if (obj->matNum) {
+        this->texNum = obj->matNum;
+        this->texName = PF_NEW_ARRAY(std::string, this->texNum);
+        for (size_t i = 0; i < this->texNum; ++i) {
+          const char *name = obj->mat[i].map_Kd;
+          if (name == NULL || strlen(name) == 0)
+            continue;
+          this->texName[i] = name;
+        }
+      } else {
+        this->texNum = 0;
+        this->texName = NULL;
+      }
+    }
+    ~TaskLoadObjTexture(void) {
+      if (this->texName) PF_DELETE_ARRAY(this->texName);
+    }
+    virtual Task* run(void) {
+      for (size_t i = 0; i < texNum; ++i) {
+        if (texName[i].size() == 0) continue;
+        Ref<Task> loading = streamer.createLoadTask(texName[i]);
+        if (loading) {
+          loading->ends(this);
+          loading->scheduled();
+        }
+      }
+      return NULL;
+    }
+    TextureStreamer &streamer;
+    std::string *texName;
+    size_t texNum;
+  };
+
   RendererObj::RendererObj(Renderer &renderer_, const FileName &fileName) :
     renderer(renderer_),
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
@@ -38,23 +86,25 @@ namespace pf
     }
 
     if (isLoaded) {
-      PF_MSG_V("RendererObj: loading textures");
-      for (size_t i = 0; i < obj->matNum; ++i) {
-        const char *name = obj->mat[i].map_Kd;
-        if (name == NULL || strlen(name) == 0)
-          continue;
-        renderer.streamer->loadTextureSync(name);
-      }
+      PF_MSG_V("RendererObj: asynchronously loading textures");
+      Ref<Task> texLoadingTask = PF_NEW(TaskLoadObjTexture, *renderer.streamer, obj);
+      texLoadingTask->scheduled();
 
       // Map each material group to the texture name
       this->tex = PF_NEW_ARRAY(Ref<Texture2D>, obj->grpNum);
+      this->texName = PF_NEW_ARRAY(std::string, obj->grpNum);
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const int mat = obj->grp[i].m;
         const char *name = obj->mat[mat].map_Kd;
         if (name == NULL || strlen(name) == 0)
           this->tex[i] = renderer.defaultTex;
-        else
-          this->tex[i] = renderer.streamer->loadTextureSync(name).tex;
+        else {
+          TextureState state = renderer.streamer->getTextureState(name);
+          if (state.value == TextureState::COMPLETE)
+            this->tex[i] = state.tex;
+          else
+            this->tex[i] = renderer.defaultTex;
+        }
       }
 
       // Compute each object bounding box and group of triangles
@@ -124,6 +174,7 @@ namespace pf
   }
 
   void RendererObj::display(void) {
+    Lock<MutexSys> lock(mutex);
     R_CALL (BindVertexArray, this->vertexArray);
     R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);

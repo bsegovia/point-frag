@@ -24,7 +24,11 @@ namespace pf
   {
     this->driver = PF_NEW(RendererDriver);
     this->streamer = PF_NEW(TextureStreamer, *this);
-    this->defaultTex = this->streamer->loadTextureSync("Maps/chess.tga").tex;
+    Ref<Task> loadingTask = this->streamer->createLoadTask("Maps/chess.tga");
+    loadingTask->scheduled();
+    loadingTask->waitForCompletion();
+    const TextureState state = this->streamer->getTextureState("Maps/chess.tga");
+    this->defaultTex = state.tex;
     FATAL_IF (defaultTex->isValid() == false, "Default texture not found");
   }
 

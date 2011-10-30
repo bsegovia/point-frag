@@ -41,23 +41,6 @@ namespace pf
 
     /*! Display bounding boxes in wireframe */
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
-    /*! Display a model */
-    void displayRendererObj(const RendererObj &model);
-#if 0
-    /*! Get the texture by name (return NULL if not found) */
-    INLINE Ref<Texture2D> getTexture(const char *name) const {
-      assert(name);
-      const auto it = this->texMap.find(name);
-      if (it == this->texMap.end())
-        return NULL;
-      else
-        return it->second;
-    }
-    /*! Set the texture in the map */
-    INLINE void setTexture(const char *name, Ref<Texture2D> &tex) {
-      this->texMap[name] = tex;
-    }
-#endif
     /*! Uniform values used in the renderer */
     INLINE void setDefaultDiffuseCol(vec4f c)  {this->defaultDiffuseCol = c;}
     INLINE void setDefaultSpecularCol(vec4f c) {this->defaultSpecularCol = c;}

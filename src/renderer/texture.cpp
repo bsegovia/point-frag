@@ -67,54 +67,6 @@ namespace pf
     renderer(renderer), handle(0), fmt(0), w(0), h(0), minLevel(0), maxLevel(0)
   {}
 
-  Texture2D::Texture2D(Renderer &renderer, const FileName &fileName, bool mipmap)
-    : renderer(renderer)
-  {
-    int comp;
-    unsigned char *img = stbi_load(std::string(fileName).c_str(),
-                                   (int*) &this->w, (int*) &this->h, &comp, 0);
-    this->fmt = this->minLevel = this->maxLevel = this->handle = 0;
-    uint32 w0 = w, h0 = h;
-    if (img != NULL) {
-      // Revert images
-      this->fmt = GL_RGBA;
-      mirror(img, w0, h0, comp);
-      const int levelNum = (int) max(log2(float(w0)), log2(float(h0)));
-      switch (comp) {
-        case 3: this->fmt = GL_RGB; break;
-        case 4: this->fmt = GL_RGBA; break;
-        default: FATAL("unsupported number of componenents");
-      };
-      this->minLevel = 0;
-      this->maxLevel = levelNum;
-
-      // Load the texture
-      R_CALL (GenTextures, 1, &this->handle);
-      R_CALL (ActiveTexture, GL_TEXTURE0);
-      R_CALL (BindTexture, GL_TEXTURE_2D, this->handle);
-      R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-      R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      int lvl = 0;
-      for (;;) {
-        R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w0, h0, 0, fmt, GL_UNSIGNED_BYTE, img);
-        if (lvl >= levelNum || mipmap == false) {
-          PF_FREE(img);
-          break;
-        } else {
-          const int mmW = max(w0/2, 1u), mmH = max(h0/2, 1u);
-          unsigned char *mipmap = doMipmap(img, w0, h0, mmW, mmH, comp);
-          PF_FREE(img);
-          w0 = mmW;
-          h0 = mmH;
-          img = mipmap;
-        }
-        ++lvl;
-      }
-      R_CALL (BindTexture, GL_TEXTURE_2D, 0);
-    } else
-      this->w = this->h = 0;
-  }
-
   Texture2D::~Texture2D(void) {
     if (this->isValid()) R_CALL (DeleteTextures, 1, &this->handle);
   }
@@ -136,18 +88,18 @@ namespace pf
   class TextureLoadData
   {
   public:
-    TextureLoadData(const char *name);
+    TextureLoadData(const std::string &name);
     ~TextureLoadData(void);
     INLINE bool isValid(void) const { return texels != NULL; }
     unsigned char **texels; //!< All mip-map level texels
     int *w, *h;             //!< Dimensions of all mip-maps
-    const char *name;       //!< Name of the file containing the data
+    std::string name;       //!< Name of the file containing the data
     int levelNum;           //!< Number of mip-maps
     int fmt;                //!< Format of the textures
   };
 
-  TextureLoadData::TextureLoadData(const char *name) :
-    texels(NULL), w(NULL), h(NULL), name(NULL), levelNum(0)
+  TextureLoadData::TextureLoadData(const std::string &name) :
+    texels(NULL), w(NULL), h(NULL), name(name), levelNum(0)
   {
     // Try to find the file and load it
     bool isLoaded = false;
@@ -169,10 +121,12 @@ namespace pf
     if (isLoaded) {
       mirror(img, w0, h0, channel);
       this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
-      this->w = PF_NEW_ARRAY(int, this->levelNum);
-      this->h = PF_NEW_ARRAY(int, this->levelNum);
-      this->texels = PF_NEW_ARRAY(unsigned char*, this->levelNum);
+      this->w = PF_NEW_ARRAY(int, this->levelNum+1);
+      this->h = PF_NEW_ARRAY(int, this->levelNum+1);
+      this->texels = PF_NEW_ARRAY(unsigned char*, this->levelNum+1);
       this->texels[0] = img;
+      this->w[0] = w0;
+      this->h[0] = h0;
       switch (channel) {
         case 3: this->fmt = GL_RGB; break;
         case 4: this->fmt = GL_RGBA; break;
@@ -183,6 +137,8 @@ namespace pf
         const int mmW = max(w0 / 2, 1), mmH = max(h0 / 2, 1);
         unsigned char *mipmap = doMipmap(img, w0, h0, mmW, mmH, channel);
         this->texels[lvl] = mipmap;
+        this->w[lvl] = mmW;
+        this->h[lvl] = mmH;
         w0 = mmW;
         h0 = mmH;
         img = mipmap;
@@ -194,7 +150,7 @@ namespace pf
   {
     PF_DELETE_ARRAY(this->w);
     PF_DELETE_ARRAY(this->h);
-    for (int i = 0; i < this->levelNum; ++i) PF_FREE(this->texels[i]);
+    for (int i = 0; i <= this->levelNum; ++i) PF_FREE(this->texels[i]);
     PF_DELETE_ARRAY(this->texels);
   }
 
@@ -207,10 +163,13 @@ namespace pf
   class TaskTextureLoad : public Task
   {
   public:
-    INLINE TaskTextureLoad(const char *name, TextureStreamer &streamer) :
-      Task("TaskTextureLoad"), name(name), streamer(streamer) {}
+    INLINE TaskTextureLoad(const std::string name, TextureStreamer &streamer) :
+      Task("TaskTextureLoad"), name(name), streamer(streamer)
+    {
+      this->setPriority(TaskPriority::LOW);
+    }
     virtual Task* run(void);
-    const char *name;          //!< File to load
+    std::string name;          //!< File to load
     TextureStreamer &streamer; //!< Streamer that handles streaming
   };
 
@@ -218,11 +177,13 @@ namespace pf
   class TaskTextureLoadOGL : public TaskMain
   {
   public:
-    INLINE TaskTextureLoadOGL(TextureLoadData *data) :
-      TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer) {}
+    INLINE TaskTextureLoadOGL(TextureLoadData *data, TextureStreamer &streamer) :
+      TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer)
+    {
+      this->setPriority(TaskPriority::LOW);
+    }
     virtual Task* run(void);
     TextureLoadData *data;     //!< Data to upload
-    const char *name;          //!< Texture to load
     TextureStreamer &streamer; //!< Streamer that handles the texture
   };
 
@@ -240,17 +201,35 @@ namespace pf
     }
     // We need to load it in OGL now
     else {
-      Task *next = PF_NEW(TaskTextureLoadOGL, data);
+      Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
       next->ends(this);
       next->scheduled();
     }
     return NULL;
   }
-#undef OGL_NAME
 
+  /*! When a concurrent load is done on the *same* resource, we simply create
+   * a proxy task that waits for the loading task itself
+   */
+  class TaskTextureLoadProxy : public Task
+  {
+  public:
+    TaskTextureLoadProxy(Ref<Task> loadingTask) :
+      Task("TaskTextureLoadProxy"), loadingTask(loadingTask) {}
+    virtual Task *run(void) {
+      loadingTask->waitForCompletion();
+      return NULL;
+    }
+    Ref<Task> loadingTask;
+  };
+
+#undef OGL_NAME
 #define OGL_NAME (this->streamer.renderer.driver)
 
-  Task *TaskTextureLoadOGL::run(void) {
+  Task *TaskTextureLoadOGL::run(void)
+  {
+    PF_MSG_V("TextureStreamer: OGL uploading " << data->name);
+    double t = getSeconds();
     Ref<Texture2D> tex = PF_NEW(Texture2D, streamer.renderer);
     tex->w = data->w[0];
     tex->h = data->h[0];
@@ -268,64 +247,58 @@ namespace pf
       R_CALL (TexImage2D,
               GL_TEXTURE_2D,
               lvl,
-              tex->fmt, tex->w, tex->h,
+              tex->fmt, data->w[lvl], data->h[lvl],
               0,
               tex->fmt,
               GL_UNSIGNED_BYTE,
-              this->data->texels[lvl]);
-
-    // The data is not needed anymore
-    PF_DELETE(this->data);
+              data->texels[lvl]);
 
     // Update the map to say we are done with this texture. We can now use it
     Lock<MutexSys> lock(streamer.mutex);
-    auto it = streamer.texMap.find(name);
+    auto it = streamer.texMap.find(this->data->name);
     assert(it != streamer.texMap.end());
     it->second.loadingTask = NULL;
     it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
 
+    // The data is not needed anymore
+    PF_DELETE(this->data);
+
+    PF_MSG_V("TextureStreamer: uploading " << data->name << 
+             " time: " << (getSeconds() - t) << "s");
+
     return NULL;
   }
 #undef OGL_NAME
 
-  Ref<Task> TextureStreamer::loadTexture(const FileName &name) {
+  TextureStreamer::TextureStreamer(Renderer &renderer) : renderer(renderer) {}
+  TextureStreamer::~TextureStreamer(void) {
+    for (auto it = texMap.begin(); it != texMap.end(); ++it) {
+      TextureState &state = it->second;
+      if (state.loadingTask)
+        state.loadingTask->waitForCompletion();
+    }
+  }
+
+  Ref<Task> TextureStreamer::createLoadTask(const FileName &name)
+  {
     Lock<MutexSys> lock(mutex);
 
     // Somebody already issued a load for it
     TextureState texState = this->getTextureStateUnlocked(name.c_str());
     if (texState.value == TextureState::LOADING ||
-        texState.value == TextureState::COMPLETE)
-      return texState.loadingTask;
+        texState.value == TextureState::COMPLETE) {
+      if (texState.loadingTask == false)
+        return NULL;
+      else
+        return PF_NEW(TaskTextureLoadProxy, texState.loadingTask);
+    }
 
     // Create the task and indicate everybody else that texture is loading
     Task *loadingTask = PF_NEW(TaskTextureLoad, name.c_str(), *this);
     this->texMap[name.str()] = TextureState(TextureState::LOADING, loadingTask);
-    loadingTask->scheduled();
     return loadingTask;
   }
 
-  TextureState TextureStreamer::loadTextureSync(const FileName &name) {
-    TextureState state = this->getTextureState(name.c_str());
-    if (state.tex)
-      return TextureState(*state.tex);
-    else {
-      PF_MSG_V("TextureStreamer: loading " << name.str());
-      bool isLoaded = false;
-      for (size_t i = 0; i < defaultPathNum; ++i) {
-        const FileName dataPath(defaultPath[i]);
-        const FileName path = dataPath + name;
-        Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, path);
-        isLoaded = tex->isValid();
-        if (isLoaded) {
-          this->texMap[name.str()] = TextureState(*tex);
-          break;
-        }
-      }
-      if (isLoaded == false)
-        this->texMap[name.str()] = TextureState(*renderer.defaultTex);
-      return texMap[name.str()];
-    }
-  }
-}
+} /* namespace pf */
 

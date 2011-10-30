@@ -39,10 +39,6 @@ namespace pf
     INLINE TextureState getTexture(const char *name) {
       return this->streamer->getTextureState(name);
     }
-    /*! Simplistic of course but we will do better later */
-    INLINE void display(const RendererObj &obj) {
-      this->driver->displayRendererObj(obj);
-    }
 
     /*! Default texture */
     Ref<Texture2D> defaultTex;

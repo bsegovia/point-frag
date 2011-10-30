@@ -103,7 +103,7 @@ namespace pf
 
 /*! Macros to handle logging information in the code */
 #define PF_LOG_HERE LoggerInfo(__FILE__, __FUNCTION__, __LINE__)
-#define PF_INFO " [thread " << loggerThreadID << " - " << PF_LOG_HERE << "]"
+#define PF_INFO " ######## thread " << loggerThreadID << " - " << PF_LOG_HERE
 
 /*! Verbose macros: they add logging position and thread ID */
 #define PF_WARNING_V(MSG) (*logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush)

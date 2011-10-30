@@ -39,8 +39,10 @@ namespace pf
     GLuint grpNum;        //!< Number of groups in the model
     GLuint topology;      //!< Mostly triangle or triangle strip
     Ref<Texture2D> *tex;  //!< One texture per group of triangles
+    std::string *texName; //!< All texture names
     BBox3f *bbox;         //!< One bounding box for each group
     Group *grp;           //!< Indices of each group
+    MutexSys mutex;       //!< XXX just to play with async load
     /*! Valid means it is in GL */
     INLINE bool isValid(void) { return this->grpNum > 0; }
     /*! Display it using the renderer */
