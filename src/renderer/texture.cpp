@@ -273,6 +273,7 @@ namespace pf
 
   TextureStreamer::TextureStreamer(Renderer &renderer) : renderer(renderer) {}
   TextureStreamer::~TextureStreamer(void) {
+    // Properly for all outstanding tasks
     for (auto it = texMap.begin(); it != texMap.end(); ++it) {
       TextureState &state = it->second;
       if (state.loadingTask)

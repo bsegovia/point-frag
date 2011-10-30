@@ -26,7 +26,9 @@ namespace pf
 #define OGL_NAME (this->renderer.driver)
 
   /*! Append the newly loaded texture in the obj (XXX hack make something
-   * better)
+   *  better later rather than using lock on the renderer obj. Better should
+   *  be to make renderer obj immutable and replace it when all textures are
+   *  loaded)
    */
   class TaskUpdateObjTexture : public Task
   {
@@ -168,6 +170,7 @@ namespace pf
       R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
       R_CALL (DeleteBuffers, 1, &this->elementBuffer);
       PF_DELETE_ARRAY(this->tex);
+      PF_DELETE_ARRAY(this->texName);
       PF_DELETE_ARRAY(this->bbox);
       PF_DELETE_ARRAY(this->grp);
     }
