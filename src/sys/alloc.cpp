@@ -47,6 +47,7 @@ namespace pf
     void* insertAlloc(void *ptr, const char *file, const char *function, int line);
     void removeAlloc(void *ptr);
     void dumpAlloc(void);
+    void dumpData(const AllocData &data);
     /*! Count the still unfreed allocations */
     volatile intptr_t unfreedNum;
     /*! Total number of allocations done */
@@ -65,7 +66,10 @@ namespace pf
     if (ptr == NULL) return ptr;
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
-    FATAL_IF(allocMap.find(iptr) != allocMap.end(), "Pointer already in map");
+    if (UNLIKELY(allocMap.find(iptr) != allocMap.end())) {
+      this->dumpData(allocMap.find(iptr)->second);
+      FATAL("Pointer already in map");
+    }
     const auto fileIt = staticStringMap.find(file);
     const auto functionIt = staticStringMap.find(function);
     int fileName, functionName;
@@ -95,15 +99,17 @@ namespace pf
     unfreedNum--;
   }
 
+  void MemDebugger::dumpData(const AllocData &data) {
+    std::cerr << "ALLOC " << data.alloc << ": " <<
+                 "file " << staticStringVector[data.fileName] << ", " <<
+                 "function " << staticStringVector[data.functionName] << ", " <<
+                 "line " << data.line << std::endl;
+  }
+
   void MemDebugger::dumpAlloc(void) {
     std::cerr << "MemDebugger: Unfreed number: " << unfreedNum << std::endl;
-    for (auto it = allocMap.begin(); it != allocMap.end(); ++it) {
-      const AllocData &data = it->second;
-      std::cerr << "ALLOC " << data.alloc << ": " <<
-                   "file " << staticStringVector[data.fileName] << ", " <<
-                   "function " << staticStringVector[data.functionName] << ", " <<
-                   "line " << data.line << std::endl;
-    }
+    for (auto it = allocMap.begin(); it != allocMap.end(); ++it)
+      this->dumpData(it->second);
     std::cerr << "MemDebugger: " << staticStringVector.size()
               << " allocated static strings" << std::endl;
   }
@@ -139,6 +145,10 @@ namespace pf
   }
 
   void* realloc(void *ptr, size_t size) {
+#if PF_DEBUG_MEMORY
+    if (ptr) MemDebuggerRemoveAlloc(ptr);
+#endif /* PF_DEBUG_MEMORY */
+    assert(size);
     return std::realloc(ptr, size);
   }
 

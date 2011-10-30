@@ -252,8 +252,10 @@ namespace pf {
     }
   };
 
-  /*! Mandatory before creating and running any task (MAIN THREAD) */
-  void TaskingSystemStart(void);
+  /*! Mandatory before creating and running any task. If workerNum < 0, the
+   *  number of hardware threads minus 1 is chosen (MAIN THREAD)
+   */
+  void TaskingSystemStart(int workerNum = -1);
 
   /*! Make the main thread enter the tasking system (MAIN THREAD) */
   void TaskingSystemEnd(void);

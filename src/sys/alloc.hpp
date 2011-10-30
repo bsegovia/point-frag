@@ -52,32 +52,35 @@ namespace pf
     MemDebuggerInsertAlloc(ptr, file, function, line);
     return ptr;
   }
-}
+} /* namespace pf */
 
 /*! Macros to handle allocation position */
 #define PF_NEW(T,...)               \
-  _MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+  pf::_MemDebuggerInsertAlloc(new T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
 #define PF_NEW_ARRAY(T,N,...)       \
-  _MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+  pf::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
 #define PF_DELETE(X)                \
-  do { MemDebuggerRemoveAlloc(X); delete X; } while (0)
+  do { pf::MemDebuggerRemoveAlloc(X); delete X; } while (0)
 
 #define PF_DELETE_ARRAY(X)          \
-  do { MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
+  do { pf::MemDebuggerRemoveAlloc(X); delete[] X; } while (0)
 
 #define PF_MALLOC(SZ)               \
-  MemDebuggerInsertAlloc(malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
+  pf::MemDebuggerInsertAlloc(pf::malloc(SZ),__FILE__, __FUNCTION__, __LINE__)
+
+#define PF_REALLOC(PTR, SZ)         \
+  pf::MemDebuggerInsertAlloc(pf::realloc(PTR, SZ),__FILE__, __FUNCTION__, __LINE__)
 
 #define PF_FREE(X)                  \
-  do { MemDebuggerRemoveAlloc(X); free(X); } while (0)
+  do { pf::MemDebuggerRemoveAlloc(X); pf::free(X); } while (0)
 
 #define PF_ALIGNED_FREE(X)          \
-  do { MemDebuggerRemoveAlloc(X); alignedFree(X); } while (0)
+  do { pf::MemDebuggerRemoveAlloc(X); pf::alignedFree(X); } while (0)
 
 #define PF_ALIGNED_MALLOC(SZ,ALIGN) \
-  MemDebuggerInsertAlloc(alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
+  pf::MemDebuggerInsertAlloc(pf::alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
 
 #endif /* __PF_ALLOC_HPP__ */
 
