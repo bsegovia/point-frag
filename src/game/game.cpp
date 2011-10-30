@@ -85,7 +85,7 @@ namespace pf
 int main(int argc, char **argv)
 {
   MemDebuggerStart();
-  TaskingSystemStart(0);
+  TaskingSystemStart();
   LoggerStart();
   GameStart(argc, argv);
 
