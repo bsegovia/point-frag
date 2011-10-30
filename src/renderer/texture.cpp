@@ -33,7 +33,7 @@ namespace pf
                                  int mmW, int mmH,
                                  int compNum)
   {
-    unsigned char *dst = (unsigned char*) pf::malloc(mmW*mmH*compNum);
+    unsigned char *dst = (unsigned char*) PF_MALLOC(mmW*mmH*compNum);
     for (int y = 0; y < mmH; ++y)
     for (int x = 0; x < mmW; ++x) {
       const int offset = (x + y*mmW) * compNum;
@@ -94,12 +94,12 @@ namespace pf
       for (;;) {
         R_CALL (TexImage2D, GL_TEXTURE_2D, lvl, fmt, w0, h0, 0, fmt, GL_UNSIGNED_BYTE, img);
         if (lvl >= levelNum || mipmap == false) {
-          pf::free(img);
+          PF_FREE(img);
           break;
         } else {
           const int mmW = max(w0/2, 1u), mmH = max(h0/2, 1u);
           unsigned char *mipmap = doMipmap(img, w0, h0, mmW, mmH, comp);
-          pf::free(img);
+          PF_FREE(img);
           w0 = mmW;
           h0 = mmH;
           img = mipmap;
@@ -135,20 +135,51 @@ namespace pf
   public:
     TextureLoadData(const char *name);
     ~TextureLoadData(void);
-    const char **texels; //!< All mip-map level texels
-    const int *w, *h;    //!< Dimensions of all mip-maps
-    int levelNum;        //!< Number of mip-maps
-    const char *name;    //!< Name of the file containing the data
+    INLINE bool isLoaded(void) const { return texels != NULL; }
+    unsigned char **texels; //!< All mip-map level texels
+    int *w, *h;             //!< Dimensions of all mip-maps
+    const char *name;       //!< Name of the file containing the data
+    int levelNum;           //!< Number of mip-maps
+    int fmt;                //!< Format of the textures
   };
 
-  TextureLoadData::TextureLoadData(const char *name)
+  TextureLoadData::TextureLoadData(const char *name) :
+    texels(NULL), w(NULL), h(NULL), name(NULL), levelNum(0)
   {
+#if 0
+    // Try to find the file and load it
+    bool isLoaded = false;
+    int w0, h0, channel;
+    for (size_t i = 0; i < defaultPathNum; ++i) {
+      const FileName dataPath(defaultPath[i]);
+      const FileName path = dataPath + FileName(name);
+      unsigned char *img = stbi_load(path.c_str(), &w0, &h0, &channel, 0);
+      if (img == NULL)
+        continue;
+      else {
+        isLoaded = true;
+        break;
+      }
+    }
 
+    // We found the image. Now compute the mip-maps
+    if (isLoaded) {
+      mirror(img, w0, h0, channel);
+      this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
+      this->w = PF_NEW_ARRAY(int, this->levelNum);
+      this->h = PF_NEW_ARRAY(int, this->levelNum);
+      this->texels = PF_NEW_ARRAY(unsigned char*, this->levelNum);
+    }
+#endif
   }
 
   TextureLoadData::~TextureLoadData(void)
   {
-
+    PF_DELETE_ARRAY(this->w);
+    PF_DELETE_ARRAY(this->h);
+    for (int i = 0; i < this->levelNum; ++i)
+      PF_DELETE_ARRAY(this->texels[i]);
+    PF_DELETE_ARRAY(this->texels);
   }
 
   class TaskTextureLoad;    //!< Load the textures from the disk
@@ -180,6 +211,30 @@ namespace pf
   };
 
   Task *TaskTextureLoad::run(void) {
+    PF_MSG_V("TextureStreamer: loading " << name);
+#if 0
+
+    // Try to find the file
+    bool isLoaded = false;
+    for (size_t i = 0; i < defaultPathNum; ++i) {
+      const FileName dataPath(defaultPath[i]);
+      const FileName path = dataPath + FileName(name);
+      int w, h, comp;
+      unsigned char *img = stbi_load(path.c_str(), &w, &h, &comp, 0);
+      if (img == NULL)
+        continue;
+      else 
+        isLoaded = true;
+      Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, path);
+      isLoaded = tex->isValid();
+      if (isLoaded) {
+        this->texMap[name.c_str()] = TextureState(*tex);
+        break;
+      }
+    }
+#endif
+    //if (isLoaded == false)
+    //  this->texMap[name.c_str()] = TextureState(*renderer.defaultTex);
     return NULL;
   }
 
