@@ -43,27 +43,7 @@ namespace pf
         const char *name = obj->mat[i].map_Kd;
         if (name == NULL || strlen(name) == 0)
           continue;
-#if 0
-        Ref<Texture2D> tex = renderer.getTextureState(name).tex;
-        if (tex == false) {
-          PF_MSG_V("RendererObj: loading " << name);
-          bool isLoaded = false;
-          for (size_t i = 0; i < defaultPathNum; ++i) {
-            const FileName dataPath(defaultPath[i]);
-            const FileName path = dataPath + FileName(name);
-            tex = PF_NEW(Texture2D, renderer, path);
-            isLoaded = tex->isValid();
-            if (isLoaded) {
-              renderer.setTexture(name, tex);
-              break;
-            }
-          }
-          if (isLoaded == false)
-            renderer.setTexture(name, renderer.defaultTex);
-        }
-#else
         renderer.streamer->loadTextureSync(name);
-#endif
       }
 
       // Map each material group to the texture name

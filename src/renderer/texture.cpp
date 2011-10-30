@@ -72,9 +72,8 @@ namespace pf
     this->fmt = this->minLevel = this->maxLevel = this->handle = 0;
     uint32 w0 = w, h0 = h;
     if (img != NULL) {
-      // Revert TGA images
+      // Revert images
       this->fmt = GL_RGBA;
-      //if (fileName.ext() == "tga") TODO check the image loader
       mirror(img, w0, h0, comp);
       const int levelNum = (int) max(log2(float(w0)), log2(float(h0)));
       switch (comp) {
