@@ -19,6 +19,8 @@ namespace pf
   {
     /*! Create texture from an image. mipmap == true will create the mipmaps */
     Texture2D(Renderer &renderer, const FileName &path, bool mipmap = true);
+    /*! Create an empty texture */
+    Texture2D(Renderer &renderer);
     /*! Release it from OGL */
     ~Texture2D(void);
     /*! Valid means it is actually in GL */
@@ -29,7 +31,6 @@ namespace pf
     GLuint w, h;        //!< Dimensions of level 0
     GLuint minLevel;    //!< Minimum level we loaded
     GLuint maxLevel;    //!< Maximum level we loaded
-    std::string name;
   };
 
   /*! States of the texture. This also includes the loading task itself. This

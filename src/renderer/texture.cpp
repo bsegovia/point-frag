@@ -63,6 +63,10 @@ namespace pf
     }
   }
 
+  Texture2D::Texture2D(Renderer &renderer) :
+    renderer(renderer), handle(0), fmt(0), w(0), h(0), minLevel(0), maxLevel(0)
+  {}
+
   Texture2D::Texture2D(Renderer &renderer, const FileName &fileName, bool mipmap)
     : renderer(renderer)
   {
@@ -109,7 +113,6 @@ namespace pf
       R_CALL (BindTexture, GL_TEXTURE_2D, 0);
     } else
       this->w = this->h = 0;
-    this->name = fileName.name();
   }
 
   Texture2D::~Texture2D(void) {
@@ -135,7 +138,7 @@ namespace pf
   public:
     TextureLoadData(const char *name);
     ~TextureLoadData(void);
-    INLINE bool isLoaded(void) const { return texels != NULL; }
+    INLINE bool isValid(void) const { return texels != NULL; }
     unsigned char **texels; //!< All mip-map level texels
     int *w, *h;             //!< Dimensions of all mip-maps
     const char *name;       //!< Name of the file containing the data
@@ -146,14 +149,14 @@ namespace pf
   TextureLoadData::TextureLoadData(const char *name) :
     texels(NULL), w(NULL), h(NULL), name(NULL), levelNum(0)
   {
-#if 0
     // Try to find the file and load it
     bool isLoaded = false;
-    int w0, h0, channel;
+    unsigned char *img = 0;
+    int w0 = 0, h0 = 0, channel = 0;
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const FileName dataPath(defaultPath[i]);
       const FileName path = dataPath + FileName(name);
-      unsigned char *img = stbi_load(path.c_str(), &w0, &h0, &channel, 0);
+      img = stbi_load(path.c_str(), &w0, &h0, &channel, 0);
       if (img == NULL)
         continue;
       else {
@@ -162,23 +165,36 @@ namespace pf
       }
     }
 
-    // We found the image. Now compute the mip-maps
+    // We found the image
     if (isLoaded) {
       mirror(img, w0, h0, channel);
       this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
       this->w = PF_NEW_ARRAY(int, this->levelNum);
       this->h = PF_NEW_ARRAY(int, this->levelNum);
       this->texels = PF_NEW_ARRAY(unsigned char*, this->levelNum);
+      this->texels[0] = img;
+      switch (channel) {
+        case 3: this->fmt = GL_RGB; break;
+        case 4: this->fmt = GL_RGBA; break;
+        default: FATAL("unsupported number of componenents");
+      };
+      // Now compute the mip-maps
+      for (int lvl = 1; lvl <= levelNum; ++lvl) {
+        const int mmW = max(w0 / 2, 1), mmH = max(h0 / 2, 1);
+        unsigned char *mipmap = doMipmap(img, w0, h0, mmW, mmH, channel);
+        this->texels[lvl] = mipmap;
+        w0 = mmW;
+        h0 = mmH;
+        img = mipmap;
+      }
     }
-#endif
   }
 
   TextureLoadData::~TextureLoadData(void)
   {
     PF_DELETE_ARRAY(this->w);
     PF_DELETE_ARRAY(this->h);
-    for (int i = 0; i < this->levelNum; ++i)
-      PF_DELETE_ARRAY(this->texels[i]);
+    for (int i = 0; i < this->levelNum; ++i) PF_FREE(this->texels[i]);
     PF_DELETE_ARRAY(this->texels);
   }
 
@@ -212,34 +228,51 @@ namespace pf
 
   Task *TaskTextureLoad::run(void) {
     PF_MSG_V("TextureStreamer: loading " << name);
-#if 0
+    TextureLoadData *data = PF_NEW(TextureLoadData, this->name);
 
-    // Try to find the file
-    bool isLoaded = false;
-    for (size_t i = 0; i < defaultPathNum; ++i) {
-      const FileName dataPath(defaultPath[i]);
-      const FileName path = dataPath + FileName(name);
-      int w, h, comp;
-      unsigned char *img = stbi_load(path.c_str(), &w, &h, &comp, 0);
-      if (img == NULL)
-        continue;
-      else 
-        isLoaded = true;
-      Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, path);
-      isLoaded = tex->isValid();
-      if (isLoaded) {
-        this->texMap[name.c_str()] = TextureState(*tex);
-        break;
-      }
+    // We were not able to find the texture. So we use a default one
+    if (data->isValid() == false) {
+      PF_MSG_V("TextureStreamer: Texture " << std::string(name) <<
+               " not found. Default texture is used instead");
+      PF_DELETE(data);
+      Lock<MutexSys> lock(streamer.mutex);
+      streamer.texMap[name] = TextureState(*streamer.renderer.defaultTex);
     }
-#endif
-    //if (isLoaded == false)
-    //  this->texMap[name.c_str()] = TextureState(*renderer.defaultTex);
+    // We need to load it in OGL now
+    else {
+      Task *next = PF_NEW(TaskTextureLoadOGL, data);
+      next->ends(this);
+      next->scheduled();
+    }
     return NULL;
   }
+#undef OGL_NAME
+
+#define OGL_NAME (this->streamer.renderer.driver)
 
   Task *TaskTextureLoadOGL::run(void) {
-    Ref<Texture2D> tex = NULL;
+    Ref<Texture2D> tex = PF_NEW(Texture2D, streamer.renderer);
+    tex->w = data->w[0];
+    tex->h = data->h[0];
+    tex->fmt = data->fmt;
+    tex->minLevel = 0;
+    tex->maxLevel = data->levelNum;
+
+    // Create the texture and its mip-maps
+    R_CALL (GenTextures, 1, &tex->handle);
+    R_CALL (ActiveTexture, GL_TEXTURE0);
+    R_CALL (BindTexture, GL_TEXTURE_2D, tex->handle);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl)
+      R_CALL (TexImage2D,
+              GL_TEXTURE_2D,
+              lvl,
+              tex->fmt, tex->w, tex->h,
+              0,
+              tex->fmt,
+              GL_UNSIGNED_BYTE,
+              this->data->texels[lvl]);
 
     // The data is not needed anymore
     PF_DELETE(this->data);
@@ -248,11 +281,13 @@ namespace pf
     Lock<MutexSys> lock(streamer.mutex);
     auto it = streamer.texMap.find(name);
     assert(it != streamer.texMap.end());
+    it->second.loadingTask = NULL;
     it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
 
     return NULL;
   }
+#undef OGL_NAME
 
   Ref<Task> TextureStreamer::loadTexture(const FileName &name) {
     Lock<MutexSys> lock(mutex);
@@ -265,7 +300,7 @@ namespace pf
 
     // Create the task and indicate everybody else that texture is loading
     Task *loadingTask = PF_NEW(TaskTextureLoad, name.c_str(), *this);
-    this->texMap[name.c_str()] = TextureState(TextureState::LOADING, loadingTask);
+    this->texMap[name.str()] = TextureState(TextureState::LOADING, loadingTask);
     loadingTask->scheduled();
     return loadingTask;
   }
@@ -283,15 +318,14 @@ namespace pf
         Ref<Texture2D> tex = PF_NEW(Texture2D, renderer, path);
         isLoaded = tex->isValid();
         if (isLoaded) {
-          this->texMap[name.c_str()] = TextureState(*tex);
+          this->texMap[name.str()] = TextureState(*tex);
           break;
         }
       }
       if (isLoaded == false)
-        this->texMap[name.c_str()] = TextureState(*renderer.defaultTex);
-      return texMap[name.c_str()];
+        this->texMap[name.str()] = TextureState(*renderer.defaultTex);
+      return texMap[name.str()];
     }
   }
 }
-#undef OGL_NAME
 
