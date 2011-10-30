@@ -42,6 +42,7 @@ namespace pf
     std::string *texName; //!< All texture names
     BBox3f *bbox;         //!< One bounding box for each group
     Group *grp;           //!< Indices of each group
+    Ref<Task> texLoading; //!< XXX To load the textures
     MutexSys mutex;       //!< XXX just to play with async load
     /*! Valid means it is in GL */
     INLINE bool isValid(void) { return this->grpNum > 0; }

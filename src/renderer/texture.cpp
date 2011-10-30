@@ -130,7 +130,7 @@ namespace pf
       switch (channel) {
         case 3: this->fmt = GL_RGB; break;
         case 4: this->fmt = GL_RGBA; break;
-        default: FATAL("unsupported number of componenents");
+        default: FATAL("unsupported number of components");
       };
       // Now compute the mip-maps
       for (int lvl = 1; lvl <= levelNum; ++lvl) {

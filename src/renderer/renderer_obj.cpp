@@ -34,7 +34,7 @@ namespace pf
   {
   public:
     TaskUpdateObjTexture(TextureStreamer &streamer,
-                         Ref<RendererObj> obj,
+                         RendererObj &obj,
                          const std::string &name) :
       Task("TaskUpdateObjTexture"), streamer(streamer), obj(obj), name(name) {}
 
@@ -42,15 +42,15 @@ namespace pf
     virtual Task* run(void) {
       const TextureState state = streamer.getTextureState(name.c_str());
       assert(state.value == TextureState::COMPLETE);
-      Lock<MutexSys> lock(obj->mutex);
-      for (size_t i = 0; i < obj->grpNum; ++i)
-        if (obj->texName[i] == name)
-          obj->tex[i] = state.tex;
+      Lock<MutexSys> lock(obj.mutex);
+      for (size_t i = 0; i < obj.grpNum; ++i)
+        if (obj.texName[i] == name)
+          obj.tex[i] = state.tex;
       return NULL;
     }
   private:
     TextureStreamer &streamer;
-    Ref<RendererObj> obj;
+    RendererObj &obj;
     std::string name;
   };
 
@@ -59,10 +59,11 @@ namespace pf
   {
   public:
     TaskLoadObjTexture(TextureStreamer &streamer,
-                       Ref<RendererObj> rendererObj,
+                       RendererObj &rendererObj,
                        const Obj &obj) :
       Task("TaskLoadObjTexture"), streamer(streamer), rendererObj(rendererObj)
     {
+      this->setPriority(TaskPriority::HIGH);
       if (obj.matNum) {
         this->texNum = obj.matNum;
         this->texName = PF_NEW_ARRAY(std::string, this->texNum);
@@ -91,7 +92,6 @@ namespace pf
           Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, rendererObj, texName[i]);
           loading->starts(updateObj.ptr);
           updateObj->ends(this);
-         // loading->ends(this);
           updateObj->scheduled();
           loading->scheduled();
         }
@@ -99,7 +99,7 @@ namespace pf
       return NULL;
     }
     TextureStreamer &streamer;
-    Ref<RendererObj> rendererObj;
+    RendererObj &rendererObj;
     std::string *texName;
     size_t texNum;
   };
@@ -130,8 +130,8 @@ namespace pf
       }
 
       // Start to load the textures
-      Ref<Task> texLoadingTask = PF_NEW(TaskLoadObjTexture, streamer, this, *obj);
-      texLoadingTask->scheduled();
+      this->texLoading= PF_NEW(TaskLoadObjTexture, streamer, *this, *obj);
+      this->texLoading->scheduled();
 
       // Compute each object bounding box and group of triangles
       PF_MSG_V("RendererObj: computing bounding boxes");
@@ -189,13 +189,15 @@ namespace pf
   }
 
   RendererObj::~RendererObj(void) {
-      if (this->vertexArray) R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
-      if (this->arrayBuffer) R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
-      if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-      if (this->tex) PF_DELETE_ARRAY(this->tex);
-      if (this->texName) PF_DELETE_ARRAY(this->texName);
-      if (this->bbox) PF_DELETE_ARRAY(this->bbox);
-      if (this->grp) PF_DELETE_ARRAY(this->grp);
+    if (this->texLoading)
+      this->texLoading->waitForCompletion();
+    if (this->vertexArray) R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
+    if (this->arrayBuffer) R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
+    if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
+    if (this->tex) PF_DELETE_ARRAY(this->tex);
+    if (this->texName) PF_DELETE_ARRAY(this->texName);
+    if (this->bbox) PF_DELETE_ARRAY(this->bbox);
+    if (this->grp) PF_DELETE_ARRAY(this->grp);
   }
 
   void RendererObj::display(void) {
