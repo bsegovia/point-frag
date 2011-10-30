@@ -204,10 +204,6 @@ enum
 
 typedef unsigned char stbi_uc;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // PRIMARY API - works on images of any type
@@ -319,10 +315,6 @@ extern void stbi_install_idct(stbi_idct_8x8 func);
 extern void stbi_install_YCbCr_to_RGB(stbi_YCbCr_to_RGB_run func);
 #endif // STBI_SIMD
 
-
-#ifdef __cplusplus
-}
-#endif
 
 //
 //

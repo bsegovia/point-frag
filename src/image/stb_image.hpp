@@ -5,10 +5,6 @@
 
 typedef unsigned char stbi_uc;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*! Load an image from a memory buffer */
 extern stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
 
@@ -17,10 +13,6 @@ extern stbi_uc *stbi_load(char const *filename,int *x, int *y, int *comp, int re
 
 /*! Load an image from a FILE handle */
 extern stbi_uc *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req_comp);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __STB_IMAGE_HPP__ */
 

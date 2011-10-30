@@ -131,7 +131,7 @@
 #define PF_TASK_USE_DEDICATED_ALLOCATOR 1
 
 /*! Store or not run-time statistics in the tasking system */
-#define PF_TASK_STATICTICS 0
+#define PF_TASK_STATICTICS 1
 
 /*! Give number of tries before yielding (multiplied by number of threads) */
 #define PF_TASK_TRIES_BEFORE_YIELD 256
