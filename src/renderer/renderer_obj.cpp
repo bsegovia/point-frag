@@ -32,21 +32,42 @@ namespace pf
    */
   class TaskUpdateObjTexture : public Task
   {
+  public:
+    TaskUpdateObjTexture(TextureStreamer &streamer,
+                         Ref<RendererObj> obj,
+                         const std::string &name) :
+      Task("TaskUpdateObjTexture"), streamer(streamer), obj(obj), name(name) {}
 
+    /*! Update the renderer obj with the fully loaded textures */
+    virtual Task* run(void) {
+      const TextureState state = streamer.getTextureState(name.c_str());
+      assert(state.value == TextureState::COMPLETE);
+      Lock<MutexSys> lock(obj->mutex);
+      for (size_t i = 0; i < obj->grpNum; ++i)
+        if (obj->texName[i] == name)
+          obj->tex[i] = state.tex;
+      return NULL;
+    }
+  private:
+    TextureStreamer &streamer;
+    Ref<RendererObj> obj;
+    std::string name;
   };
 
   /*! Load all textures for the given renderer obj */
   class TaskLoadObjTexture : public Task
   {
   public:
-    TaskLoadObjTexture(TextureStreamer &streamer, const Obj *obj) :
-      Task("TaskLoadObjTexture"), streamer(streamer)
+    TaskLoadObjTexture(TextureStreamer &streamer,
+                       Ref<RendererObj> rendererObj,
+                       const Obj &obj) :
+      Task("TaskLoadObjTexture"), streamer(streamer), rendererObj(rendererObj)
     {
-      if (obj->matNum) {
-        this->texNum = obj->matNum;
+      if (obj.matNum) {
+        this->texNum = obj.matNum;
         this->texName = PF_NEW_ARRAY(std::string, this->texNum);
         for (size_t i = 0; i < this->texNum; ++i) {
-          const char *name = obj->mat[i].map_Kd;
+          const char *name = obj.mat[i].map_Kd;
           if (name == NULL || strlen(name) == 0)
             continue;
           this->texName[i] = name;
@@ -56,21 +77,29 @@ namespace pf
         this->texName = NULL;
       }
     }
+
     ~TaskLoadObjTexture(void) {
       if (this->texName) PF_DELETE_ARRAY(this->texName);
     }
+
+    /*! Spawn one loading task per group */
     virtual Task* run(void) {
       for (size_t i = 0; i < texNum; ++i) {
         if (texName[i].size() == 0) continue;
         Ref<Task> loading = streamer.createLoadTask(texName[i]);
         if (loading) {
-          loading->ends(this);
+          Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, rendererObj, texName[i]);
+          loading->starts(updateObj.ptr);
+          updateObj->ends(this);
+         // loading->ends(this);
+          updateObj->scheduled();
           loading->scheduled();
         }
       }
       return NULL;
     }
     TextureStreamer &streamer;
+    Ref<RendererObj> rendererObj;
     std::string *texName;
     size_t texNum;
   };
@@ -80,6 +109,7 @@ namespace pf
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
     PF_MSG_V("RendererObj: loading .obj file \"" << fileName.base() << "\"");
+    TextureStreamer &streamer = *renderer.streamer;
     Obj *obj = PF_NEW(Obj);
     bool isLoaded = false;
     for (size_t i = 0; i < defaultPathNum; ++i) {
@@ -89,25 +119,19 @@ namespace pf
 
     if (isLoaded) {
       PF_MSG_V("RendererObj: asynchronously loading textures");
-      Ref<Task> texLoadingTask = PF_NEW(TaskLoadObjTexture, *renderer.streamer, obj);
-      texLoadingTask->scheduled();
 
       // Map each material group to the texture name
       this->tex = PF_NEW_ARRAY(Ref<Texture2D>, obj->grpNum);
       this->texName = PF_NEW_ARRAY(std::string, obj->grpNum);
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const int mat = obj->grp[i].m;
-        const char *name = obj->mat[mat].map_Kd;
-        if (name == NULL || strlen(name) == 0)
-          this->tex[i] = renderer.defaultTex;
-        else {
-          TextureState state = renderer.streamer->getTextureState(name);
-          if (state.value == TextureState::COMPLETE)
-            this->tex[i] = state.tex;
-          else
-            this->tex[i] = renderer.defaultTex;
-        }
+        this->tex[i] = renderer.defaultTex;
+        this->texName[i] = obj->mat[mat].map_Kd;
       }
+
+      // Start to load the textures
+      Ref<Task> texLoadingTask = PF_NEW(TaskLoadObjTexture, streamer, this, *obj);
+      texLoadingTask->scheduled();
 
       // Compute each object bounding box and group of triangles
       PF_MSG_V("RendererObj: computing bounding boxes");
@@ -165,15 +189,13 @@ namespace pf
   }
 
   RendererObj::~RendererObj(void) {
-    if (this->isValid()) {
-      R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
-      R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
-      R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-      PF_DELETE_ARRAY(this->tex);
-      PF_DELETE_ARRAY(this->texName);
-      PF_DELETE_ARRAY(this->bbox);
-      PF_DELETE_ARRAY(this->grp);
-    }
+      if (this->vertexArray) R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
+      if (this->arrayBuffer) R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
+      if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
+      if (this->tex) PF_DELETE_ARRAY(this->tex);
+      if (this->texName) PF_DELETE_ARRAY(this->texName);
+      if (this->bbox) PF_DELETE_ARRAY(this->bbox);
+      if (this->grp) PF_DELETE_ARRAY(this->grp);
   }
 
   void RendererObj::display(void) {
