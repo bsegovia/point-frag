@@ -44,10 +44,8 @@ namespace pf
   }
 
   TaskEvent::TaskEvent(InputEvent &current, InputEvent &previous) :
-    Task("TaskEvent"), current(&current), previous(&previous)
-  {
-    this->setAffinity(PF_TASK_MAIN_THREAD);
-  }
+    TaskMain("TaskEvent"), current(&current), previous(&previous), cloneRoot(NULL)
+  { }
 
   void TaskEvent::keyDown(unsigned char key, int x, int y) {
     taskEvent->current->downKey(key);
@@ -102,7 +100,18 @@ namespace pf
     glutKeyboardUpFunc(TaskEvent::keyUp);
   }
 
-  Task *TaskEvent::run(void) {
+  static double prevT0 = 0.;
+  Task *TaskEvent::run(void)
+  {
+#if 0
+    while (getSeconds() - prevT0 < .010) {
+      TaskingSystemRunAnyTask();
+      Task *task = this->clone();
+      task->scheduled();
+      return NULL;
+    }
+#endif
+    prevT0 = getSeconds();
     if (UNLIKELY(taskEvent == NULL)) TaskEvent::init();
     taskEvent = this;
     this->current->time = getSeconds();

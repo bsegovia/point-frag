@@ -53,7 +53,7 @@ namespace pf
   };
 
   /*! Record all events (keyboard, mouse, resizes) */
-  class TaskEvent : public Task
+  class TaskEvent : public TaskMain
   {
   public:
     /*! Previous events are used to get delta values */
@@ -71,9 +71,17 @@ namespace pf
     static void entry(int state);
     static void motion(int x, int y);
 
+    Task *clone(void) {
+      TaskEvent *task = PF_NEW(TaskEvent, *this->current, *this->previous);
+      task->cloneRoot = this->cloneRoot ? this->cloneRoot : this;
+      task->ends(task->cloneRoot.ptr);
+      return task;
+    }
+
     /*! Both events are needed to handle deltas */
     Ref<InputEvent> current;
     Ref<InputEvent> previous;
+    Ref<Task> cloneRoot;
   };
 } /* namespace pf */
 

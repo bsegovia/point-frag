@@ -1,10 +1,47 @@
 #include "renderer_driver.hpp"
 #include "sys/logging.hpp"
+#include "sys/tasking.hpp"
 
 #include <cstring>
 
+#if defined(__LINUX__)
+#include <GL/freeglut.h>
+#include "GL/glx.h"
+#include "GL/glxext.h"
+#endif
+
 namespace pf
 {
+#if defined(__LINUX__)
+#define OGL_NAME (&driver)
+  class TaskCreateOGLContext : public Task
+  {
+  public:
+    TaskCreateOGLContext(RendererDriver &driver, int threadID) :
+      Task("TaskCreateOGLContext"), driver(driver), threadID(threadID)
+    {
+      this->setAffinity(threadID);
+    }
+    virtual Task *run(void) {
+      glutInitWindowSize(16, 16);
+      glutInitWindowPosition(64, 64);
+      glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+      glutInitContextVersion(3, 3);
+      glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+      glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+      glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+      PF_MSG_V("GLUT: creating window");
+      glutCreateWindow("DDD");
+      glutHideWindow();
+      R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
+      return NULL;
+    }
+    RendererDriver &driver;
+    int threadID;
+  };
+#undef OGL_NAME
+#endif
+
 #define OGL_NAME this
 
   /*! Where you may find data files and shaders */
@@ -32,9 +69,9 @@ namespace pf
   }
 
   GLuint RendererDriver::buildProgram(const std::string &prefix,
-                                bool useVertex,
-                                bool useGeometry,
-                                bool useFragment)
+                                      bool useVertex,
+                                      bool useGeometry,
+                                      bool useFragment)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
@@ -336,12 +373,20 @@ namespace pf
   RendererDriver::RendererDriver(void) {
     PF_MSG_V("RendererDriver: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
-    this->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
     this->initQuad();
     this->initPlain();
     this->initDiffuse();
     this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
+    const int threadNum = TaskingSystemGetThreadNum();
+#if 0
+    for (int i = 1; i < threadNum; ++i) {
+      Task *spawnContext = PF_NEW(TaskCreateOGLContext, *this, i);
+      spawnContext->scheduled();
+      spawnContext->waitForCompletion();
+    }
+#endif
   }
 
   RendererDriver::~RendererDriver(void) {

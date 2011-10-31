@@ -132,6 +132,7 @@ namespace pf
         case 4: this->fmt = GL_RGBA; break;
         default: FATAL("unsupported number of components");
       };
+
       // Now compute the mip-maps
       for (int lvl = 1; lvl <= levelNum; ++lvl) {
         const int mmW = max(w0 / 2, 1), mmH = max(h0 / 2, 1);
@@ -166,7 +167,8 @@ namespace pf
     INLINE TaskTextureLoad(const std::string name, TextureStreamer &streamer) :
       Task("TaskTextureLoad"), name(name), streamer(streamer)
     {
-      this->setPriority(TaskPriority::LOW);
+       //this->setAffinity(2);
+       this->setPriority(TaskPriority::LOW);
     }
     virtual Task* run(void);
     std::string name;          //!< File to load
@@ -178,17 +180,25 @@ namespace pf
   {
   public:
     INLINE TaskTextureLoadOGL(TextureLoadData *data, TextureStreamer &streamer) :
-      TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer)
+      TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer), cloneRoot(NULL)
     {
-      this->setPriority(TaskPriority::LOW);
+       this->setPriority(TaskPriority::LOW);
+    }
+    Task *clone(void) {
+      TaskTextureLoadOGL *task = PF_NEW(TaskTextureLoadOGL, this->data, this->streamer);
+      task->cloneRoot = this->cloneRoot ? this->cloneRoot : this;
+      task->ends(task->cloneRoot.ptr);
+      return task;
     }
     virtual Task* run(void);
     TextureLoadData *data;     //!< Data to upload
     TextureStreamer &streamer; //!< Streamer that handles the texture
+    Ref<Task> cloneRoot;
   };
 
   Task *TaskTextureLoad::run(void) {
-    PF_MSG_V("TextureStreamer: loading " << name);
+    PF_MSG_V("TextureStreamer: " << name << " loading");
+    double t = getSeconds();
     TextureLoadData *data = PF_NEW(TextureLoadData, this->name);
 
     // We were not able to find the texture. So we use a default one
@@ -205,6 +215,9 @@ namespace pf
       next->ends(this);
       next->scheduled();
     }
+    PF_MSG_V("TextureStreamer: " << data->name <<
+             " loading time: " << (getSeconds() - t) << "s");
+
     return NULL;
   }
 
@@ -226,9 +239,20 @@ namespace pf
 #undef OGL_NAME
 #define OGL_NAME (this->streamer.renderer.driver)
 
+  static double prevT = 0.;
   Task *TaskTextureLoadOGL::run(void)
   {
-    PF_MSG_V("TextureStreamer: OGL uploading " << data->name);
+#if 0
+    while (getSeconds() - prevT < 0.05) {
+      TaskingSystemRunAnyTask();
+      Task *task = this->clone();
+      task->scheduled();
+      return NULL;
+    }
+#endif
+
+    PF_MSG_V("TextureStreamer: " << data->name << " OGL uploading " );
+    prevT =getSeconds();
     double t = getSeconds();
     Ref<Texture2D> tex = PF_NEW(Texture2D, streamer.renderer);
     tex->w = data->w[0];
@@ -243,7 +267,7 @@ namespace pf
     R_CALL (BindTexture, GL_TEXTURE_2D, tex->handle);
     R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl)
+    for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
       R_CALL (TexImage2D,
               GL_TEXTURE_2D,
               lvl,
@@ -252,6 +276,7 @@ namespace pf
               tex->fmt,
               GL_UNSIGNED_BYTE,
               data->texels[lvl]);
+    }
 
     // Update the map to say we are done with this texture. We can now use it
     Lock<MutexSys> lock(streamer.mutex);
@@ -264,8 +289,8 @@ namespace pf
     // The data is not needed anymore
     PF_DELETE(this->data);
 
-    PF_MSG_V("TextureStreamer: uploading " << data->name << 
-             " time: " << (getSeconds() - t) << "s");
+    PF_MSG_V("TextureStreamer: " << data->name <<
+             " OGL uploading time: " << (getSeconds() - t) << "s");
 
     return NULL;
   }

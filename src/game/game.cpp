@@ -67,11 +67,12 @@ namespace pf
     glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
-    glutCreateWindow(argv[0]);
+    int main = glutCreateWindow(argv[0]);
     //glutFullScreen();
 
     renderer = PF_NEW(Renderer);
     renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
+    glutSetWindow(main);
   }
 
   void GameEnd()

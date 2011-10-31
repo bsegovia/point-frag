@@ -67,11 +67,6 @@ namespace pf {
 
   Task *TaskCamera::run(void)
   {
-    // Change mouse orientation
-    const float xrel = float(event->mouseXRel) * float(event->dt) * cam->angularSpeed;
-    const float yrel = float(event->mouseYRel) * float(event->dt) * cam->angularSpeed;
-    cam->updateOrientation(xrel, yrel);
-
     // Change mouse position
     vec3f d(0.f);
     if (event->getKey('w')) d.z += float(event->dt) * cam->speed;
@@ -82,6 +77,11 @@ namespace pf {
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
+
+    // Change mouse orientation
+    const float xrel = float(event->mouseXRel) * float(event->dt) * cam->angularSpeed;
+    const float yrel = float(event->mouseYRel) * float(event->dt) * cam->angularSpeed;
+    cam->updateOrientation(xrel, yrel);
 
     return NULL;
   }
