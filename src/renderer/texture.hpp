@@ -70,7 +70,7 @@ namespace pf
      *  return the task that is currently loading it. That may be NULL if the
      *  task is already loaded
      */
-    Ref<Task> createLoadTask(const FileName &name);
+    Ref<Task> createLoadTask(const std::string &name);
 
   private:
     /*! Store for each texture its state */
@@ -78,7 +78,7 @@ namespace pf
     /*! Serialize the streamer access */
     MutexSys mutex;
     /*! Unlocked for internal use */
-    TextureState getTextureStateUnlocked(const char *name);
+    TextureState getTextureStateUnlocked(const std::string &name);
     friend class TaskTextureLoad;    //!< Load the textures from the disk
     friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
     Renderer &renderer;              //!< Owner of the streamer

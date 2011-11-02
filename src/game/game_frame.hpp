@@ -30,7 +30,7 @@ namespace pf
   public:
     /*! Used to create the next frame */
     GameFrame(GameFrame &previous);
-    GameFrame(void);
+    GameFrame(int w, int h);
     Ref<FlyCamera> cam;    //!< Camera for this frame
     Ref<InputEvent> event; //!< Input as captured for this frame
   };

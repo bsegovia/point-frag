@@ -126,7 +126,10 @@ namespace pf
       for (size_t i = 0; i < obj->grpNum; ++i) {
         const int mat = obj->grp[i].m;
         this->tex[i] = renderer.defaultTex;
-        this->texName[i] = obj->mat[mat].map_Kd;
+        if (mat >= 0)
+		  this->texName[i] = obj->mat[mat].map_Kd;
+		else
+          this->texName[i] = "";
       }
 
       // Start to load the textures

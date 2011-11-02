@@ -27,9 +27,11 @@ using namespace pf;
 
 namespace pf
 {
+  static const int defaultWidth = 800, defaultHeight = 600;
   Renderer *renderer = NULL;
   Ref<RendererObj> renderObj = NULL;
   LoggerStream *coutStream = NULL;
+  LoggerStream *fileStream = NULL;
 
   class CoutStream : public LoggerStream
   {
@@ -40,16 +42,35 @@ namespace pf
     }
   };
 
+  class FileStream : public LoggerStream
+  {
+  public:
+	FileStream(void) {
+      file = fopen("log.txt", "w");
+	  assert(file);
+	}
+	virtual ~FileStream(void) {fclose(file);}
+    virtual LoggerStream& operator<< (const std::string &str) {
+      fprintf(file, str.c_str());
+      return *this;
+    }
+  private:
+    FILE *file;
+  };
+
   void LoggerStart(void)
   {
     logger = PF_NEW(Logger);
     coutStream = PF_NEW(CoutStream);
+    fileStream = PF_NEW(FileStream);
     logger->insert(*coutStream);
+	logger->insert(*fileStream);
   }
 
   void LoggerEnd(void)
   {
-    logger->remove(*coutStream);
+	logger->remove(*fileStream);
+	logger->remove(*coutStream);
     PF_DELETE(coutStream);
     PF_DELETE(logger);
     logger = NULL;
@@ -58,7 +79,7 @@ namespace pf
   void GameStart(int argc, char **argv)
   {
     PF_MSG_V("GLUT: initialization");
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(defaultWidth, defaultHeight);
     glutInitWindowPosition(64, 64);
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -67,8 +88,7 @@ namespace pf
     glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
-    int main = glutCreateWindow(argv[0]);
-    //glutFullScreen();
+    glutCreateWindow(argv[0]);
 
     renderer = PF_NEW(Renderer);
     renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
@@ -93,7 +113,7 @@ int main(int argc, char **argv)
   // We create a dummy frame such that a previous frame always exists in the
   // system. This makes everything a lot easier to handle. We do not destroy it
   // since it is referenced counted
-  GameFrame *dummyFrame = PF_NEW(GameFrame);
+  GameFrame *dummyFrame = PF_NEW(GameFrame, defaultWidth, defaultHeight);
   Task *frameTask = PF_NEW(TaskGameFrame, *dummyFrame);
   frameTask->scheduled();
   TaskingSystemEnter();

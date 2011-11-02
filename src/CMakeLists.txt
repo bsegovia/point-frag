@@ -1,5 +1,5 @@
 include (FindGLUT)
-include_directories (${SDL_INCLUDE_PATH})
+include_directories (${GLUT_INCLUDE_PATH})
 set (SRC
   game/camera.cpp
   game/game.cpp

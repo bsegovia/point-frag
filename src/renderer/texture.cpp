@@ -76,7 +76,7 @@ namespace pf
     return this->getTextureStateUnlocked(name);
   }
 
-  TextureState TextureStreamer::getTextureStateUnlocked(const char *name) {
+  TextureState TextureStreamer::getTextureStateUnlocked(const std::string &name) {
     auto it = texMap.find(name);
     if (it == texMap.end())
       return TextureState();
@@ -149,10 +149,11 @@ namespace pf
 
   TextureLoadData::~TextureLoadData(void)
   {
-    PF_DELETE_ARRAY(this->w);
-    PF_DELETE_ARRAY(this->h);
-    for (int i = 0; i <= this->levelNum; ++i) PF_FREE(this->texels[i]);
-    PF_DELETE_ARRAY(this->texels);
+    PF_SAFE_DELETE_ARRAY(this->w);
+    PF_SAFE_DELETE_ARRAY(this->h);
+	if (this->texels)
+      for (int i = 0; i <= this->levelNum; ++i) PF_FREE(this->texels[i]);
+    PF_SAFE_DELETE_ARRAY(this->texels);
   }
 
   class TaskTextureLoad;    //!< Load the textures from the disk
@@ -164,10 +165,10 @@ namespace pf
   class TaskTextureLoad : public Task
   {
   public:
-    INLINE TaskTextureLoad(const std::string name, TextureStreamer &streamer) :
+    INLINE TaskTextureLoad(const std::string &name, TextureStreamer &streamer) :
       Task("TaskTextureLoad"), name(name), streamer(streamer)
     {
-       //this->setAffinity(2);
+       this->setAffinity(2);
        this->setPriority(TaskPriority::LOW);
     }
     virtual Task* run(void);
@@ -182,7 +183,7 @@ namespace pf
     INLINE TaskTextureLoadOGL(TextureLoadData *data, TextureStreamer &streamer) :
       TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer), cloneRoot(NULL)
     {
-       this->setPriority(TaskPriority::LOW);
+       this->setPriority(TaskPriority::HIGH);
     }
     Task *clone(void) {
       TaskTextureLoadOGL *task = PF_NEW(TaskTextureLoadOGL, this->data, this->streamer);
@@ -206,18 +207,18 @@ namespace pf
       PF_MSG_V("TextureStreamer: Texture " << std::string(name) <<
                " not found. Default texture is used instead");
       PF_DELETE(data);
-      Lock<MutexSys> lock(streamer.mutex);
+	  Lock<MutexSys> lock(streamer.mutex);
       streamer.texMap[name] = TextureState(*streamer.renderer.defaultTex);
     }
     // We need to load it in OGL now
     else {
+      PF_MSG_V("TextureStreamer: " << this->name <<
+               " loading time: " << (getSeconds() - t) << "s");
       Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
       next->ends(this);
       next->scheduled();
     }
-    PF_MSG_V("TextureStreamer: " << data->name <<
-             " loading time: " << (getSeconds() - t) << "s");
-
+    
     return NULL;
   }
 
@@ -285,12 +286,11 @@ namespace pf
     it->second.loadingTask = NULL;
     it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
-
-    // The data is not needed anymore
-    PF_DELETE(this->data);
-
     PF_MSG_V("TextureStreamer: " << data->name <<
              " OGL uploading time: " << (getSeconds() - t) << "s");
+
+	// The data is not needed anymore
+    PF_DELETE(this->data);
 
     return NULL;
   }
@@ -306,7 +306,7 @@ namespace pf
     }
   }
 
-  Ref<Task> TextureStreamer::createLoadTask(const FileName &name)
+  Ref<Task> TextureStreamer::createLoadTask(const std::string &name)
   {
     Lock<MutexSys> lock(mutex);
 
@@ -322,7 +322,7 @@ namespace pf
 
     // Create the task and indicate everybody else that texture is loading
     Task *loadingTask = PF_NEW(TaskTextureLoad, name.c_str(), *this);
-    this->texMap[name.str()] = TextureState(TextureState::LOADING, loadingTask);
+    this->texMap[name] = TextureState(TextureState::LOADING, loadingTask);
     return loadingTask;
   }
 

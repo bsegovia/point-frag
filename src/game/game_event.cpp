@@ -23,11 +23,14 @@ namespace pf
   /*! Only way to to use GLUT is to use this global */
   static TaskEvent *taskEvent = NULL;
 
-  InputEvent::InputEvent(void)
+  InputEvent::InputEvent(int w_, int h_)
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->mouseX = this->mouseY = 0;
-    this->w = this->h = 0;
+ 	this->time = this->dt = 0.;
+	this->w = w_;
+	this->h = h_;
+	this->isResized = 0;
     for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
   }
 
@@ -35,6 +38,8 @@ namespace pf
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->isResized = 0;
+	this->time = getSeconds();
+	this->dt = 0.;
     this->w = previous.w;
     this->h = previous.h;
     for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
@@ -74,20 +79,10 @@ namespace pf
 
   void TaskEvent::motion(int x, int y) {
     // Wrap the mouse when too close of the borders
-    if (x <= 1 ||
-        y <= 1 ||
-        x >= taskEvent->current->w - 2 ||
-        y >= taskEvent->current->h - 2) {
-      taskEvent->current->mouseX = taskEvent->current->w / 2;
-      taskEvent->current->mouseY = taskEvent->current->h / 2;
-      glutWarpPointer(taskEvent->current->mouseX, taskEvent->current->mouseY);
-    // Update the position
-    } else {
-      taskEvent->current->mouseXRel = x - taskEvent->previous->mouseX;
-      taskEvent->current->mouseYRel = y - taskEvent->previous->mouseY;
-      taskEvent->current->mouseX = x;
-      taskEvent->current->mouseY = y;
-    }
+	taskEvent->current->mouseXRel = x - taskEvent->current->w / 2;
+    taskEvent->current->mouseYRel = y - taskEvent->current->h / 2;
+    taskEvent->current->mouseX = x;
+    taskEvent->current->mouseY = y;
   }
 
   void TaskEvent::init(void) {
@@ -117,6 +112,13 @@ namespace pf
     this->current->time = getSeconds();
     this->current->dt = this->current->time - this->previous->time;
     glutMainLoopEvent();
+	glutWarpPointer(taskEvent->current->w / 2, taskEvent->current->h / 2);
+	const int w0 = glutGet(GLUT_WINDOW_WIDTH);
+    const int h0 = glutGet(GLUT_WINDOW_HEIGHT);
+	if (w0 != taskEvent->current->w || h0 != taskEvent->current->h)
+      taskEvent->current->isResized = 1;
+	taskEvent->current->w = w0;
+    taskEvent->current->h = h0;
     return NULL;
   }
 }

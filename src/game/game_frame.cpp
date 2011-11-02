@@ -27,9 +27,9 @@ namespace pf
     this->event = PF_NEW(InputEvent, *previous.event);
   }
 
-  GameFrame::GameFrame(void) {
+  GameFrame::GameFrame(int w, int h) {
     this->cam = PF_NEW(FlyCamera);
-    this->event = PF_NEW(InputEvent);
+    this->event = PF_NEW(InputEvent, w, h);
   }
 
   TaskGameFrame::TaskGameFrame(GameFrame &previous_) : previous(&previous_) {}

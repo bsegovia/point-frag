@@ -34,10 +34,9 @@ namespace pf
 // Now, we load everything with glut on Windows too
 #if defined(__WIN32__)
   #undef DECL_GL_PROC
-  #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) do {             \
+  #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE)                  \
     this->FIELD = (PROTOTYPE) glutGetProcAddress(#NAME);      \
-    FATAL_IF (this->FIELD == NULL, "OpenGL 3.3 is required"); \
-  } while (0)
+    FATAL_IF (this->FIELD == NULL, "OpenGL 3.3 is required");
 #endif /* __WIN32__ */
 
 #include "GL/ogl120.hxx"
