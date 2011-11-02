@@ -118,6 +118,7 @@ namespace pf
         PF_DELETE_ARRAY(this->data);
         if (this->next) PF_DELETE(this->next);
       }
+    private
       T *data;
       GrowingPoolElem *next;
       size_t allocated, maxElemNum;
