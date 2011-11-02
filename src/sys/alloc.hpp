@@ -92,11 +92,9 @@ namespace pf
   class GrowingPool
   {
   public:
-    GrowingPool(void) : current(NULL) {}
-    ~GrowingPool(void) { PF_DELETE(current); }
+    GrowingPool(void) : current(PF_NEW(GrowingPoolElem, 1)) {}
+    ~GrowingPool(void) { assert(current); PF_DELETE(current); }
     T *allocate(void) {
-      if (UNLIKELY(current == NULL))
-        this->current = PF_NEW(GrowingPoolElem, 1);
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
         GrowingPoolElem *elem = PF_NEW(GrowingPoolElem, 2 * current->maxElemNum);
         elem->next = current;
