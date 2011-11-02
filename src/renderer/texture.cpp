@@ -168,8 +168,7 @@ namespace pf
     INLINE TaskTextureLoad(const std::string &name, TextureStreamer &streamer) :
       Task("TaskTextureLoad"), name(name), streamer(streamer)
     {
-       this->setAffinity(2);
-       this->setPriority(TaskPriority::LOW);
+       this->setPriority(TaskPriority::HIGH);
     }
     virtual Task* run(void);
     std::string name;          //!< File to load
@@ -213,8 +212,8 @@ namespace pf
     // We need to load it in OGL now
     else {
       PF_MSG_V("TextureStreamer: " << this->name <<
-               " loading time: " << (getSeconds() - t) << "s");
-      Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
+               " loading time: " << (getSeconds() - t) << "s");  
+	  Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
       next->ends(this);
       next->scheduled();
     }
@@ -284,11 +283,10 @@ namespace pf
     auto it = streamer.texMap.find(this->data->name);
     assert(it != streamer.texMap.end());
     it->second.loadingTask = NULL;
-    it->second.tex = tex;
+	it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
     PF_MSG_V("TextureStreamer: " << data->name <<
              " OGL uploading time: " << (getSeconds() - t) << "s");
-
 	// The data is not needed anymore
     PF_DELETE(this->data);
 

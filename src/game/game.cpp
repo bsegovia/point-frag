@@ -63,14 +63,14 @@ namespace pf
     logger = PF_NEW(Logger);
     coutStream = PF_NEW(CoutStream);
     fileStream = PF_NEW(FileStream);
-    logger->insert(*coutStream);
-    logger->insert(*fileStream);
+   // logger->insert(*coutStream);
+   // logger->insert(*fileStream);
   }
 
   void LoggerEnd(void)
   {
-    logger->remove(*fileStream);
-    logger->remove(*coutStream);
+  //  logger->remove(*fileStream);
+  //  logger->remove(*coutStream);
     PF_DELETE(fileStream);
     PF_DELETE(coutStream);
     PF_DELETE(logger);

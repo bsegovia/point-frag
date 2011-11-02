@@ -16,6 +16,8 @@
 
 #include "game_event.hpp"
 #include "sys/mutex.hpp"
+#include "sys/logging.hpp"
+
 #include <GL/freeglut.h>
 
 namespace pf
@@ -42,10 +44,10 @@ namespace pf
 	this->dt = 0.;
     this->w = previous.w;
     this->h = previous.h;
-    for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
-      this->keys[i] = previous.keys[i];
     this->mouseX = previous.mouseX;
     this->mouseY = previous.mouseY;
+    for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i)
+      this->keys[i] = previous.keys[i];
   }
 
   TaskEvent::TaskEvent(InputEvent &current, InputEvent &previous) :
@@ -78,8 +80,7 @@ namespace pf
   }
 
   void TaskEvent::motion(int x, int y) {
-    // Wrap the mouse when too close of the borders
-	taskEvent->current->mouseXRel = x - taskEvent->current->w / 2;
+    taskEvent->current->mouseXRel = x - taskEvent->current->w / 2;
     taskEvent->current->mouseYRel = y - taskEvent->current->h / 2;
     taskEvent->current->mouseX = x;
     taskEvent->current->mouseY = y;
@@ -119,7 +120,7 @@ namespace pf
       taskEvent->current->isResized = 1;
 	taskEvent->current->w = w0;
     taskEvent->current->h = h0;
-    return NULL;
+	return NULL;
   }
 }
 

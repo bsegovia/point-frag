@@ -62,7 +62,7 @@ namespace pf
 
     // Display all the bounding boxes
     R_CALL (setMVP, MVP);
-    R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
+    //R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
     glutSwapBuffers();
 
     return NULL;

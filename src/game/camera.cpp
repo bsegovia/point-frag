@@ -1,10 +1,11 @@
 #include "camera.hpp"
 #include "game_event.hpp"
+#include "sys/logging.hpp"
 
 namespace pf {
 
   const float FlyCamera::defaultSpeed = 1.f;
-  const float FlyCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 100.f;
+  const float FlyCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FlyCamera::acosMinAngle = 0.95f;
 
   FlyCamera::FlyCamera(const vec3f &pos_,
@@ -79,9 +80,11 @@ namespace pf {
     cam->ratio = float(event->w) / float(event->h);
 
     // Change mouse orientation
-    const float xrel = float(event->mouseXRel) * float(event->dt) * cam->angularSpeed;
-    const float yrel = float(event->mouseYRel) * float(event->dt) * cam->angularSpeed;
-    cam->updateOrientation(xrel, yrel);
+	const float mouseXRel = float(event->mouseXRel);
+	const float mouseYRel = float(event->mouseYRel);
+    const float xrel = cam->angularSpeed * mouseXRel;
+    const float yrel = cam->angularSpeed * mouseYRel;
+ 	cam->updateOrientation(xrel, yrel);
 
     return NULL;
   }

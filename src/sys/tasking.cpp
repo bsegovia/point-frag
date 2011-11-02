@@ -67,9 +67,15 @@ namespace pf {
      *  will return the first non-empty queue with the highest priority
      */
     INLINE int getActiveMask(void) const {
-      const __m128i t = __load_acquire(&tail.v);
+#if defined(__WIN32__)
+	  PF_COMPILER_READ_WRITE_BARRIER;
+	  const __m128i t = *(__m128i *) (&tail.v);
+      const __m128i h = *(__m128i *) (&head.v);
+#else
+	  const __m128i t = __load_acquire(&tail.v);
       const __m128i h = __load_acquire(&head.v);
-      const __m128i len = _mm_sub_epi32(t, h);
+#endif /* defined(__WIN32__) */
+	  const __m128i len = _mm_sub_epi32(t, h);
       return _mm_movemask_ps(_mm_castsi128_ps(len));
     }
 
