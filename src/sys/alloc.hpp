@@ -61,6 +61,9 @@ namespace pf
 #define PF_NEW_ARRAY(T,N,...)       \
   pf::_MemDebuggerInsertAlloc(new T[N](__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
 
+#define PF_NEW_P(T,X,...)           \
+  pf::_MemDebuggerInsertAlloc(new (X) T(__VA_ARGS__), __FILE__, __FUNCTION__, __LINE__)
+
 #define PF_DELETE(X)                \
   do { pf::MemDebuggerRemoveAlloc(X); delete X; } while (0)
 
@@ -82,5 +85,47 @@ namespace pf
 #define PF_ALIGNED_MALLOC(SZ,ALIGN) \
   pf::MemDebuggerInsertAlloc(pf::alignedMalloc(SZ,ALIGN),__FILE__, __FUNCTION__, __LINE__)
 
+namespace pf
+{
+  /*! A growing pool never deallocates */
+  template <typename T>
+  class GrowingPool
+  {
+  public:
+    GrowingPool(void) : current(NULL) {}
+    ~GrowingPool(void) { PF_DELETE(current); }
+    T *allocate(void) {
+      if (UNLIKELY(current == NULL))
+        this->current = PF_NEW(GrowingPoolElem, 1);
+      if (UNLIKELY(current->allocated == current->maxElemNum)) {
+        GrowingPoolElem *elem = PF_NEW(GrowingPoolElem, 2 * current->maxElemNum);
+        elem->next = current;
+        current = elem;
+      }
+      T *data = current->data + current->allocated++;
+      return data;
+    }
+
+  private:
+    struct GrowingPoolElem
+    {
+      GrowingPoolElem(size_t elemNum) {
+        this->data = PF_NEW_ARRAY(T, elemNum);
+        this->next = NULL;
+        this->maxElemNum = elemNum;
+        this->allocated = 0;
+      }
+      ~GrowingPoolElem(void) {
+        PF_DELETE_ARRAY(this->data);
+        if (this->next) PF_DELETE(this->next);
+      }
+      T *data;
+      GrowingPoolElem *next;
+      size_t allocated, maxElemNum;
+    };
+    GrowingPoolElem *current;
+  };
+
+} /* namespace pf */
 #endif /* __PF_ALLOC_HPP__ */
 
