@@ -44,10 +44,12 @@ namespace pf
   public:
     INLINE MutexActive(void) : $lock(LOCK_IS_FREE) {}
     INLINE void lock(void) {
+      PF_COMPILER_READ_BARRIER;
       while (cmpxchg($lock, LOCK_IS_TAKEN, LOCK_IS_FREE) != LOCK_IS_FREE)
         _mm_pause();
+      PF_COMPILER_READ_BARRIER;
     }
-    INLINE void unlock(void) { $lock = LOCK_IS_FREE; }
+    INLINE void unlock(void) { $lock.storeRelease(LOCK_IS_FREE); }
   protected:
     enum ${ LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1 };
     Atomic $lock;

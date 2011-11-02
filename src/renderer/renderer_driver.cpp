@@ -379,14 +379,6 @@ namespace pf
     this->initDiffuse();
     this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
-    const int threadNum = TaskingSystemGetThreadNum();
-#if 0
-    for (int i = 1; i < threadNum; ++i) {
-      Task *spawnContext = PF_NEW(TaskCreateOGLContext, *this, i);
-      spawnContext->scheduled();
-      spawnContext->waitForCompletion();
-    }
-#endif
   }
 
   RendererDriver::~RendererDriver(void) {

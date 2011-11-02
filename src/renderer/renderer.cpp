@@ -29,7 +29,8 @@ namespace pf
     loadingTask->waitForCompletion();
     const TextureState state = this->streamer->getTextureState("Maps/chess.tga");
     this->defaultTex = state.tex;
-    FATAL_IF (defaultTex == NULL || defaultTex->isValid() == false, "Default texture not found");
+    FATAL_IF (defaultTex == false  || defaultTex->isValid() == false,
+              "Default \"chess.tga\" texture not found");
   }
 
   Renderer::~Renderer(void)

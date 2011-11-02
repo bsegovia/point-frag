@@ -67,13 +67,9 @@ namespace pf {
      *  will return the first non-empty queue with the highest priority
      */
     INLINE int getActiveMask(void) const {
-#if defined(_MSC_VER)
-      const __m128i t = _mm_castps_si128(_mm_load_ps((float*) tail.x));
-      const __m128i h = _mm_castps_si128(_mm_load_ps((float*) head.x));
+      const __m128i t = __load_acquire(&tail.v);
+      const __m128i h = __load_acquire(&head.v);
       const __m128i len = _mm_sub_epi32(t, h);
-#else
-      const __m128i len = _mm_sub_epi32(tail.v, head.v);
-#endif /* _MSC_VER */
       return _mm_movemask_ps(_mm_castsi128_ps(len));
     }
 
@@ -159,17 +155,18 @@ namespace pf {
     /*! Call by the main thread to enter the tasking system */
     template <bool isMainThread> void go(void);
     /*! Interrupt all threads */
-    INLINE void stopAll(void) { deadMain = dead = true; }
+    INLINE void stopAll(void) {
+      __store_release(&deadMain, true);
+      __store_release(&dead, true);
+    }
     /*! Interrupt main thread only */
-    INLINE void stopMain(void) { deadMain = true; }
+    INLINE void stopMain(void) { __store_release(&deadMain, true); }
     /*! Number of threads running in the scheduler (not including main) */
     INLINE uint32 getWorkerNum(void) { return uint32(this->workerNum); }
     /*! ID of the calling thread in the tasking system */
     INLINE uint32 getThreadID(void) { return uint32(this->threadID); }
     /*! Try to get a task from all the current queues */
     INLINE Task* getTask(void);
-    /*! Allow to update the task state when scheduled */
-    INLINE void setTaskState(Task *task, int state) { task->state = state; }
     /*! Run the task and recursively handle the tasks to start and to end */
     void runTask(Task *task);
     /*! Data provided to each thread */
@@ -311,8 +308,10 @@ namespace pf {
     const uint32 prio = task.getPriority();
     if (UNLIKELY(this->head[prio] - this->tail[prio] == elemNum))
       return false;
-    task.state = TaskState::READY;
+    __store_release(&task.state, uint8(TaskState::READY));
+    PF_COMPILER_READ_WRITE_BARRIER;
     this->tasks[prio][this->head[prio] % elemNum] = &task;
+    PF_COMPILER_READ_WRITE_BARRIER;
     this->head[prio]++;
     IF_TASK_STATISTICS(statInsertNum++);
     return true;
@@ -353,8 +352,10 @@ namespace pf {
     Lock<MutexActive> lock(this->mutex);
     if (UNLIKELY(this->head[prio] - this->tail[prio] == elemNum))
       return false;
-    task.state = TaskState::READY;
+    __store_release(&task.state, uint8(TaskState::READY));
+    PF_COMPILER_READ_WRITE_BARRIER;
     this->tasks[prio][this->head[prio] % elemNum] = &task;
+    PF_COMPILER_READ_WRITE_BARRIER;
     this->head[prio]++;
     IF_TASK_STATISTICS(statInsertNum++);
     return true;
@@ -539,11 +540,12 @@ namespace pf {
         yieldTime = inactivityNum = 0;
       } else
         inactivityNum++;
-      if (isMainThread) {
-        if (UNLIKELY(This->deadMain))
-          break;
-      } else if (UNLIKELY(This->dead))
-        break;
+      bool isDead;
+      if (isMainThread)
+        isDead = __load_acquire(&This->deadMain);
+      else
+        isDead = __load_acquire(&This->dead);
+      if (UNLIKELY(isDead)) break;
       if (UNLIKELY(inactivityNum >= maxInactivityNum)) {
         inactivityNum = 0;
         yield(yieldTime);
@@ -657,10 +659,10 @@ namespace pf {
       // Note that the task may already be running if this is a task set (task
       // sets can be run concurrently by several threads).
 #ifndef NDEBUG
-      const uint32 state = task->state;
+      const uint8 state = __load_acquire(&task->state);
       assert(state == TaskState::READY || state == TaskState::RUNNING);
 #endif /* NDEBUG */
-      task->state = TaskState::RUNNING;
+      __store_release(&task->state, uint8(TaskState::RUNNING));
       nextToRun = task->run();
       Task *toRelease = task;
 
@@ -670,7 +672,7 @@ namespace pf {
 
         // We are done here
         if (stillRunning == 0) {
-          task->state = TaskState::DONE;
+          __store_release(&task->state, uint8(TaskState::DONE));
           // Start the tasks if they become ready
           if (task->toBeStarted) {
             task->toBeStarted->toStart--;
@@ -701,7 +703,7 @@ namespace pf {
         }
       }
       task = nextToRun;
-      if (task) task->state = TaskState::READY;
+      if (task) __store_release(&task->state, uint8(TaskState::READY));
     } while (task);
   }
 
@@ -715,7 +717,7 @@ namespace pf {
   static TaskAllocator *allocator = NULL;
 
   void Task::scheduled(void) {
-    this->state = TaskState::SCHEDULED;
+    __store_release(&this->state, uint8(TaskState::SCHEDULED));
     this->toStart--;
     if (this->toStart == 0) scheduler->schedule(*this);
   }
@@ -762,7 +764,7 @@ namespace pf {
   }
 
   void Task::waitForCompletion(void) {
-    while (this->state != TaskState::DONE) {
+    while (__load_acquire(&this->state) != TaskState::DONE) {
       Task *someTask = scheduler->getTask();
       if (someTask) scheduler->runTask(someTask);
     }

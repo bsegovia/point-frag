@@ -25,6 +25,16 @@
 
 #include <intrin.h>
 
+#define PF_COMPILER_WRITE_BARRIER       _WriteBarrier
+#define PF_COMPILER_READ_WRITE_BARRIER  _ReadWriteBarrier
+
+#if _MSC_VER >= 1400
+#pragma intrinsic(_ReadBarrier)
+#define PF_COMPILER_READ_BARRIER        _ReadBarrier
+#else
+#define PF_COMPILER_READ_BARRIER        _ReadWriteBarrier
+#endif /* _MSC_VER >= 1400 */
+
 INLINE int __bsf(int v) {
   unsigned long r = 0; _BitScanForward(&r,v); return r;
 }
@@ -69,7 +79,7 @@ INLINE size_t __btr(size_t v, size_t i) {
   __int64 r = v; _bittestandreset64(&r,i); return r;
 }
 
-#endif
+#endif /* defined(__X86_64__) && !defined(__INTEL_COMPILER) */
 
 typedef int32 atomic32_t;
 
@@ -97,7 +107,7 @@ INLINE int64 atomic_cmpxchg(volatile int64* m, const int64 v, const int64 c) {
 
 typedef int32 atomic_t;
 
-#endif
+#endif /* defined(__X86_64__) */
 
 #else
 
@@ -169,8 +179,29 @@ INLINE int32 atomic_cmpxchg(int32 volatile* value, const int32 input, int32 comp
 
   typedef int32 atomic_t;
 
-#endif
+#endif /* defined(__X86_64__) */
 
-#endif
+#define PF_COMPILER_READ_WRITE_BARRIER    asm volatile("" ::: "memory");
+#define PF_COMPILER_WRITE_BARRIER         PF_COMPILER_READ_WRITE_BARRIER
+#define PF_COMPILER_READ_BARRIER          PF_COMPILER_READ_WRITE_BARRIER
 
-#endif
+#endif /* __WIN32__ */
+
+template <typename T>
+INLINE T __load_acquire(volatile T *ptr)
+{
+  PF_COMPILER_READ_WRITE_BARRIER;
+  T x = *ptr; // for x86, load == load_acquire
+  PF_COMPILER_READ_WRITE_BARRIER;
+  return x;
+}
+
+template <typename T>
+INLINE void __store_release(volatile T *ptr, T x)
+{
+  PF_COMPILER_READ_WRITE_BARRIER;
+  *ptr = x; // for x86, store == store_release
+  PF_COMPILER_READ_WRITE_BARRIER;
+}
+#endif /* __PF_INTRINSICS_H__ */
+

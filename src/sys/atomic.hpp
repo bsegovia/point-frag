@@ -32,7 +32,7 @@ namespace pf
     INLINE AtomicInternal(T data) : data(data) {}
     INLINE AtomicInternal& operator =(const T input) { data = input; return *this; }
     INLINE operator T() const { return data; }
-
+    INLINE void storeRelease(T x) { __store_release(&data, x); }
   public:
     INLINE friend T operator+= (AtomicInternal& value, T input) { return atomic_add(&value.data, input) + input; }
     INLINE friend T operator++ (AtomicInternal& value) { return atomic_add(&value.data,  1) + 1; }

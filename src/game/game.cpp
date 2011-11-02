@@ -35,27 +35,27 @@ namespace pf
 
   class CoutStream : public LoggerStream
   {
-  public:
-    virtual LoggerStream& operator<< (const std::string &str) {
-      std::cout << str;
-      return *this;
-    }
+    public:
+      virtual LoggerStream& operator<< (const std::string &str) {
+        std::cout << str;
+        return *this;
+      }
   };
 
   class FileStream : public LoggerStream
   {
-  public:
-	FileStream(void) {
-      file = fopen("log.txt", "w");
-	  assert(file);
-	}
-	virtual ~FileStream(void) {fclose(file);}
-    virtual LoggerStream& operator<< (const std::string &str) {
-      fprintf(file, str.c_str());
-      return *this;
-    }
-  private:
-    FILE *file;
+    public:
+      FileStream(void) {
+        file = fopen("log.txt", "w");
+        assert(file);
+      }
+      virtual ~FileStream(void) {fclose(file);}
+      virtual LoggerStream& operator<< (const std::string &str) {
+        fprintf(file, str.c_str());
+        return *this;
+      }
+    private:
+      FILE *file;
   };
 
   void LoggerStart(void)
@@ -64,13 +64,14 @@ namespace pf
     coutStream = PF_NEW(CoutStream);
     fileStream = PF_NEW(FileStream);
     logger->insert(*coutStream);
-	logger->insert(*fileStream);
+    logger->insert(*fileStream);
   }
 
   void LoggerEnd(void)
   {
-	logger->remove(*fileStream);
-	logger->remove(*coutStream);
+    logger->remove(*fileStream);
+    logger->remove(*coutStream);
+    PF_DELETE(fileStream);
     PF_DELETE(coutStream);
     PF_DELETE(logger);
     logger = NULL;
@@ -92,7 +93,6 @@ namespace pf
 
     renderer = PF_NEW(Renderer);
     renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
-    glutSetWindow(main);
   }
 
   void GameEnd()
