@@ -80,11 +80,11 @@ namespace pf {
     cam->ratio = float(event->w) / float(event->h);
 
     // Change mouse orientation
-	const float mouseXRel = float(event->mouseXRel);
-	const float mouseYRel = float(event->mouseYRel);
+    const float mouseXRel = float(event->mouseXRel);
+    const float mouseYRel = float(event->mouseYRel);
     const float xrel = cam->angularSpeed * mouseXRel;
     const float yrel = cam->angularSpeed * mouseYRel;
- 	cam->updateOrientation(xrel, yrel);
+    cam->updateOrientation(xrel, yrel);
 
     return NULL;
   }

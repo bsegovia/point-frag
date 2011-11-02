@@ -29,10 +29,10 @@ namespace pf
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->mouseX = this->mouseY = 0;
- 	this->time = this->dt = 0.;
-	this->w = w_;
-	this->h = h_;
-	this->isResized = 0;
+    this->time = this->dt = 0.;
+    this->w = w_;
+    this->h = h_;
+    this->isResized = 0;
     for (intptr_t i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
   }
 
@@ -40,8 +40,8 @@ namespace pf
   {
     this->mouseXRel = this->mouseYRel = 0;
     this->isResized = 0;
-	this->time = getSeconds();
-	this->dt = 0.;
+    this->time = getSeconds();
+    this->dt = 0.;
     this->w = previous.w;
     this->h = previous.h;
     this->mouseX = previous.mouseX;
@@ -113,14 +113,14 @@ namespace pf
     this->current->time = getSeconds();
     this->current->dt = this->current->time - this->previous->time;
     glutMainLoopEvent();
-	glutWarpPointer(taskEvent->current->w / 2, taskEvent->current->h / 2);
-	const int w0 = glutGet(GLUT_WINDOW_WIDTH);
+    glutWarpPointer(taskEvent->current->w / 2, taskEvent->current->h / 2);
+    const int w0 = glutGet(GLUT_WINDOW_WIDTH);
     const int h0 = glutGet(GLUT_WINDOW_HEIGHT);
-	if (w0 != taskEvent->current->w || h0 != taskEvent->current->h)
+    if (w0 != taskEvent->current->w || h0 != taskEvent->current->h)
       taskEvent->current->isResized = 1;
-	taskEvent->current->w = w0;
+    taskEvent->current->w = w0;
     taskEvent->current->h = h0;
-	return NULL;
+    return NULL;
   }
 }
 

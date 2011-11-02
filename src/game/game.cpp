@@ -25,8 +25,6 @@
 #include <cstdio>
 #include <iostream>
 
-using namespace pf;
-
 namespace pf
 {
   static const int defaultWidth = 800, defaultHeight = 600;
@@ -107,6 +105,7 @@ namespace pf
 
 int main(int argc, char **argv)
 {
+  using namespace pf;
   MemDebuggerStart();
   TaskingSystemStart();
   LoggerStart();

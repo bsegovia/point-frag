@@ -32,10 +32,8 @@ namespace pf
 #define OGL_NAME ((RendererDriver*)renderer->driver)
 
   TaskGameRender::TaskGameRender(FlyCamera &cam, InputEvent &event) :
-    cam(&cam), event(&event)
-  {
-    this->setAffinity(PF_TASK_MAIN_THREAD);
-  }
+    TaskMain("TaskGameRender"), cam(&cam), event(&event)
+  {}
 
   Task* TaskGameRender::run(void)
   {
@@ -62,7 +60,7 @@ namespace pf
 
     // Display all the bounding boxes
     R_CALL (setMVP, MVP);
-    //R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
+    R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
     glutSwapBuffers();
 
     return NULL;

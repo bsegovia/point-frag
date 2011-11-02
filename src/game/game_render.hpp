@@ -22,7 +22,7 @@ namespace pf
   class InputEvent;
 
   /*! Responsible to display everything */
-  class TaskGameRender : public Task
+  class TaskGameRender : public TaskMain
   {
   public:
     TaskGameRender(FlyCamera &cam, InputEvent &event);
