@@ -22,6 +22,8 @@
 #include "renderer/renderer.hpp"
 
 #include <GL/freeglut.h>
+#include <cstdio>
+#include <iostream>
 
 using namespace pf;
 
