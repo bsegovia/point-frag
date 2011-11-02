@@ -114,6 +114,7 @@ namespace pf
         this->allocated = 0;
       }
       ~GrowingPoolElem(void) {
+        assert(this->data);
         PF_DELETE_ARRAY(this->data);
         if (this->next) PF_DELETE(this->next);
       }
