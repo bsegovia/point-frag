@@ -29,7 +29,14 @@ namespace pf
   /*! Entity used for rendering of OBJ models */
   class RendererObj : public RefCount {
   public:
-    friend class Renderer;
+    /*! Note that this object actually belongs to a renderer */
+    RendererObj(Renderer &renderer, const FileName &fileName);
+    /*! Release it (still from a renderer */
+    ~RendererObj(void);
+    /*! Valid means it is OGL uploaded */
+    INLINE bool isValid(void) { return this->grpNum > 0; }
+    /*! Display it using the renderer */
+    void display(void);
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
     Renderer &renderer;   //!< A RendererObj belongs to a renderer
@@ -44,14 +51,7 @@ namespace pf
     GLuint topology;      //!< Mostly triangle or triangle strip
     Ref<Task> texLoading; //!< XXX To load the textures
     MutexSys mutex;       //!< XXX just to play with async load
-    /*! Valid means it is in GL */
-    INLINE bool isValid(void) { return this->grpNum > 0; }
-    /*! Display it using the renderer */
-    void display(void);
-    /*! Note that this object actually belongs to a renderer */
-    RendererObj(Renderer &renderer, const FileName &fileName);
-    /*! Release it (still from a renderer */
-    ~RendererObj(void);
+    friend class Renderer;
   };
 }
 
