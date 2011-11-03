@@ -18,6 +18,15 @@ set (SRC
   sys/string.cpp
   sys/logging.cpp
   image/stb_image.cpp
+  image/squish/alpha.cpp
+  image/squish/clusterfit.cpp
+  image/squish/colourblock.cpp
+  image/squish/colourfit.cpp
+  image/squish/colourset.cpp
+  image/squish/maths.cpp
+  image/squish/rangefit.cpp
+  image/squish/singlecolourfit.cpp
+  image/squish/squish.cpp
   models/obj.cpp
   renderer/ogl.cpp
   renderer/texture.cpp

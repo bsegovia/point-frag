@@ -103,8 +103,8 @@ namespace pf
   }
 
   GLuint RendererDriver::buildProgram(const char *vertSource,
-                                const char *geomSource,
-                                const char *fragSource)
+                                      const char *geomSource,
+                                      const char *fragSource)
   {
     GLuint program = 0, fragmentName = 0, vertexName = 0, geometryName = 0;
     R_CALLR (program, CreateProgram);
