@@ -105,7 +105,7 @@ namespace pf
   };
 
   RendererObj::RendererObj(Renderer &renderer_, const FileName &fileName) :
-    renderer(renderer_),
+    renderer(renderer_), tex(NULL), texName(NULL), bbox(NULL), grp(NULL),
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
     PF_MSG_V("RendererObj: loading .obj file \"" << fileName.base() << "\"");
@@ -127,8 +127,8 @@ namespace pf
         const int mat = obj->grp[i].m;
         this->tex[i] = renderer.defaultTex;
         if (mat >= 0)
-		  this->texName[i] = obj->mat[mat].map_Kd;
-		else
+          this->texName[i] = obj->mat[mat].map_Kd;
+        else
           this->texName[i] = "";
       }
 
@@ -192,15 +192,14 @@ namespace pf
   }
 
   RendererObj::~RendererObj(void) {
-    if (this->texLoading)
-      this->texLoading->waitForCompletion();
+    if (this->texLoading) this->texLoading->waitForCompletion();
     if (this->vertexArray) R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
     if (this->arrayBuffer) R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-    if (this->tex) PF_DELETE_ARRAY(this->tex);
-    if (this->texName) PF_DELETE_ARRAY(this->texName);
-    if (this->bbox) PF_DELETE_ARRAY(this->bbox);
-    if (this->grp) PF_DELETE_ARRAY(this->grp);
+    PF_SAFE_DELETE_ARRAY(this->tex);
+    PF_SAFE_DELETE_ARRAY(this->texName);
+    PF_SAFE_DELETE_ARRAY(this->bbox);
+    PF_SAFE_DELETE_ARRAY(this->grp);
   }
 
   void RendererObj::display(void) {

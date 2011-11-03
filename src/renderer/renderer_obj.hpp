@@ -33,15 +33,15 @@ namespace pf
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
     Renderer &renderer;   //!< A RendererObj belongs to a renderer
+    Ref<Texture2D> *tex;  //!< One texture per group of triangles
+    std::string *texName; //!< All texture names
+    BBox3f *bbox;         //!< One bounding box for each group
+    Group *grp;           //!< Indices of each group
     GLuint vertexArray;   //!< Vertex declaration
     GLuint arrayBuffer;   //!< Vertex data (positions, normals...)
     GLuint elementBuffer; //!< Indices
     GLuint grpNum;        //!< Number of groups in the model
     GLuint topology;      //!< Mostly triangle or triangle strip
-    Ref<Texture2D> *tex;  //!< One texture per group of triangles
-    std::string *texName; //!< All texture names
-    BBox3f *bbox;         //!< One bounding box for each group
-    Group *grp;           //!< Indices of each group
     Ref<Task> texLoading; //!< XXX To load the textures
     MutexSys mutex;       //!< XXX just to play with async load
     /*! Valid means it is in GL */
