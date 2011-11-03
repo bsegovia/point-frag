@@ -65,7 +65,7 @@ namespace pf
     ~TextureStreamer(void);
 
     /*! Indicate the current loading state of the texture */
-    TextureState getTextureState(const char *name);
+    TextureState getTextureState(const std::string &name);
     /*! If the texture is not loading, spawn a task and load it. Otherwise,
      *  return the task that is currently loading it. That may be NULL if the
      *  task is already loaded

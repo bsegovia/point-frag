@@ -31,17 +31,18 @@ namespace pf
   static unsigned char *doMipmap(const unsigned char *src,
                                  int w, int h,
                                  int mmW, int mmH,
-                                 int compNum)
+                                 int channelNum)
   {
-    unsigned char *dst = (unsigned char*) PF_MALLOC(mmW*mmH*compNum);
+    assert(src && w && h && mmW && mmH && channelNum);
+    unsigned char *dst = (unsigned char*) PF_MALLOC(mmW*mmH*channelNum);
     for (int y = 0; y < mmH; ++y) {
       for (int x = 0; x < mmW; ++x) {
-        const int offset = (x + y*mmW) * compNum;
-        const int offset0 = (2*x+0 + 2*y*w+0) * compNum;
-        const int offset1 = (2*x+1 + 2*y*w+w) * compNum;
-        const int offset2 = (2*x+0 + 2*y*w+w) * compNum;
-        const int offset3 = (2*x+1 + 2*y*w+0) * compNum;
-        for (int c = 0; c < compNum; ++c) {
+        const int offset = (x + y*mmW) * channelNum;
+        const int offset0 = (2*x+0 + 2*y*w+0) * channelNum;
+        const int offset1 = (2*x+1 + 2*y*w+w) * channelNum;
+        const int offset2 = (2*x+0 + 2*y*w+w) * channelNum;
+        const int offset3 = (2*x+1 + 2*y*w+0) * channelNum;
+        for (int c = 0; c < channelNum; ++c) {
           const float f = float(src[offset0+c]) +
             float(src[offset1+c]) +
             float(src[offset2+c]) +
@@ -53,13 +54,14 @@ namespace pf
     return dst;
   }
 
-  static void mirror(unsigned char *img, int w, int h, int compNum)
+  static void mirror(unsigned char *img, int w, int h, int channelNum)
   {
+    assert(img != NULL);
     for (int y = 0; y < h / 2; ++y)
       for (int x = 0; x < w; ++x) {
-        const int offset = compNum * (y*w + x);
-        const int mirror = compNum * ((h-y-1)*w + x);
-        for (int c = 0; c < compNum; ++c)
+        const int offset = channelNum * (y*w + x);
+        const int mirror = channelNum * ((h-y-1)*w + x);
+        for (int c = 0; c < channelNum; ++c)
           std::swap(img[offset+c], img[mirror+c]);
       }
   }
@@ -72,7 +74,7 @@ namespace pf
     if (this->handle != 0) R_CALL (DeleteTextures, 1, &this->handle);
   }
 
-  TextureState TextureStreamer::getTextureState(const char *name) {
+  TextureState TextureStreamer::getTextureState(const std::string &name) {
     Lock<MutexSys> lock(mutex);
     return this->getTextureStateUnlocked(name);
   }
@@ -104,7 +106,7 @@ namespace pf
   {
     // Try to find the file and load it
     bool isLoaded = false;
-    unsigned char *img = 0;
+    unsigned char *img = NULL;
     int w0 = 0, h0 = 0, channel = 0;
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const FileName dataPath(defaultPath[i]);
@@ -117,6 +119,7 @@ namespace pf
         break;
       }
     }
+    assert(isLoaded || img == NULL);
 
     // We found the image
     if (isLoaded) {
@@ -131,7 +134,7 @@ namespace pf
       switch (channel) {
         case 3: this->fmt = GL_RGB; break;
         case 4: this->fmt = GL_RGBA; break;
-        default: FATAL("unsupported number of components");
+        default: FATAL("unsupported channel number");
       };
       PF_MSG_V("TextureStreamer: format: " << name << ", " <<
                w0 << "x" << h0 << "x" <<
@@ -156,7 +159,8 @@ namespace pf
     PF_SAFE_DELETE_ARRAY(this->w);
     PF_SAFE_DELETE_ARRAY(this->h);
     if (this->texels)
-      for (int i = 0; i <= this->levelNum; ++i) PF_FREE(this->texels[i]);
+      for (int i = 0; i <= this->levelNum; ++i)
+        PF_FREE(this->texels[i]);
     PF_SAFE_DELETE_ARRAY(this->texels);
   }
 
@@ -186,7 +190,9 @@ namespace pf
     INLINE TaskTextureLoadOGL(TextureLoadData *data, TextureStreamer &streamer) :
       TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer)
     {
-      assert(data != NULL);
+      assert(data != NULL &&
+             data->levelNum != 0 &&
+             data->w != NULL && data->h != NULL && data->texels != NULL);
       this->setPriority(TaskPriority::HIGH);
     }
     virtual Task* run(void);
@@ -205,12 +211,13 @@ namespace pf
                " not found. Default texture is used instead");
       PF_DELETE(data);
       Lock<MutexSys> lock(streamer.mutex);
+      assert(streamer.renderer.defaultTex);
       streamer.texMap[name] = TextureState(*streamer.renderer.defaultTex);
     }
     // We need to load it in OGL now
     else {
       PF_MSG_V("TextureStreamer: loading time: " << this->name <<
-               ", " << (getSeconds() - t) << "s");
+               ", " << getSeconds() - t << "s");
       Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
       next->ends(this);
       next->scheduled();
@@ -226,7 +233,8 @@ namespace pf
   {
   public:
     TaskTextureLoadProxy(Ref<Task> loadingTask) :
-      Task("TaskTextureLoadProxy"), loadingTask(loadingTask) {}
+      Task("TaskTextureLoadProxy"), loadingTask(loadingTask)
+    { assert(this->loadingTask); }
     virtual Task *run(void) {
       loadingTask->waitForCompletion();
       return NULL;
@@ -256,13 +264,13 @@ namespace pf
     R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
       R_CALL (TexImage2D,
-          GL_TEXTURE_2D,
-          lvl,
-          tex->fmt, data->w[lvl], data->h[lvl],
-          0,
-          tex->fmt,
-          GL_UNSIGNED_BYTE,
-          data->texels[lvl]);
+              GL_TEXTURE_2D,
+              lvl,
+              tex->fmt, data->w[lvl], data->h[lvl],
+              0,
+              tex->fmt,
+              GL_UNSIGNED_BYTE,
+              data->texels[lvl]);
     }
 
     // Update the map to say we are done with this texture. We can now use it
@@ -297,7 +305,7 @@ namespace pf
     Lock<MutexSys> lock(mutex);
 
     // Somebody already issued a load for it
-    TextureState texState = this->getTextureStateUnlocked(name.c_str());
+    TextureState texState = this->getTextureStateUnlocked(name);
     if (texState.value == TextureState::LOADING ||
         texState.value == TextureState::COMPLETE) {
       if (texState.loadingTask == false)
