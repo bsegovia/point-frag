@@ -108,6 +108,7 @@ struct obj_light_quad {
   int material_index;
 };
 
+struct obj_scene_data;
 struct obj_growable_scene_data {
   char scene_filename[OBJ_FILENAME_LENGTH];
   char material_filename[OBJ_FILENAME_LENGTH];
@@ -123,15 +124,8 @@ struct obj_growable_scene_data {
   list light_disc_list;
   list material_list;
 
-  GrowingPool<obj_face> *faceAllocator;
-  GrowingPool<obj_vector> *vectorAllocator;
-  GrowingPool<obj_plane> *planeAllocator;
-  GrowingPool<obj_sphere> *sphereAllocator;
-  GrowingPool<obj_material> *matAllocator;
-  GrowingPool<obj_light_point> *pointAllocator;
-  GrowingPool<obj_light_quad> *discAllocator;
-  GrowingPool<obj_light_disc> *quadAllocator;
   obj_camera *camera;
+  obj_scene_data *data;
 };
 
 struct obj_scene_data {
@@ -147,14 +141,14 @@ struct obj_scene_data {
   obj_material    **material_list;
   obj_camera      *camera;
 
-  GrowingPool<obj_face> faceAllocator;
-  GrowingPool<obj_vector> vectorAllocator;
-  GrowingPool<obj_plane> planeAllocator;
-  GrowingPool<obj_sphere> sphereAllocator;
-  GrowingPool<obj_material> matAllocator;
-  GrowingPool<obj_light_point> pointAllocator;
-  GrowingPool<obj_light_quad> discAllocator;
-  GrowingPool<obj_light_disc> quadAllocator;
+  GrowingPool<obj_face> *faceAllocator;
+  GrowingPool<obj_vector> *vectorAllocator;
+  GrowingPool<obj_plane> *planeAllocator;
+  GrowingPool<obj_sphere> *sphereAllocator;
+  GrowingPool<obj_material> *matAllocator;
+  GrowingPool<obj_light_point> *pointAllocator;
+  GrowingPool<obj_light_quad> *discAllocator;
+  GrowingPool<obj_light_disc> *quadAllocator;
 
   int vertex_count;
   int vertex_normal_count;
@@ -169,28 +163,28 @@ struct obj_scene_data {
 };
 
 void *obj_face::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->faceAllocator->allocate();
+  return scene->data->faceAllocator->allocate();
 }
 void *obj_vector::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->vectorAllocator->allocate();
+  return scene->data->vectorAllocator->allocate();
 }
 void *obj_plane::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->planeAllocator->allocate();
+  return scene->data->planeAllocator->allocate();
 }
 void *obj_sphere::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->sphereAllocator->allocate();
+  return scene->data->sphereAllocator->allocate();
 }
 void *obj_material::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->matAllocator->allocate();
+  return scene->data->matAllocator->allocate();
 }
 void *obj_light_point::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->pointAllocator->allocate();
+  return scene->data->pointAllocator->allocate();
 }
 void *obj_light_quad::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->quadAllocator->allocate();
+  return scene->data->quadAllocator->allocate();
 }
 void *obj_light_disc::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->discAllocator->allocate();
+  return scene->data->discAllocator->allocate();
 }
 
 class ObjLoader
@@ -788,14 +782,7 @@ static int parse_obj_scene(obj_scene_data *data_out, const char *filename)
   obj_growable_scene_data growable_data;
 
   obj_init_temp_storage(&growable_data);
-  growable_data.faceAllocator = &data_out->faceAllocator;
-  growable_data.vectorAllocator = &data_out->vectorAllocator;
-  growable_data.planeAllocator = &data_out->planeAllocator;
-  growable_data.sphereAllocator = &data_out->sphereAllocator;
-  growable_data.matAllocator = &data_out->matAllocator;
-  growable_data.pointAllocator = &data_out->pointAllocator;
-  growable_data.quadAllocator = &data_out->quadAllocator;
-  growable_data.discAllocator = &data_out->discAllocator;
+  growable_data.data = data_out;
   if (obj_parse_obj_file(&growable_data, filename) == 0) {
     obj_free_all_storage(&growable_data);
     return 0;
@@ -806,8 +793,29 @@ static int parse_obj_scene(obj_scene_data *data_out, const char *filename)
   return 1;
 }
 
-ObjLoader::ObjLoader() { std::memset(this, 0, sizeof(*this)); }
-ObjLoader::~ObjLoader() { delete_obj_data(&data); }
+ObjLoader::ObjLoader(void) {
+  std::memset(this, 0, sizeof(ObjLoader));
+  data.faceAllocator = PF_NEW(GrowingPool<obj_face>);
+  data.vectorAllocator = PF_NEW(GrowingPool<obj_vector>);
+  data.planeAllocator = PF_NEW(GrowingPool<obj_plane>);
+  data.sphereAllocator = PF_NEW(GrowingPool<obj_sphere>);
+  data.matAllocator = PF_NEW(GrowingPool<obj_material>);
+  data.pointAllocator = PF_NEW(GrowingPool<obj_light_point>);
+  data.discAllocator = PF_NEW(GrowingPool<obj_light_quad>);
+  data.quadAllocator = PF_NEW(GrowingPool<obj_light_disc>);
+}
+
+ObjLoader::~ObjLoader(void) {
+  PF_DELETE(data.faceAllocator);
+  PF_DELETE(data.vectorAllocator);
+  PF_DELETE(data.planeAllocator);
+  PF_DELETE(data.sphereAllocator);
+  PF_DELETE(data.matAllocator);
+  PF_DELETE(data.pointAllocator);
+  PF_DELETE(data.discAllocator);
+  PF_DELETE(data.quadAllocator);
+  delete_obj_data(&data);
+}
 
 int ObjLoader::load(const char *filename) {
   int no_error = 1;
@@ -854,7 +862,9 @@ static void patchName(char *str)
   str[end+1] = 0;
 }
 
-Obj::Obj(void) {std::memset(this,0,sizeof(Obj));}
+Obj::Obj(void) {
+  std::memset(this,0,sizeof(Obj));
+}
 
 INLINE uint32 str_hash(const char *key)
 {
