@@ -79,9 +79,7 @@ namespace pf
       }
     }
 
-    ~TaskLoadObjTexture(void) {
-      if (this->texName) PF_DELETE_ARRAY(this->texName);
-    }
+    ~TaskLoadObjTexture(void) { PF_SAFE_DELETE_ARRAY(this->texName); }
 
     /*! Spawn one loading task per group */
     virtual Task* run(void) {

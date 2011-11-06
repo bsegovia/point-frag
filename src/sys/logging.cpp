@@ -35,10 +35,6 @@ namespace pf
     return *this << fileName.base() << " at " << info.function << " line " << info.line;
   }
 
-  LoggerBuffer& LoggerBuffer::operator<< (LoggerThreadIDTy) {
-    return *this << TaskingSystemGetThreadID();
-  }
-
   Logger::Logger(void) : streams(NULL) {
     const uint32 threadNum = TaskingSystemGetThreadNum();
     this->buffers = PF_NEW_ARRAY(LoggerBuffer, threadNum);

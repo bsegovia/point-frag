@@ -44,7 +44,6 @@ namespace pf
 
   /*! Helper and proxy structures to display various information */
   static struct LoggerFlushTy { } loggerFlush MAYBE_UNUSED;
-  static struct LoggerThreadIDTy { } loggerThreadID MAYBE_UNUSED;
   struct LoggerInfo {
     INLINE LoggerInfo(const char *file, const char *function, int line) :
       file(file), function(function), line(line) {}
@@ -63,7 +62,6 @@ namespace pf
       return *this;
     }
     LoggerBuffer& operator<< (LoggerFlushTy);
-    LoggerBuffer& operator<< (LoggerThreadIDTy);
     LoggerBuffer& operator<< (const LoggerInfo&);
     /*! Output the info a nice format */
     LoggerBuffer& info(const char *file, const char *function, int line);
@@ -84,6 +82,7 @@ namespace pf
     void output(const std::string &str);
     template <typename T> LoggerBuffer& operator<< (const T &x) {
       LoggerBuffer &buffer = buffers[TaskingSystemGetThreadID()];
+      buffer << "[" << "thread " << std::setw(2) << TaskingSystemGetThreadID() << "] ";
       buffer << "[" << std::setw(12) << std::fixed << getSeconds() - startTime << "s] " << x;
       return buffer;
     }
@@ -103,7 +102,7 @@ namespace pf
 
 /*! Macros to handle logging information in the code */
 #define PF_LOG_HERE LoggerInfo(__FILE__, __FUNCTION__, __LINE__)
-#define PF_INFO " ######## thread " << loggerThreadID << " - " << PF_LOG_HERE
+#define PF_INFO " ######## " << PF_LOG_HERE
 
 /*! Verbose macros: they add logging position and thread ID */
 #define PF_WARNING_V(MSG) (*logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush)
