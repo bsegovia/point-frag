@@ -88,33 +88,58 @@ namespace pf
       return it->second;
   }
 
+#define DECL_SWITCH_CASE(CASE) case CASE: return #CASE
+  static INLINE const char *TextureGetDXTName(TextureFormat fmt) {
+    switch (fmt) {
+      DECL_SWITCH_CASE(PF_TEX_FORMAT_PLAIN);
+      DECL_SWITCH_CASE(PF_TEX_FORMAT_DXT1);
+      DECL_SWITCH_CASE(PF_TEX_FORMAT_DXT3);
+      DECL_SWITCH_CASE(PF_TEX_FORMAT_DXT5);
+    };
+    return "";
+  }
+
+  static INLINE const char *TextureGetDXTQuality(TextureQuality quality) {
+    switch (quality) {
+      DECL_SWITCH_CASE(PF_TEX_DXT_LOW_QUALITY);
+      DECL_SWITCH_CASE(PF_TEX_DXT_NORMAL_QUALITY);
+      DECL_SWITCH_CASE(PF_TEX_DXT_HIGH_QUALITY);
+    };
+    return "";
+  }
+#undef DECL_SWITCH_CASE
+
   /*! Contain the texture data (format + data) that we will provide to OGL */
   class TextureLoadData
   {
   public:
-    TextureLoadData(const std::string &name);
+    TextureLoadData(const TextureRequest &request);
     ~TextureLoadData(void);
     INLINE bool isValid(void) const { return texels != NULL; }
+    TextureRequest request;
     unsigned char **texels; //!< All mip-map level texels
     int *w, *h;             //!< Dimensions of all mip-maps
     size_t *sz;             //!< Size of them (if compression used)
-    std::string name;       //!< Name of the file containing the data
     int levelNum;           //!< Number of mip-maps
-    int fmt;                //!< Format of the textures
+    int fmt;                //!< Format of the texture
   };
 
-  TextureLoadData::TextureLoadData(const std::string &name) :
-    texels(NULL), w(NULL), h(NULL), name(name), levelNum(0), fmt(0)
+  TextureLoadData::TextureLoadData(const TextureRequest &request) :
+    request(request),
+    texels(NULL), w(NULL), h(NULL), sz(NULL),
+    levelNum(0), fmt(0)
   {
 
     // Try to find the file and load it
     bool isLoaded = false;
     unsigned char *img = NULL;
     int w0 = 0, h0 = 0, channel = 0;
-    const int reqComp = 4;     // We force 4 channels since libsquish requires it
+
+    // We only force 4 channels for compression (squish requires it)
+    const int reqComp = request.fmt == PF_TEX_FORMAT_PLAIN ? 0 : 4;
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const FileName dataPath(defaultPath[i]);
-      const FileName path = dataPath + FileName(name);
+      const FileName path = dataPath + FileName(request.name);
       img = stbi_load(path.c_str(), &w0, &h0, &channel, reqComp);
       if (img == NULL)
         continue;
@@ -123,13 +148,20 @@ namespace pf
         break;
       }
     }
-    channel = reqComp; // We force RGBA
-    assert(isLoaded || img == NULL);
+
+    // We force RGBA
+    channel = request.fmt == PF_TEX_FORMAT_PLAIN ? channel : reqComp;
 
     // We found the image
     if (isLoaded) {
       mirror(img, w0, h0, channel);
-      this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
+      if (request.minFilter != GL_LINEAR_MIPMAP_LINEAR  &&
+          request.minFilter != GL_LINEAR_MIPMAP_NEAREST &&
+          request.minFilter != GL_NEAREST_MIPMAP_LINEAR &&
+          request.minFilter != GL_NEAREST_MIPMAP_NEAREST)
+        this->levelNum = 0;
+      else
+        this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
       this->w = PF_NEW_ARRAY(int, this->levelNum+1);
       this->h = PF_NEW_ARRAY(int, this->levelNum+1);
       this->sz = PF_NEW_ARRAY(size_t, this->levelNum+1);
@@ -138,7 +170,6 @@ namespace pf
       this->w[0] = w0;
       this->h[0] = h0;
       this->sz[0] = 0; // non zero only if compressed
-      this->fmt = GL_RGBA;
 
       // Now compute the mip-maps
       for (int lvl = 1; lvl <= levelNum; ++lvl) {
@@ -152,24 +183,69 @@ namespace pf
         h0 = mmH;
         img = mipmap;
       }
+
+      if (request.fmt == PF_TEX_FORMAT_PLAIN) {
+        switch (channel) {
+          case 3: this->fmt = GL_RGB;  break;
+          case 4: this->fmt = GL_RGBA; break;
+          default: FATAL("Unsupported number of channels");
+        };
+      }
+      else {
+        using namespace squish;
+        PF_MSG_V("TextureStreamer: compressing: " << request.name << ", " <<
+                  TextureGetDXTName(request.fmt) << ", " <<
+                  TextureGetDXTQuality(request.quality));
+        // Get DXT format
+        int squishFmt = 0;
+        this->fmt = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+        switch (request.fmt) {
+          case PF_TEX_FORMAT_DXT3:
+            this->fmt = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            squishFmt = kDxt3;
+          break;
+          case PF_TEX_FORMAT_DXT5:
+            this->fmt = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            squishFmt = kDxt5;
+          break;
+          default:
+            this->fmt = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            squishFmt = kDxt1;
+          break;
+        };
+
+        // Get compression quality
+        int squishQuality = 0;
+        switch (request.quality) {
+          case PF_TEX_DXT_NORMAL_QUALITY:
+            squishQuality = kColourClusterFit;
+          break;
+          case PF_TEX_DXT_LOW_QUALITY:
+            squishFmt = kColourRangeFit;
+          break;
+          default:
+            squishFmt = kColourIterativeClusterFit;
+          break;
+        };
+
+        // Compress all mip-maps
+        const int flags = squishFmt | squishQuality;
+        for (int lvl = 0; lvl <= levelNum; ++lvl) {
+          this->sz[lvl] = GetStorageRequirements(w[lvl], h[lvl], flags);
+          u8 *compressed = (u8 *) PF_MALLOC(this->sz[lvl]);
+          CompressImage(texels[lvl], w[lvl], h[lvl], compressed, flags);
+          PF_FREE(texels[lvl]);
+          this->texels[lvl] = compressed;
+        }
+      }
     }
-#if 1
-    // Compress into DXT1
-    for (int lvl = 0; lvl <= levelNum; ++lvl) {
-      using namespace squish;
-      this->sz[lvl] = GetStorageRequirements(w[lvl], h[lvl], kDxt1);
-      u8 *compressed = (u8 *) PF_MALLOC(this->sz[lvl]);
-      CompressImage(texels[lvl], w[lvl], h[lvl], compressed, kDxt1 | kColourRangeFit);
-      PF_FREE(texels[lvl]);
-      this->texels[lvl] = compressed;
-    }
-#endif
   }
 
   TextureLoadData::~TextureLoadData(void)
   {
     PF_SAFE_DELETE_ARRAY(this->w);
     PF_SAFE_DELETE_ARRAY(this->h);
+    PF_SAFE_DELETE_ARRAY(this->sz);
     if (this->texels)
       for (int i = 0; i <= this->levelNum; ++i)
         PF_FREE(this->texels[i]);
@@ -185,13 +261,13 @@ namespace pf
   class TaskTextureLoad : public Task
   {
   public:
-    INLINE TaskTextureLoad(const std::string &name, TextureStreamer &streamer) :
-      Task("TaskTextureLoad"), name(name), streamer(streamer)
+    INLINE TaskTextureLoad(const TextureRequest &request, TextureStreamer &streamer) :
+      Task("TaskTextureLoad"), request(request), streamer(streamer)
     {
       this->setPriority(TaskPriority::LOW);
     }
     virtual Task* run(void);
-    std::string name;          //!< File to load
+    TextureRequest request;    //!< File to load
     TextureStreamer &streamer; //!< Streamer that handles streaming
   };
 
@@ -203,8 +279,8 @@ namespace pf
       TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer)
     {
       assert(data != NULL &&
-             data->levelNum != 0 &&
-             data->w != NULL && data->h != NULL && data->texels != NULL);
+             data->w != NULL && data->h != NULL &&
+             data->texels != NULL);
       this->setPriority(TaskPriority::HIGH);
     }
     virtual Task* run(void);
@@ -213,24 +289,24 @@ namespace pf
   };
 
   Task *TaskTextureLoad::run(void) {
-    PF_MSG_V("TextureStreamer: loading: " << name);
+    PF_MSG_V("TextureStreamer: loading: " << request.name);
     double t = getSeconds();
-    TextureLoadData *data = PF_NEW(TextureLoadData, this->name);
+    TextureLoadData *data = PF_NEW(TextureLoadData, request);
 
     // We were not able to find the texture. So we use a default one
     if (data->isValid() == false) {
-      PF_MSG_V("TextureStreamer: texture: " << std::string(name) <<
+      PF_MSG_V("TextureStreamer: texture: " << request.name <<
                " not found. Default texture is used instead");
       PF_DELETE(data);
       Lock<MutexSys> lock(streamer.mutex);
       assert(streamer.renderer.defaultTex);
-      streamer.texMap[name] = TextureState(*streamer.renderer.defaultTex);
+      streamer.texMap[request.name] = TextureState(*streamer.renderer.defaultTex);
     }
     // We need to load it in OGL now
     else {
-      PF_MSG_V("TextureStreamer: loading time: " << this->name <<
+      PF_MSG_V("TextureStreamer: loading time: " << request.name <<
                ", " << getSeconds() - t << "s");
-      Task *next = PF_NEW(TaskTextureLoadOGL, data, this->streamer);
+      Task *next = PF_NEW(TaskTextureLoadOGL, data, streamer);
       next->ends(this);
       next->scheduled();
     }
@@ -259,7 +335,8 @@ namespace pf
 
   Task *TaskTextureLoadOGL::run(void)
   {
-    PF_MSG_V("TextureStreamer: OGL uploading: " << data->name);
+    const TextureRequest &request = data->request;
+    PF_MSG_V("TextureStreamer: OGL uploading: " << request.name);
     double t = getSeconds();
     Ref<Texture2D> tex = PF_NEW(Texture2D, streamer.renderer);
     tex->w = data->w[0];
@@ -272,41 +349,43 @@ namespace pf
     R_CALL (GenTextures, 1, &tex->handle);
     R_CALL (ActiveTexture, GL_TEXTURE0);
     R_CALL (BindTexture, GL_TEXTURE_2D, tex->handle);
-    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#if 0
-  for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
-      R_CALL (TexImage2D,
-              GL_TEXTURE_2D,
-              lvl,
-              tex->fmt, data->w[lvl], data->h[lvl],
-              0,
-              tex->fmt,
-              GL_UNSIGNED_BYTE,
-              data->texels[lvl]);
-#else
-  for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
-      R_CALL (CompressedTexImage2D,
-              GL_TEXTURE_2D,
-              lvl,
-              GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-              data->w[lvl], data->h[lvl],
-              0,
-              data->sz[lvl],
-              data->texels[lvl]);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, request.minFilter);
+    R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, request.magFilter);
 
-#endif
-    }
+    // Upload the mip-maps
+    if (request.fmt == PF_TEX_FORMAT_PLAIN)
+      for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
+          R_CALL (TexImage2D,
+                  GL_TEXTURE_2D,
+                  lvl,
+                  tex->fmt, data->w[lvl], data->h[lvl],
+                  0,
+                  tex->fmt,
+                  GL_UNSIGNED_BYTE,
+                  data->texels[lvl]);
+      }
+    else 
+      for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
+          R_CALL (CompressedTexImage2D,
+                  GL_TEXTURE_2D,
+                  lvl,
+                  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+                  data->w[lvl], data->h[lvl],
+                  0,
+                  data->sz[lvl],
+                  data->texels[lvl]);
+
+        }
 
     // Update the map to say we are done with this texture. We can now use it
     Lock<MutexSys> lock(streamer.mutex);
-    auto it = streamer.texMap.find(this->data->name);
+    auto it = streamer.texMap.find(request.name);
     assert(it != streamer.texMap.end());
     it->second.loadingTask = NULL;
     it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
     PF_MSG_V("TextureStreamer: OGL uploading time: " <<
-             data->name << ", " << getSeconds() - t << "s");
+             request.name << ", " << getSeconds() - t << "s");
 
     // The data is not needed anymore
     PF_DELETE(this->data);
@@ -325,12 +404,12 @@ namespace pf
     }
   }
 
-  Ref<Task> TextureStreamer::createLoadTask(const std::string &name)
+  Ref<Task> TextureStreamer::createLoadTask(const TextureRequest &request)
   {
     Lock<MutexSys> lock(mutex);
 
     // Somebody already issued a load for it
-    TextureState texState = this->getTextureStateUnlocked(name);
+    TextureState texState = this->getTextureStateUnlocked(request.name);
     if (texState.value == TextureState::LOADING ||
         texState.value == TextureState::COMPLETE) {
       if (texState.loadingTask == false)
@@ -340,8 +419,8 @@ namespace pf
     }
 
     // Create the task and indicate everybody else that texture is loading
-    Task *loadingTask = PF_NEW(TaskTextureLoad, name.c_str(), *this);
-    this->texMap[name] = TextureState(TextureState::LOADING, loadingTask);
+    Task *loadingTask = PF_NEW(TaskTextureLoad, request, *this);
+    this->texMap[request.name] = TextureState(TextureState::LOADING, loadingTask);
     return loadingTask;
   }
 

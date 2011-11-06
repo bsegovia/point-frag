@@ -24,7 +24,8 @@ namespace pf
   {
     this->driver = PF_NEW(RendererDriver);
     this->streamer = PF_NEW(TextureStreamer, *this);
-    Ref<Task> loadingTask = this->streamer->createLoadTask("Maps/chess.tga");
+    const TextureRequest req("Maps/chess.tga", PF_TEX_FORMAT_PLAIN, GL_NEAREST, GL_NEAREST);
+    Ref<Task> loadingTask = this->streamer->createLoadTask(req);
     loadingTask->scheduled();
     loadingTask->waitForCompletion();
     const TextureState state = this->streamer->getTextureState("Maps/chess.tga");

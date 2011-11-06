@@ -34,31 +34,40 @@ namespace pf
     GLuint internalFmt; //!< Internal format
   };
 
-  enum TextureLoadSource {
-    PF_TEX_LOAD_FROM_FILE = 0u,
-    PF_TEX_LOAD_FROM_DATA = 1u,
-    PF_TEX_LOAD_INVALID   = 0xffffffffu
-  };
-
-  enum TextureDXTQuality {
+  /*! Texture compression quality when used */
+  enum TextureQuality
+  {
     PF_TEX_DXT_HIGH_QUALITY = 0,
     PF_TEX_DXT_NORMAL_QUALITY = 1,
     PF_TEX_DXT_LOW_QUALITY = 2
   };
 
+  /*! Format we want OGL wise */
+  enum TextureFormat
+  {
+    PF_TEX_FORMAT_PLAIN = 0,
+    PF_TEX_FORMAT_DXT1  = 1,
+    PF_TEX_FORMAT_DXT3  = 2,
+    PF_TEX_FORMAT_DXT5  = 3
+  };
+
   /*! Describe how to load a texture and what to do with it */
   struct TextureRequest
   {
-    TextureLoadSource source;
-    std::string fileName;     //!< Only if load from file
-    char *data;               //!< Only if load from data
-    uint32_t w, h;            //!< Dimensions (load from data only)
-    GLuint format;            //!< Format of the data (load from data only)
-    GLuint internalFormat;    //!< Internal format of the texture
-    GLuint minFilter;         //!< Minification
-    GLuint magFilter;         //!< Magnification (will compute mip-maps if needed)
+    INLINE TextureRequest(const std::string &name,
+                          TextureFormat fmt,
+                          GLuint minFilter = GL_LINEAR_MIPMAP_LINEAR,
+                          GLuint magFilter = GL_LINEAR,
+                          TextureQuality quality = PF_TEX_DXT_LOW_QUALITY) :
+      name(name), fmt(fmt),
+      minFilter(minFilter), magFilter(magFilter),
+      quality(quality)  {}
+    std::string name;       //!< Only if load from file
+    TextureFormat fmt;      //!< Format we want in OGL
+    GLuint minFilter;       //!< Minification
+    GLuint magFilter;       //!< Magnification (will compute mip-maps if needed)
+    TextureQuality quality; //!< Compression quality when used
   };
-
 
   /*! States of the texture. This also includes the loading task itself. This
    *  will allow any other tasks (including tasks that did not issue the load) to
@@ -73,10 +82,11 @@ namespace pf
     Ref<Texture2D> tex;    //!< Texture itself
     Ref<Task> loadingTask; //!< Pointer to the task that issued the load
     int value;             //!< Current loading state
-    enum {
-      NOT_HERE = 0,  //!< Unknown not in the streamer at all
-      LOADING = 1,   //!< Somebody started to load it
-      COMPLETE = 2,  //!< It is here!
+    enum
+    {
+      NOT_HERE  = 0, //!< Unknown not in the streamer at all
+      LOADING   = 1, //!< Somebody started to load it
+      COMPLETE  = 2, //!< It is here!
       NOT_FOUND = 3, //!< The resource was not found
       INVALID_STATE = 0xffffffff
     };
@@ -99,7 +109,7 @@ namespace pf
      *  return the task that is currently loading it. That may be NULL if the
      *  task is already loaded
      */
-    Ref<Task> createLoadTask(const std::string &name);
+    Ref<Task> createLoadTask(const TextureRequest &request);
 
   private:
     /*! Store for each texture its state */

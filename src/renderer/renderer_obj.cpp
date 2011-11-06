@@ -40,7 +40,7 @@ namespace pf
 
     /*! Update the renderer obj with the fully loaded textures */
     virtual Task* run(void) {
-      const TextureState state = streamer.getTextureState(name.c_str());
+      const TextureState state = streamer.getTextureState(name);
       assert(state.value == TextureState::COMPLETE);
       Lock<MutexSys> lock(obj.mutex);
       for (size_t i = 0; i < obj.grpNum; ++i)
@@ -87,7 +87,8 @@ namespace pf
     virtual Task* run(void) {
       for (size_t i = 0; i < texNum; ++i) {
         if (texName[i].size() == 0) continue;
-        Ref<Task> loading = streamer.createLoadTask(texName[i]);
+        const TextureRequest req(texName[i], PF_TEX_FORMAT_DXT1);
+        Ref<Task> loading = streamer.createLoadTask(req);
         if (loading) {
           Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, rendererObj, texName[i]);
           loading->starts(updateObj.ptr);
