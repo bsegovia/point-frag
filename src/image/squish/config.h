@@ -26,6 +26,8 @@
 #ifndef SQUISH_CONFIG_H
 #define SQUISH_CONFIG_H
 
+#define SQUISH_USE_SSE 1
+
 // Set to 1 when building squish to use Altivec instructions.
 #ifndef SQUISH_USE_ALTIVEC
 #define SQUISH_USE_ALTIVEC 0

@@ -29,7 +29,36 @@ namespace pf
     GLuint w, h;        //!< Dimensions of level 0
     GLuint minLevel;    //!< Minimum level we loaded
     GLuint maxLevel;    //!< Maximum level we loaded
+    GLuint magFilter;   //!< Magnification filter
+    GLuint minFilter;   //!< Magnification filter
+    GLuint internalFmt; //!< Internal format
   };
+
+  enum TextureLoadSource {
+    PF_TEX_LOAD_FROM_FILE = 0u,
+    PF_TEX_LOAD_FROM_DATA = 1u,
+    PF_TEX_LOAD_INVALID   = 0xffffffffu
+  };
+
+  enum TextureDXTQuality {
+    PF_TEX_DXT_HIGH_QUALITY = 0,
+    PF_TEX_DXT_NORMAL_QUALITY = 1,
+    PF_TEX_DXT_LOW_QUALITY = 2
+  };
+
+  /*! Describe how to load a texture and what to do with it */
+  struct TextureRequest
+  {
+    TextureLoadSource source;
+    std::string fileName;     //!< Only if load from file
+    char *data;               //!< Only if load from data
+    uint32_t w, h;            //!< Dimensions (load from data only)
+    GLuint format;            //!< Format of the data (load from data only)
+    GLuint internalFormat;    //!< Internal format of the texture
+    GLuint minFilter;         //!< Minification
+    GLuint magFilter;         //!< Magnification (will compute mip-maps if needed)
+  };
+
 
   /*! States of the texture. This also includes the loading task itself. This
    *  will allow any other tasks (including tasks that did not issue the load) to

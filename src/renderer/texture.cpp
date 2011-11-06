@@ -20,6 +20,7 @@
 #include "sys/tasking.hpp"
 #include "sys/logging.hpp"
 #include "image/stb_image.hpp"
+#include "image/squish/squish.h"
 #include "math/math.hpp"
 
 #include <cstring>
@@ -44,9 +45,9 @@ namespace pf
         const int offset3 = (2*x+1 + 2*y*w+0) * channelNum;
         for (int c = 0; c < channelNum; ++c) {
           const float f = float(src[offset0+c]) +
-            float(src[offset1+c]) +
-            float(src[offset2+c]) +
-            float(src[offset3+c]);
+                          float(src[offset1+c]) +
+                          float(src[offset2+c]) +
+                          float(src[offset3+c]);
           dst[offset+c] = (unsigned char) (f * 0.25f);
         }
       }
@@ -96,6 +97,7 @@ namespace pf
     INLINE bool isValid(void) const { return texels != NULL; }
     unsigned char **texels; //!< All mip-map level texels
     int *w, *h;             //!< Dimensions of all mip-maps
+    size_t *sz;             //!< Size of them (if compression used)
     std::string name;       //!< Name of the file containing the data
     int levelNum;           //!< Number of mip-maps
     int fmt;                //!< Format of the textures
@@ -104,14 +106,16 @@ namespace pf
   TextureLoadData::TextureLoadData(const std::string &name) :
     texels(NULL), w(NULL), h(NULL), name(name), levelNum(0), fmt(0)
   {
+
     // Try to find the file and load it
     bool isLoaded = false;
     unsigned char *img = NULL;
     int w0 = 0, h0 = 0, channel = 0;
+    const int reqComp = 4;     // We force 4 channels since libsquish requires it
     for (size_t i = 0; i < defaultPathNum; ++i) {
       const FileName dataPath(defaultPath[i]);
       const FileName path = dataPath + FileName(name);
-      img = stbi_load(path.c_str(), &w0, &h0, &channel, 0);
+      img = stbi_load(path.c_str(), &w0, &h0, &channel, reqComp);
       if (img == NULL)
         continue;
       else {
@@ -119,6 +123,7 @@ namespace pf
         break;
       }
     }
+    channel = reqComp; // We force RGBA
     assert(isLoaded || img == NULL);
 
     // We found the image
@@ -127,18 +132,13 @@ namespace pf
       this->levelNum = (int) max(log2(float(w0)), log2(float(h0)));
       this->w = PF_NEW_ARRAY(int, this->levelNum+1);
       this->h = PF_NEW_ARRAY(int, this->levelNum+1);
+      this->sz = PF_NEW_ARRAY(size_t, this->levelNum+1);
       this->texels = PF_NEW_ARRAY(unsigned char*, this->levelNum+1);
       this->texels[0] = img;
       this->w[0] = w0;
       this->h[0] = h0;
-      switch (channel) {
-        case 3: this->fmt = GL_RGB; break;
-        case 4: this->fmt = GL_RGBA; break;
-        default: FATAL("unsupported channel number");
-      };
-      PF_MSG_V("TextureStreamer: format: " << name << ", " <<
-               w0 << "x" << h0 << "x" <<
-               (this->fmt == GL_RGB ? "RGB" : "RGBA"));
+      this->sz[0] = 0; // non zero only if compressed
+      this->fmt = GL_RGBA;
 
       // Now compute the mip-maps
       for (int lvl = 1; lvl <= levelNum; ++lvl) {
@@ -147,11 +147,23 @@ namespace pf
         this->texels[lvl] = mipmap;
         this->w[lvl] = mmW;
         this->h[lvl] = mmH;
+        this->sz[lvl] = 0; // non zero only if compressed
         w0 = mmW;
         h0 = mmH;
         img = mipmap;
       }
     }
+#if 1
+    // Compress into DXT1
+    for (int lvl = 0; lvl <= levelNum; ++lvl) {
+      using namespace squish;
+      this->sz[lvl] = GetStorageRequirements(w[lvl], h[lvl], kDxt1);
+      u8 *compressed = (u8 *) PF_MALLOC(this->sz[lvl]);
+      CompressImage(texels[lvl], w[lvl], h[lvl], compressed, kDxt1 | kColourRangeFit);
+      PF_FREE(texels[lvl]);
+      this->texels[lvl] = compressed;
+    }
+#endif
   }
 
   TextureLoadData::~TextureLoadData(void)
@@ -176,7 +188,7 @@ namespace pf
     INLINE TaskTextureLoad(const std::string &name, TextureStreamer &streamer) :
       Task("TaskTextureLoad"), name(name), streamer(streamer)
     {
-      this->setPriority(TaskPriority::HIGH);
+      this->setPriority(TaskPriority::LOW);
     }
     virtual Task* run(void);
     std::string name;          //!< File to load
@@ -262,7 +274,8 @@ namespace pf
     R_CALL (BindTexture, GL_TEXTURE_2D, tex->handle);
     R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     R_CALL (TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
+#if 0
+  for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
       R_CALL (TexImage2D,
               GL_TEXTURE_2D,
               lvl,
@@ -271,6 +284,18 @@ namespace pf
               tex->fmt,
               GL_UNSIGNED_BYTE,
               data->texels[lvl]);
+#else
+  for (GLuint lvl = tex->minLevel; lvl <= tex->maxLevel; ++lvl) {
+      R_CALL (CompressedTexImage2D,
+              GL_TEXTURE_2D,
+              lvl,
+              GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+              data->w[lvl], data->h[lvl],
+              0,
+              data->sz[lvl],
+              data->texels[lvl]);
+
+#endif
     }
 
     // Update the map to say we are done with this texture. We can now use it

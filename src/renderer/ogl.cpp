@@ -13,6 +13,9 @@
 
 namespace pf
 {
+
+#define OGL_NAME this
+
   OGL::OGL() :
     textureNum(0),
     vertexArrayNum(0),
@@ -49,6 +52,23 @@ namespace pf
 
 #undef DECL_GL_PROC
 
+    // Print information about the current OGL driver
+    const unsigned char *version = NULL;
+    const unsigned char *vendor = NULL;
+    const unsigned char *renderer = NULL;
+    R_CALLR (version, GetString, GL_VERSION);
+    R_CALLR (vendor, GetString, GL_VENDOR);
+    R_CALLR (renderer, GetString, GL_RENDERER);
+    PF_MSG ("OGL: " << version);
+    PF_MSG ("OGL: " << vendor);
+    PF_MSG ("OGL: " << renderer);
+
+    // Check extensions we need
+    if (glutExtensionSupported("GL_EXT_texture_compression_s3tc"))
+      PF_MSG ("OGL: GL_EXT_texture_compression_s3tc supported");
+    else
+      FATAL ("GL_EXT_texture_compression_s3tc unsupported");
+
 // Get driver dependent constants
 #define GET_CST(ENUM, FIELD)                        \
     this->GetIntegerv(ENUM, &this->FIELD);          \
@@ -65,6 +85,8 @@ namespace pf
            this->bufferNum == 0 &&
            this->frameBufferNum == 0);
   }
+
+#undef OGL_NAME
 
   bool OGL::checkError(const char *title) const
   {
