@@ -373,7 +373,6 @@ namespace pf
   RendererDriver::RendererDriver(void) {
     PF_MSG_V("RendererDriver: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
-    R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
     this->initQuad();
     this->initPlain();
     this->initDiffuse();

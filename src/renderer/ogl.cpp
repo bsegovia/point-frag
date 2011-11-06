@@ -62,6 +62,7 @@ namespace pf
     PF_MSG ("OGL: " << version);
     PF_MSG ("OGL: " << vendor);
     PF_MSG ("OGL: " << renderer);
+	R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
 
     // Check extensions we need
     if (glutExtensionSupported("GL_EXT_texture_compression_s3tc"))
@@ -69,7 +70,10 @@ namespace pf
     else
       FATAL ("GL_EXT_texture_compression_s3tc unsupported");
 
-// Get driver dependent constants
+	// ATI Driver WORK AROUND error is emitted here
+	while (this->GetError() != GL_NO_ERROR);
+	
+	// Get driver dependent constants
 #define GET_CST(ENUM, FIELD)                        \
     this->GetIntegerv(ENUM, &this->FIELD);          \
     PF_MSG("OGL: " #ENUM << " == " << this->FIELD);
