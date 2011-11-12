@@ -43,7 +43,7 @@ namespace pf
     // Set the display viewport
     R_CALL (Viewport, 0, 0, event->w, event->h);
     R_CALL (Enable, GL_DEPTH_TEST);
-    R_CALL (Enable, GL_CULL_FACE);
+    R_CALL (Disable, GL_CULL_FACE);
     R_CALL (CullFace, GL_FRONT);
     R_CALL (DepthFunc, GL_LEQUAL);
 

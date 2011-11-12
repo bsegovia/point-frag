@@ -16,9 +16,9 @@
 using namespace pf;
 
 enum {
-  OBJ_FILENAME_LENGTH = 500,
-  MATERIAL_NAME_SIZE = 255,
-  OBJ_LINE_SIZE = 500,
+  OBJ_FILENAME_LENGTH = 1024,
+  MATERIAL_NAME_SIZE = 1024,
+  OBJ_LINE_SIZE = 4096,
   MAX_VERTEX_COUNT = 4
 };
 
@@ -577,16 +577,16 @@ static int obj_parse_mtl_file(obj_growable_scene_data *scene, char *filename, li
     { }
     // map_Ka
     else if (strequal(current_token, "map_Ka") && material_open)
-      strncpy(current_mtl->map_Ka, strtok(NULL, " \t"), OBJ_FILENAME_LENGTH);
+      strncpy(current_mtl->map_Ka, strtok(NULL, " \t\r\n"), OBJ_FILENAME_LENGTH);
     // map_Kd
     else if (strequal(current_token, "map_Kd") && material_open)
-      strncpy(current_mtl->map_Kd, strtok(NULL, " \t"), OBJ_FILENAME_LENGTH);
+      strncpy(current_mtl->map_Kd, strtok(NULL, " \t\r\n"), OBJ_FILENAME_LENGTH);
     // map_D
     else if (strequal(current_token, "map_D") && material_open)
-      strncpy(current_mtl->map_D, strtok(NULL, " \t"), OBJ_FILENAME_LENGTH);
+      strncpy(current_mtl->map_D, strtok(NULL, " \t\r\n"), OBJ_FILENAME_LENGTH);
     // map_Bump
     else if (strequal(current_token, "map_Bump") && material_open)
-      strncpy(current_mtl->map_Bump, strtok(NULL, " \t"), OBJ_FILENAME_LENGTH);
+      strncpy(current_mtl->map_Bump, strtok(NULL, " \t\r\n"), OBJ_FILENAME_LENGTH);
     else
       fprintf(stderr, "Unknown command '%s' in material file %s at line %i:\n\t%s\n",
               current_token, filename, line_number, current_line);
@@ -851,12 +851,10 @@ inline bool _cmp(ObjTriangle t0, ObjTriangle t1) {return t0.m < t1.m;}
 static void patchName(char *str)
 {
   const int sz = strlen(str);
-  const int begin = str[0] == '\"' ? 1 : 0;
-  const int end = str[sz-1] == '\"' ? sz-1 : sz-2;
-  if (begin > end)
-    return;
-  if (begin == 0 && end == sz-1)
-    return;
+  int begin = str[0] == '\"' ? 1 : 0;
+  int end = str[sz-1] == '\"' ? sz-2 : sz-1;
+  if (begin > end) return;
+  if (begin == 0 && end == sz-1) return;
   for (int i = begin, curr = 0; i <= end; ++i, ++curr)
     str[curr] = str[i];
   str[end+1] = 0;
@@ -905,13 +903,20 @@ Obj::load(const FileName &fileName)
   };
 
   std::map<vertex_key, int> map;
-  struct poly { int v[MAX_VERTEX_COUNT]; int mat; int n; };
+  struct poly { int v[4]; int mat; int n; };
   std::vector<poly> polys;
   int vert_n = 0;
   for (int i = 0; i < loader.faceCount; ++i) {
     const obj_face *face = loader.faceList[i];
+    if (face == NULL) {
+      PF_MSG_V ("ObjLoader: NULL face for " << fileName.str());
+      return false;
+    }
+    if (face->vertex_count > 4) {
+      PF_MSG_V ("ObjLoader: Too many vertices for " << fileName.str());
+      return false;
+    }
     int v[] = {0,0,0,0};
-    assert(face != NULL);
     for (int j = 0; j < face->vertex_count; ++j) {
       const int p = face->vertex_index[j];
       const int n = face->normal_index[j];
@@ -1014,6 +1019,10 @@ Obj::load(const FileName &fileName)
     std::memcpy(this->grp,  &matGrp[0],  sizeof(ObjMatGroup) * this->grpNum);
   }
   this->mat = mat;
+  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << triNum << " triangles");
+  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << vertNum << " vertices");
+  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << grpNum << " groups");
+  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << matNum << " materials");
   return true;
 }
 

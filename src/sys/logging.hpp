@@ -106,13 +106,13 @@ namespace pf
 
 /*! Verbose macros: they add logging position and thread ID */
 #define PF_WARNING_V(MSG) (*logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush)
-#define PF_ERROR_V(MSG) (*logger << "ERROR " << MSG << PF_INFO << "\n" << loggerFlush)
-#define PF_MSG_V(MSG) (*logger << MSG << PF_INFO << "\n" << loggerFlush)
+#define PF_ERROR_V(MSG)   (*logger << "ERROR " << MSG << PF_INFO << "\n" << loggerFlush)
+#define PF_MSG_V(MSG)     (*logger << MSG << PF_INFO << "\n" << loggerFlush)
 
 /*! Regular macros: just the user message */
-#define PF_WARNING(MSG) (*logger << MSG << "\n" << loggerFlush)
-#define PF_ERROR(MSG) (*logger << MSG << "\n" << loggerFlush)
-#define PF_MSG(MSG) (*logger << MSG << "\n" << loggerFlush)
+#define PF_WARNING(MSG) (*logger << "WARNING " << MSG << "\n" << loggerFlush)
+#define PF_ERROR(MSG)   (*logger << "ERROR " << MSG << "\n" << loggerFlush)
+#define PF_MSG(MSG)     (*logger << MSG << "\n" << loggerFlush)
 
 #endif /* __PF_LOGGING_HPP__ */
 

@@ -32,7 +32,8 @@ set (SRC
   renderer/texture.cpp
   renderer/renderer.cpp
   renderer/renderer_obj.cpp
-  renderer/renderer_driver.cpp)
+  renderer/renderer_driver.cpp
+  rt/bvh.cpp)
 include_directories (.)
 add_executable (app ${SRC})
 if (UNIX)

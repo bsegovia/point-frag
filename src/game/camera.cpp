@@ -4,7 +4,7 @@
 
 namespace pf {
 
-  const float FlyCamera::defaultSpeed = 1.f;
+  const float FlyCamera::defaultSpeed = 5.f;
   const float FlyCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FlyCamera::acosMinAngle = 0.95f;
 
