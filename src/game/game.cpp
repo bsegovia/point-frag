@@ -77,8 +77,8 @@ namespace pf
     logger = NULL;
   }
 
-  //static const FileName objName("f000.obj");
-  static const FileName objName("arabic_city_II.obj");
+  static const FileName objName("f000.obj");
+  //static const FileName objName("arabic_city_II.obj");
 
   static RTTriangle *ObjComputeTriangle(const Obj &obj) {
     RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
@@ -101,6 +101,11 @@ namespace pf
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
+
+    // flush to zero and no denormals
+#if defined(__SSE__)
+    _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
+#endif /* __SSE__ */
 
     renderer = PF_NEW(Renderer);
     Obj obj;

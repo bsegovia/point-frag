@@ -17,8 +17,11 @@
 #include "bvh.hpp"
 #include "rt_triangle.hpp"
 
-#include "math/bbox.hpp"
+#if defined(__SSE__)
 #include "simd/ssef.hpp"
+#endif /* __SSE__ */
+
+#include "math/bbox.hpp"
 #include "sys/logging.hpp"
 #include "sys/logging.hpp"
 #include "sys/alloc.hpp"
@@ -33,10 +36,7 @@
 
 namespace pf
 {
-#if 1
-  typedef BBox3f Box;
-  INLINE Box convertBox(const BBox3f &from) { return from; }
-#else
+#if defined(__SSE__)
   typedef BBox<ssef> Box;
 
   /*! Computes half surface area of box. */
@@ -52,7 +52,10 @@ namespace pf
     for (size_t j = 0; j < 3; ++j) to.upper[j] = from.upper[j];
     return to;
   }
-#endif
+#else
+  typedef BBox3f Box;
+  INLINE Box convertBox(const BBox3f &from) { return from; }
+#endif /* __SSE__*/
 
   /* Just the barycenter of a triangle */
   struct Centroid : public vec3f {
@@ -164,7 +167,6 @@ namespace pf
     for(int j = 0; j < n; ++j) {
       const T &prim = soup[j];
       centroids[j] = Centroid(prim);
-      //aabbs[j] = prim.getAABB();
       aabbs[j] = convertBox(prim.getAABB());
       sceneAABB.grow(aabbs[j]);
     }

@@ -68,14 +68,14 @@ namespace pf {
      */
     INLINE int getActiveMask(void) const {
 #if defined(__WIN32__)
-	  PF_COMPILER_READ_WRITE_BARRIER;
-	  const __m128i t = *(__m128i *) (&tail.v);
+      PF_COMPILER_READ_WRITE_BARRIER;
+      const __m128i t = *(__m128i *) (&tail.v);
       const __m128i h = *(__m128i *) (&head.v);
 #else
-	  const __m128i t = __load_acquire(&tail.v);
+      const __m128i t = __load_acquire(&tail.v);
       const __m128i h = __load_acquire(&head.v);
 #endif /* defined(__WIN32__) */
-	  const __m128i len = _mm_sub_epi32(t, h);
+      const __m128i len = _mm_sub_epi32(t, h);
       return _mm_movemask_ps(_mm_castsi128_ps(len));
     }
 
@@ -536,6 +536,11 @@ namespace pf {
     const int maxInactivityNum = (This->getWorkerNum()+1) * PF_TASK_TRIES_BEFORE_YIELD;
     int inactivityNum = 0;
     int yieldTime = 0;
+
+    // flush to zero and no denormals
+#if defined(__SSE__)
+    _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
+#endif /* __SSE__ */
 
     // We try to pick up a task from our queue and then we try to steal a task
     // from other queues
