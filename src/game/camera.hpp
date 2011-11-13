@@ -15,8 +15,8 @@ namespace pf
               const vec3f &view_ = vec3f(0.f,0.f,1.f),
               float fov_ = 45.f,
               float ratio_ = 1.f,
-              float near_ = 0.01f,
-              float far_ = 100.f);
+              float near_ = 0.1f,
+              float far_ = 10000.f);
     FlyCamera(const FlyCamera &other);
     /*! Update the orientation of the camera */
     void updateOrientation(float dx, float dy);
