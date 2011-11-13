@@ -105,8 +105,10 @@ namespace pf
     }
 
   private:
-    struct GrowingPoolElem
+    /*! Chunk of elements to allocate */
+    class GrowingPoolElem
     {
+      friend class GrowingPool;
       GrowingPoolElem(size_t elemNum) {
         this->data = PF_NEW_ARRAY(T, elemNum);
         this->next = NULL;
@@ -118,11 +120,9 @@ namespace pf
         PF_DELETE_ARRAY(this->data);
         if (this->next) PF_DELETE(this->next);
       }
-    private:
       T *data;
       GrowingPoolElem *next;
       size_t allocated, maxElemNum;
-      friend class GrowingPool;
     };
     GrowingPoolElem *current;
   };

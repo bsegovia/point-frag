@@ -38,9 +38,9 @@ namespace pf
   {
     ObjLoader(void) : objSaved(NULL), mtlSaved(NULL) {}
     /*! Load the obj model */
-    int loadObj(const char *fileName);
+    bool loadObj(const char *fileName);
     /*! Load the mtllib file */
-    int loadMtl(const char *mtlFileName, const char *objFileName);
+    bool loadMtl(const char *mtlFileName, const char *objFileName);
     /*! Find a material by name */
     int findMaterial(const char *name);
     /*! Parse and return a new face */
@@ -117,14 +117,14 @@ namespace pf
   };
 #undef DECL_FAST_ALLOC
 
-  static char INLINE strequal(const char *s1, const char *s2) {
-    if (strcmp(s1, s2) == 0) return 1;
-    return 0;
+  static bool INLINE strequal(const char *s1, const char *s2) {
+    if (strcmp(s1, s2) == 0) return true;
+    return false;
   }
 
-  static char INLINE contains(const char *haystack, const char *needle) {
-    if (strstr(haystack, needle) == NULL) return 0;
-    return 1;
+  static bool INLINE contains(const char *haystack, const char *needle) {
+    if (strstr(haystack, needle) == NULL) return false;
+    return true;
   }
 
   void ObjLoaderMat::setDefault(void) {
@@ -150,7 +150,7 @@ namespace pf
       if (face.normalID != NULL)  face.normalID[vertexNum] = 0;
       face.vertexID[vertexNum] = atoi(token);
 
-      if (contains(token, "//")) { //normal only
+      if (contains(token, "//")) {
         temp_str = strchr(token, '/');
         temp_str++;
         face.normalID[vertexNum] = atoi(++temp_str);
@@ -194,7 +194,7 @@ namespace pf
     return v;
   }
 
-  int ObjLoader::loadMtl(const char *mtlFileName, const char *objFileName)
+  bool ObjLoader::loadMtl(const char *mtlFileName, const char *objFileName)
   {
     char *tok = NULL;
     FILE *mtlFile = NULL;
@@ -203,13 +203,28 @@ namespace pf
     int lineNumber = 0;
     char material_open = 0;
 
-    // open scene
+    // Try to get directly from the provided file name
+    FileName lastLocation = mtlFileName;
     mtlFile = fopen(mtlFileName, "r");
-    if (mtlFile == 0) {
-      PF_MSG ("ObjLoader: error reading file: " << mtlFileName);
-      return 0;
+
+    // If failed try to get it from where the obj directory
+    const FileName objName(objFileName);
+    const FileName mtlName(mtlFileName);
+    if (mtlFile == NULL) {
+      lastLocation = objName.path() + mtlName.base();
+      mtlFile = fopen(lastLocation.c_str(), "r");
     }
 
+    // Try to get it an obj sub-directory
+    if (mtlFile == NULL) {
+      lastLocation = objName.path() + mtlName;
+      mtlFile = fopen(lastLocation.c_str(), "r");
+    }
+
+    // We were not able to find it
+    if (mtlFile == NULL) return false;
+
+    // Parse it
     while (fgets(currLine, LINE_SZ, mtlFile)) {
       char **saved = &this->mtlSaved;
       tok = strtok_r(currLine, " \t\n\r", saved);
@@ -284,10 +299,10 @@ namespace pf
     }
 
     fclose(mtlFile);
-    return 1;
+    return true;
   }
 
-  int ObjLoader::loadObj(const char *fileName)
+  bool ObjLoader::loadObj(const char *fileName)
   {
     FILE* objFile;
     int current_material = -1; 
@@ -297,9 +312,9 @@ namespace pf
 
     // open scene
     objFile = fopen(fileName, "r");
-    if (objFile == 0) {
+    if (objFile == NULL) {
       PF_MSG ("ObjLoader: error reading file: " << fileName);
-      return 0;
+      return false;
     }
 
     // parser loop
@@ -330,7 +345,7 @@ namespace pf
         const char *mtlFileName = strtok_r(NULL, whiteSpace, saved);
         if (this->loadMtl(mtlFileName, fileName) == 0) {
           PF_ERROR_V("ObjLoader: Error loading " << mtlFileName);
-          return 0;
+          return false;
         }
         continue;
       }
@@ -346,12 +361,12 @@ namespace pf
     }
 
     fclose(objFile);
-    return 1;
+    return true;
   }
 
   static inline bool cmp(ObjTriangle t0, ObjTriangle t1) {return t0.m < t1.m;}
 
-  Obj::Obj(void) { std::memset(this,0,sizeof(Obj)); }
+  Obj::Obj(void) { std::memset(this, 0, sizeof(Obj)); }
 
   INLINE uint32 str_hash(const char *key) {
     uint32 h = 5381;
@@ -516,8 +531,7 @@ namespace pf
     return true;
   }
 
-  Obj::~Obj(void)
-  {
+  Obj::~Obj(void) {
     PF_SAFE_DELETE_ARRAY(this->tri);
     PF_SAFE_DELETE_ARRAY(this->vert);
     PF_SAFE_DELETE_ARRAY(this->grp);
