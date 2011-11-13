@@ -77,8 +77,8 @@ namespace pf
     logger = NULL;
   }
 
-  static const FileName objName("f000.obj");
-  //static const FileName objName("arabic_city_II.obj");
+  //static const FileName objName("f000.obj");
+  static const FileName objName("arabic_city_II.obj");
 
   static RTTriangle *ObjComputeTriangle(const Obj &obj) {
     RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
