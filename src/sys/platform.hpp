@@ -144,54 +144,52 @@
 #define __builtin_expect(expr,b) expr
 #endif
 
-/* Debug syntactic sugar */
+/*! Debug syntactic sugar */
 #ifdef NDEBUG
 #define IF_DEBUG(EXPR)
 #else
 #define IF_DEBUG(EXPR) EXPR
 #endif /* NDEBUG */
 
-/* Debug printing macros */
+/*! Debug printing macros */
 #define STRING(x) #x
 #define PING std::cout << __FILE__ << " (" << __LINE__ << "): " << __FUNCTION__ << std::endl
 #define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
 
-/* Branch hint */
+/*! Branch hint */
 #define LIKELY(x)       __builtin_expect((x),1)
 #define UNLIKELY(x)     __builtin_expect((x),0)
 
-/* Stringify macros */
+/*! Stringify macros */
 #define JOIN(X, Y) _DO_JOIN(X, Y)
 #define _DO_JOIN(X, Y) _DO_JOIN2(X, Y)
 #define _DO_JOIN2(X, Y) X##Y
 
-/* Fatal error macros */
+/*! Fatal error macros */
 #if defined(__WIN32__)
-namespace pf { void fatalBox(const char*); }
-#define FATAL(...)                                           \
-do {                                                         \
-  char msg[1024];                                            \
-  _snprintf_s(msg, sizeof(msg), _countof(msg), __VA_ARGS__); \
-  pf::fatalBox(msg);                                         \
-  fprintf(stderr, "error: ");                                \
-  fprintf(stderr, __VA_ARGS__);                              \
-  fprintf(stderr, "\n");                                     \
-  fflush(stderr); assert(false); _exit(-1);                  \
+namespace pf
+{
+  void Win32Fatal(const char*);
+} /* namespace pf */
+
+#define FATAL(MSG)                                   \
+do {                                                 \
+  std::cerr << MSG << std::endl;                     \
+  pf::Win32FATAL(MSG.c_str());                       \
+  assert(0); _exit(-1);                              \
 } while (0)
 #else
-#define FATAL(...)                                           \
-do {                                                         \
-  fprintf(stderr, "error: ");                                \
-  fprintf(stderr, __VA_ARGS__);                              \
-  fprintf(stderr, "\n");                                     \
-  fflush(stderr); assert(0); _exit(-1);                      \
+#define FATAL(MSG)                                   \
+do {                                                 \
+  std::cerr << MSG << std::endl;                     \
+  assert(0); _exit(-1);                              \
 } while (0)
 #endif /* __WIN32__ */
 
 #define NOT_IMPLEMENTED FATAL ("Not implemented")
-#define FATAL_IF(COND, ...)                                  \
-do {                                                         \
-  if(UNLIKELY(COND)) FATAL(__VA_ARGS__);                     \
+#define FATAL_IF(COND, MSG)                          \
+do {                                                 \
+  if(UNLIKELY(COND)) FATAL(MSG);                     \
 } while (0)
 
 /* Safe deletion macros */
@@ -276,8 +274,8 @@ namespace pf
     return r;
   }
 
-  template<uint32 N> INLINE uint32
-  isPowerOf(uint32 i) {
+  template<uint32 N>
+  INLINE uint32 isPowerOf(uint32 i) {
     while (i > 1) {
       if (i%N) return false;
       i = i/N;
@@ -304,6 +302,8 @@ private:
 
   /** returns performance counter in seconds */
   double getSeconds();
-}
 
-#endif
+} /* namespace pf */
+
+#endif /* __PF_PLATFORM_HPP__ */
+

@@ -1,3 +1,19 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "obj.hpp"
 #include "sys/platform.hpp"
 #include "sys/alloc.hpp"
@@ -11,626 +27,353 @@
 #include <vector>
 #include <algorithm>
 
-#define WHITESPACE " \t\n\r"
-
-using namespace pf;
-
-enum {
-  OBJ_FILENAME_LENGTH = 1024,
-  MATERIAL_NAME_SIZE = 1024,
-  OBJ_LINE_SIZE = 4096,
-  MAX_VERTEX_COUNT = 4
-};
-
-struct obj_growable_scene_data;
-
-struct list {
-  int item_count;
-  int current_max_size;
-  char growable;
-  void **items;
-  char **names;	
-};
-
-struct obj_face {
-  void *operator new (size_t sz, obj_growable_scene_data *scene);
-  int vertex_index[MAX_VERTEX_COUNT];
-  int normal_index[MAX_VERTEX_COUNT];
-  int texture_index[MAX_VERTEX_COUNT];
-  int vertex_count;
-  int material_index;
-};
-
-struct obj_vector {
-  void *operator new (size_t sz, obj_growable_scene_data *scene);
-  double e[3];
-};
-
-struct obj_material {
-  void *operator new (size_t sz, obj_growable_scene_data *scene);
-  char name[MATERIAL_NAME_SIZE];
-  char map_Ka[OBJ_FILENAME_LENGTH];
-  char map_Kd[OBJ_FILENAME_LENGTH];
-  char map_D[OBJ_FILENAME_LENGTH];
-  char map_Bump[OBJ_FILENAME_LENGTH];
-  double amb[3];
-  double diff[3];
-  double spec[3];
-  double km;
-  double reflect;
-  double refract;
-  double trans;
-  double shiny;
-  double glossy;
-  double refract_index;
-};
-
-struct obj_scene_data;
-struct obj_growable_scene_data {
-  char scene_filename[OBJ_FILENAME_LENGTH];
-  char material_filename[OBJ_FILENAME_LENGTH];
-
-  list vertex_list;
-  list vertex_normal_list;
-  list vertex_texture_list;
-  list face_list;
-  list material_list;
-
-  obj_scene_data *data;
-};
-
-struct obj_scene_data {
-  obj_vector      **vertex_list;
-  obj_vector      **vertex_normal_list;
-  obj_vector      **vertex_texture_list;
-  obj_face        **face_list;
-  obj_material    **material_list;
-
-  GrowingPool<obj_face> *faceAllocator;
-  GrowingPool<obj_vector> *vectorAllocator;
-  GrowingPool<obj_material> *matAllocator;
-
-  int vertex_count;
-  int vertex_normal_count;
-  int vertex_texture_count;
-  int face_count;
-  int material_count;
-};
-
-void *obj_face::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->data->faceAllocator->allocate();
-}
-void *obj_vector::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->data->vectorAllocator->allocate();
-}
-void *obj_material::operator new (size_t sz, obj_growable_scene_data *scene) {
-  return scene->data->matAllocator->allocate();
-}
-
-class ObjLoader
+namespace pf
 {
-public:
-  ObjLoader(void);
-  ~ObjLoader(void);
-  int load(const char *filename);
+  struct ObjLoaderVec;
+  struct ObjLoaderFace;
+  struct ObjLoaderMat;
 
-  obj_vector   **vertexList;
-  obj_vector   **normalList;
-  obj_vector   **textureList;
-  obj_face     **faceList;
-  obj_material **materialList;
-  int vertexCount;
-  int normalCount;
-  int textureCount;
-  int faceCount;
-  int materialCount;
-  obj_scene_data data;
-};
-
-static char strequal(const char *s1, const char *s2)
-{
-  if (strcmp(s1, s2) == 0) return 1;
-  return 0;
-}
-
-static char contains(const char *haystack, const char *needle)
-{
-  if (strstr(haystack, needle) == NULL) return 0;
-  return 1;
-}
-
-static void list_make(list *listo, int size, char growable);
-static int list_add_item(list *listo, void *item, char *name);
-static int list_find(list *listo, char *name_to_find);
-static void list_delete_index(list *listo, int indx);
-static void list_delete_all(list *listo);
-static void list_free(list *listo);
-
-static char list_is_full(list *listo)
-{
-  return(listo->item_count == listo->current_max_size);
-}
-
-static void list_make(list *listo, int start_size, char growable)
-{
-  listo->names = PF_NEW_ARRAY(char*, start_size);
-  listo->items = PF_NEW_ARRAY(void*, start_size);
-  listo->item_count = 0;
-  listo->current_max_size = start_size;
-  listo->growable = growable;
-}
-
-static void list_grow(list *old_listo)
-{
-  int i;
-  list new_listo;
-
-  list_make(&new_listo, 2*old_listo->current_max_size, old_listo->growable++);
-
-  for (i=0; i<old_listo->current_max_size; i++)
-    list_add_item(&new_listo, old_listo->items[i] , old_listo->names[i]);
-
-  list_free(old_listo);
-
-  // Copy new structure to old list
-  old_listo->names = new_listo.names;
-  old_listo->items = new_listo.items;
-  old_listo->item_count = new_listo.item_count;
-  old_listo->current_max_size = new_listo.current_max_size;
-  old_listo->growable = new_listo.growable;
-}
-
-static int list_add_item(list *listo, void *item, char *name)
-{
-  int name_length;
-  char *new_name;
-
-  if (list_is_full(listo)) {
-    if (listo->growable)
-      list_grow(listo);
-    else
-      return -1;
-  }
-
-  listo->names[listo->item_count] = NULL;
-  if (name != NULL) {
-    name_length = strlen(name);
-    new_name = PF_NEW_ARRAY(char, name_length + 1);
-    strncpy(new_name, name, name_length);
-    listo->names[listo->item_count] = new_name;
-  }
-
-  listo->items[listo->item_count] = item;
-  listo->item_count++;
-
-  return listo->item_count-1;
-}
-
-static int list_find(list *listo, char *name_to_find)
-{
-  for (int i = 0; i < listo->item_count; ++i)
-    if (strncmp(listo->names[i], name_to_find, strlen(name_to_find)) == 0)
-      return i;
-  return -1;
-}
-
-static void list_delete_index(list *listo, int indx)
-{
-  int j;
-
-  // remove item
-  PF_SAFE_DELETE_ARRAY(listo->names[indx]);
-
-  // restructure
-  for (j=indx; j < listo->item_count-1; j++) {
-    listo->names[j] = listo->names[j+1];
-    listo->items[j] = listo->items[j+1];
-  }
-
-  listo->item_count--;
-
-  return;
-}
-
-static void list_delete_all(list *listo)
-{
-  for (int i = listo->item_count - 1; i >= 0; i--)
-    list_delete_index(listo, i);
-}
-
-static void list_free(list *listo)
-{
-  list_delete_all(listo);
-  PF_DELETE_ARRAY(listo->names);
-  PF_DELETE_ARRAY(listo->items);
-}
-
-static void obj_free_half_list(list *listo)
-{
-  list_delete_all(listo);
-  PF_DELETE_ARRAY(listo->names);
-}
-
-static int obj_convert_to_list_index(int current_max, int index)
-{
-  if (index == 0) return -1;
-  if (index < 0)  return current_max + index;
-  return index - 1;
-}
-
-static void obj_convert_to_list_index_v(int current_max, int *indices)
-{
-  for (int i = 0; i < MAX_VERTEX_COUNT; i++)
-    indices[i] = obj_convert_to_list_index(current_max, indices[i]);
-}
-
-static void obj_set_material_defaults(obj_material *mtl)
-{
-  mtl->amb[0] = 0.2;
-  mtl->amb[1] = 0.2;
-  mtl->amb[2] = 0.2;
-  mtl->diff[0] = 0.8;
-  mtl->diff[1] = 0.8;
-  mtl->diff[2] = 0.8;
-  mtl->spec[0] = 1.0;
-  mtl->spec[1] = 1.0;
-  mtl->spec[2] = 1.0;
-  mtl->reflect = 0.0;
-  mtl->trans = 1;
-  mtl->glossy = 98;
-  mtl->shiny = 0;
-  mtl->refract_index = 1;
-  mtl->map_Ka[0] = '\0';
-}
-
-static int obj_parse_vertex_index(int *vertex_index, int *texture_index, int *normal_index)
-{
-  char *temp_str;
-  char *token;
-  int vertex_count = 0;
-
-
-  while ((token = strtok(NULL, WHITESPACE)) != NULL)
+  /*! Helper to load OBJ wavefront files */
+  struct ObjLoader
   {
-    if (texture_index != NULL)
-      texture_index[vertex_count] = 0;
-    if (normal_index != NULL)
-      normal_index[vertex_count] = 0;
+    ObjLoader(void) : objSaved(NULL), mtlSaved(NULL) {}
+    /*! Load the obj model */
+    int loadObj(const char *fileName);
+    /*! Load the mtllib file */
+    int loadMtl(const char *mtlFileName, const char *objFileName);
+    /*! Find a material by name */
+    int findMaterial(const char *name);
+    /*! Parse and return a new face */
+    ObjLoaderFace* parseFace(void);
+    /*! Parse and return a new vector */
+    ObjLoaderVec* parseVector(void);
+    /*! Get the vertex indices from the face */
+    void parseVertexIndex(ObjLoaderFace &face);
+    /*! Get a valid index from the lists (-1 means invalid) */
+    INLINE int getListIndex(int currMax, int index) {
+      if (index == 0) return -1;
+      if (index < 0)  return currMax + index;
+      return index - 1;
+    }
+    /*! Get valid indices from the lists (-1 means invalid) */
+    void getListIndexV(int current_max, int *indices) {
+      for (int i = 0; i < MAX_VERT_NUM; i++)
+        indices[i] = this->getListIndex(current_max, indices[i]);
+    }
+    std::vector<ObjLoaderVec*>  vertexList;      //!< All positions parsed
+    std::vector<ObjLoaderVec*>  normalList;      //!< All normals parsed
+    std::vector<ObjLoaderVec*>  textureList;     //!< All textures parsed
+    std::vector<ObjLoaderFace*> faceList;        //!< All faces parsed
+    std::vector<ObjLoaderMat*>  materialList;    //!< All materials parsed
+    GrowingPool<ObjLoaderFace>  faceAllocator;   //!< Speeds up face allocation
+    GrowingPool<ObjLoaderVec>   vectorAllocator; //!< Speeds up vector allocation
+    GrowingPool<ObjLoaderMat>   matAllocator;    //!< Speeds up material allocation
+    char *objSaved, *mtlSaved;                   //!< for strtok_r
+    static const char *whiteSpace;               //!< White space characters
+    static const int FILENAME_SZ = 1024;
+    static const int MAT_NAME_SZ = 1024;
+    static const int LINE_SZ = 4096;
+    static const int MAX_VERT_NUM = 4;
+  };
+  const char *ObjLoader::whiteSpace = " \t\n\r";
 
-    vertex_index[vertex_count] = atoi(token);
+#define DECL_FAST_ALLOC(ALLOCATOR)                            \
+  INLINE void *operator new (size_t sz, ObjLoader &loader) {  \
+    return loader.ALLOCATOR.allocate();                       \
+  }
+  /*! Face as parsed by the OBJ loader */
+  struct ObjLoaderFace {
+    DECL_FAST_ALLOC(faceAllocator);
+    int vertexID[ObjLoader::MAX_VERT_NUM];
+    int normalID[ObjLoader::MAX_VERT_NUM];
+    int textureID[ObjLoader::MAX_VERT_NUM];
+    int vertexNum;
+    int materialID;
+  };
 
-    if (contains(token, "//")) { //normal only
-      temp_str = strchr(token, '/');
-      temp_str++;
-      normal_index[vertex_count] = atoi(++temp_str);
-    } else if (contains(token, "/")) {
-      temp_str = strchr(token, '/');
-      texture_index[vertex_count] = atoi(++temp_str);
-      if (contains(temp_str, "/")) {
-        temp_str = strchr(temp_str, '/');
-        normal_index[vertex_count] = atoi(++temp_str);
+  /*! Vector as parsed by the OBJ loader */
+  struct ObjLoaderVec {
+    DECL_FAST_ALLOC(vectorAllocator);
+    double e[3];
+  };
+
+  /*! Material as parsed by the OBJ loader */
+  struct ObjLoaderMat {
+    DECL_FAST_ALLOC(matAllocator);
+    INLINE void setDefault(void);
+    char name[ObjLoader::MAT_NAME_SZ];
+    char map_Ka[ObjLoader::FILENAME_SZ];
+    char map_Kd[ObjLoader::FILENAME_SZ];
+    char map_D[ObjLoader::FILENAME_SZ];
+    char map_Bump[ObjLoader::FILENAME_SZ];
+    double amb[3], diff[3], spec[3];
+    double km;
+    double reflect;
+    double refract;
+    double trans;
+    double shiny;
+    double glossy;
+    double refract_index;
+  };
+#undef DECL_FAST_ALLOC
+
+  static char INLINE strequal(const char *s1, const char *s2) {
+    if (strcmp(s1, s2) == 0) return 1;
+    return 0;
+  }
+
+  static char INLINE contains(const char *haystack, const char *needle) {
+    if (strstr(haystack, needle) == NULL) return 0;
+    return 1;
+  }
+
+  void ObjLoaderMat::setDefault(void) {
+    this->map_Ka[0] = this->map_Kd[0] = this->map_D[0] = this->map_Bump[0] = '\0';
+    this->amb[0]  = this->amb[1]  = this->amb[2]  = 0.2;
+    this->diff[0] = this->diff[1] = this->diff[2] = 0.8;
+    this->spec[0] = this->spec[1] = this->spec[2] = 1.0;
+    this->reflect = 0.0;
+    this->trans = 1.;
+    this->glossy = 98.;
+    this->shiny = 0.;
+    this->refract_index = 1.;
+  }
+
+  void ObjLoader::parseVertexIndex(ObjLoaderFace &face)
+  {
+    char **saved = &this->objSaved;
+    char *temp_str = NULL, *token = NULL;
+    int vertexNum = 0;
+
+    while ((token = strtok_r(NULL, whiteSpace, saved)) != NULL) {
+      if (face.textureID != NULL) face.textureID[vertexNum] = 0;
+      if (face.normalID != NULL)  face.normalID[vertexNum] = 0;
+      face.vertexID[vertexNum] = atoi(token);
+
+      if (contains(token, "//")) { //normal only
+        temp_str = strchr(token, '/');
+        temp_str++;
+        face.normalID[vertexNum] = atoi(++temp_str);
+      } else if (contains(token, "/")) {
+        temp_str = strchr(token, '/');
+        face.textureID[vertexNum] = atoi(++temp_str);
+        if (contains(temp_str, "/")) {
+          temp_str = strchr(temp_str, '/');
+          face.normalID[vertexNum] = atoi(++temp_str);
+        }
       }
+      vertexNum++;
     }
-
-    vertex_count++;
+    face.vertexNum = vertexNum;
   }
 
-  return vertex_count;
-}
-
-static obj_face* obj_parse_face(obj_growable_scene_data *scene)
-{
-  int vertex_count;
-  obj_face *face = new (scene) obj_face;
-
-  vertex_count = obj_parse_vertex_index(face->vertex_index, face->texture_index, face->normal_index);
-  obj_convert_to_list_index_v(scene->vertex_list.item_count, face->vertex_index);
-  obj_convert_to_list_index_v(scene->vertex_texture_list.item_count, face->texture_index);
-  obj_convert_to_list_index_v(scene->vertex_normal_list.item_count, face->normal_index);
-  face->vertex_count = vertex_count;
-
-  return face;
-}
-
-static obj_vector* obj_parse_vector(obj_growable_scene_data *scene)
-{
-  obj_vector *v = new (scene) obj_vector;
-  v->e[0] = v->e[1] = v->e[2] = 0.;
-  for (int i = 0; i < 3; ++i) {
-    const char * str = strtok(NULL, WHITESPACE);
-    if (str == NULL)
-      break;
-    v->e[i] = atof(str);
-  }
-  return v;
-}
-
-static int obj_parse_mtl_file(obj_growable_scene_data *scene, char *filename, list *material_list)
-{
-  char *current_token = NULL;
-  FILE *mtl_file_stream = NULL;
-  obj_material *current_mtl = NULL;
-  char current_line[OBJ_LINE_SIZE];
-  int line_number = 0;
-  char material_open = 0;
-
-  // open scene
-  mtl_file_stream = fopen(filename, "r");
-  if (mtl_file_stream == 0) {
-    PF_MSG ("ObjLoader: error reading file: " << filename);
-    return 0;
+  int ObjLoader::findMaterial(const char *name) {
+    for (size_t i = 0; i < materialList.size(); ++i)
+      if (strequal(name, materialList[i]->name)) return i;
+    return -1;
   }
 
-  assert(material_list != NULL);
-
-  while (fgets(current_line, OBJ_LINE_SIZE, mtl_file_stream)) {
-    current_token = strtok(current_line, " \t\n\r");
-    line_number++;
-
-    // skip comments
-    if (current_token == NULL || strequal(current_token, "//") || strequal(current_token, "#"))
-      continue;
-    // start material
-    else if (strequal(current_token, "newmtl")) {
-      material_open = 1;
-      current_mtl = new (scene) obj_material;
-      obj_set_material_defaults(current_mtl);
-      strncpy(current_mtl->name, strtok(NULL, " \t"), MATERIAL_NAME_SIZE);
-      list_add_item(material_list, current_mtl, current_mtl->name);
-    }
-    // ambient
-    else if (strequal(current_token, "Ka") && material_open) {
-      current_mtl->amb[0] = atof(strtok(NULL, " \t"));
-      current_mtl->amb[1] = atof(strtok(NULL, " \t"));
-      current_mtl->amb[2] = atof(strtok(NULL, " \t"));
-    }
-    // diff
-    else if (strequal(current_token, "Kd") && material_open) {
-      current_mtl->diff[0] = atof(strtok(NULL, " \t"));
-      current_mtl->diff[1] = atof(strtok(NULL, " \t"));
-      current_mtl->diff[2] = atof(strtok(NULL, " \t"));
-    }
-    // specular
-    else if (strequal(current_token, "Ks") && material_open) {
-      current_mtl->spec[0] = atof(strtok(NULL, " \t"));
-      current_mtl->spec[1] = atof(strtok(NULL, " \t"));
-      current_mtl->spec[2] = atof(strtok(NULL, " \t"));
-    }
-    // shiny
-    else if (strequal(current_token, "Ns") && material_open)
-      current_mtl->shiny = atof(strtok(NULL, " \t"));
-    // map_Km
-    else if (strequal(current_token, "Km") && material_open)
-      current_mtl->km = atof(strtok(NULL, " \t"));
-    // transparent
-    else if (strequal(current_token, "d") && material_open)
-      current_mtl->trans = atof(strtok(NULL, " \t"));
-    // reflection
-    else if (strequal(current_token, "r") && material_open)
-      current_mtl->reflect = atof(strtok(NULL, " \t"));
-    // glossy
-    else if (strequal(current_token, "sharpness") && material_open)
-      current_mtl->glossy = atof(strtok(NULL, " \t"));
-    // refract index
-    else if (strequal(current_token, "Ni") && material_open)
-      current_mtl->refract_index = atof(strtok(NULL, " \t"));
-    // illumination type
-    else if (strequal(current_token, "illum") && material_open) { }
-    // map_Ka
-    else if (strequal(current_token, "map_Ka") && material_open)
-      strncpy(current_mtl->map_Ka, strtok(NULL, " \"\t\r\n"), OBJ_FILENAME_LENGTH);
-    // map_Kd
-    else if (strequal(current_token, "map_Kd") && material_open)
-      strncpy(current_mtl->map_Kd, strtok(NULL, " \"\t\r\n"), OBJ_FILENAME_LENGTH);
-    // map_D
-    else if (strequal(current_token, "map_D") && material_open)
-      strncpy(current_mtl->map_D, strtok(NULL, " \"\t\r\n"), OBJ_FILENAME_LENGTH);
-    // map_Bump
-    else if (strequal(current_token, "map_Bump") && material_open)
-      strncpy(current_mtl->map_Bump, strtok(NULL, " \"\t\r\n"), OBJ_FILENAME_LENGTH);
-    else
-      fprintf(stderr, "Unknown command '%s' in material file %s at line %i:\n\t%s\n",
-              current_token, filename, line_number, current_line);
+  ObjLoaderFace* ObjLoader::parseFace(void) {
+    ObjLoaderFace *face = new (*this) ObjLoaderFace;
+    this->parseVertexIndex(*face);
+    this->getListIndexV(vertexList.size(), face->vertexID);
+    this->getListIndexV(textureList.size(), face->textureID);
+    this->getListIndexV(normalList.size(), face->normalID);
+    return face;
   }
 
-  fclose(mtl_file_stream);
-  return 1;
-}
-
-static int obj_parse_obj_file(obj_growable_scene_data *growable, const char *filename)
-{
-  FILE* obj_file_stream;
-  int current_material = -1; 
-  char *current_token = NULL;
-  char current_line[OBJ_LINE_SIZE];
-  int line_number = 0;
-
-  // open scene
-  obj_file_stream = fopen(filename, "r");
-  if (obj_file_stream == 0) {
-    PF_MSG ("ObjLoader: error reading file: " << filename);
-    return 0;
+  ObjLoaderVec* ObjLoader::parseVector(void) {
+    ObjLoaderVec *v = new (*this) ObjLoaderVec;
+    v->e[0] = v->e[1] = v->e[2] = 0.;
+    for (int i = 0; i < 3; ++i) {
+      const char * str = strtok_r(NULL, whiteSpace, &this->objSaved);
+      if (str == NULL)
+        break;
+      v->e[i] = atof(str);
+    }
+    return v;
   }
 
-  // parser loop
-  while (fgets(current_line, OBJ_LINE_SIZE, obj_file_stream))
+  int ObjLoader::loadMtl(const char *mtlFileName, const char *objFileName)
   {
-    current_token = strtok(current_line, " \t\n\r");
-    line_number++;
+    char *tok = NULL;
+    FILE *mtlFile = NULL;
+    ObjLoaderMat *currMat = NULL;
+    char currLine[LINE_SZ];
+    int lineNumber = 0;
+    char material_open = 0;
 
-    // skip comments
-    if (current_token == NULL || current_token[0] == '#')
-      continue;
-
-    // parse objects
-    else if (strequal(current_token, "v")) // process vertex
-      list_add_item(&growable->vertex_list, obj_parse_vector(growable), NULL);
-    else if (strequal(current_token, "vn")) // process vertex normal
-      list_add_item(&growable->vertex_normal_list, obj_parse_vector(growable), NULL);
-    else if (strequal(current_token, "vt")) // process vertex texture
-      list_add_item(&growable->vertex_texture_list, obj_parse_vector(growable), NULL);
-    else if (strequal(current_token, "f")) { // process face 
-      obj_face *face = obj_parse_face(growable);
-      face->material_index = current_material;
-      list_add_item(&growable->face_list, face, NULL);
+    // open scene
+    mtlFile = fopen(mtlFileName, "r");
+    if (mtlFile == 0) {
+      PF_MSG ("ObjLoader: error reading file: " << mtlFileName);
+      return 0;
     }
-    else if (strequal(current_token, "p")) {} // process point
-    else if (strequal(current_token, "usemtl")) //  usemtl
-      current_material = list_find(&growable->material_list, strtok(NULL, WHITESPACE));
-    else if (strequal(current_token, "mtllib")) { //  mtllib
-      strncpy(growable->material_filename, strtok(NULL, WHITESPACE), OBJ_FILENAME_LENGTH);
-      obj_parse_mtl_file(growable, growable->material_filename, &growable->material_list);
-      continue;
+
+    while (fgets(currLine, LINE_SZ, mtlFile)) {
+      char **saved = &this->mtlSaved;
+      tok = strtok_r(currLine, " \t\n\r", saved);
+      lineNumber++;
+
+      // skip comments
+      if (tok == NULL || strequal(tok, "//") || strequal(tok, "#"))
+        continue;
+      // start material
+      else if (strequal(tok, "newmtl")) {
+        material_open = 1;
+        currMat = new (*this) ObjLoaderMat;
+        currMat->setDefault();
+        strncpy(currMat->name, strtok_r(NULL, whiteSpace, saved), MAT_NAME_SZ);
+        materialList.push_back(currMat);
+      }
+      // ambient
+      else if (strequal(tok, "Ka") && material_open) {
+        currMat->amb[0] = atof(strtok_r(NULL, " \t", saved));
+        currMat->amb[1] = atof(strtok_r(NULL, " \t", saved));
+        currMat->amb[2] = atof(strtok_r(NULL, " \t", saved));
+      }
+      // diff
+      else if (strequal(tok, "Kd") && material_open) {
+        currMat->diff[0] = atof(strtok_r(NULL, " \t", saved));
+        currMat->diff[1] = atof(strtok_r(NULL, " \t", saved));
+        currMat->diff[2] = atof(strtok_r(NULL, " \t", saved));
+      }
+      // specular
+      else if (strequal(tok, "Ks") && material_open) {
+        currMat->spec[0] = atof(strtok_r(NULL, " \t", saved));
+        currMat->spec[1] = atof(strtok_r(NULL, " \t", saved));
+        currMat->spec[2] = atof(strtok_r(NULL, " \t", saved));
+      }
+      // shiny
+      else if (strequal(tok, "Ns") && material_open)
+        currMat->shiny = atof(strtok_r(NULL, " \t", saved));
+      // map_Km
+      else if (strequal(tok, "Km") && material_open)
+        currMat->km = atof(strtok_r(NULL, " \t", saved));
+      // transparent
+      else if (strequal(tok, "d") && material_open)
+        currMat->trans = atof(strtok_r(NULL, " \t", saved));
+      // reflection
+      else if (strequal(tok, "r") && material_open)
+        currMat->reflect = atof(strtok_r(NULL, " \t", saved));
+      // glossy
+      else if (strequal(tok, "sharpness") && material_open)
+        currMat->glossy = atof(strtok_r(NULL, " \t", saved));
+      // refract index
+      else if (strequal(tok, "Ni") && material_open)
+        currMat->refract_index = atof(strtok_r(NULL, " \t", saved));
+      // map_Ka
+      else if (strequal(tok, "map_Ka") && material_open)
+        strncpy(currMat->map_Ka, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+      // map_Kd
+      else if (strequal(tok, "map_Kd") && material_open)
+        strncpy(currMat->map_Kd, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+      // map_D
+      else if (strequal(tok, "map_D") && material_open)
+        strncpy(currMat->map_D, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+      // map_Bump
+      else if (strequal(tok, "map_Bump") && material_open)
+        strncpy(currMat->map_Bump, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+      // illumination type
+      else if (strequal(tok, "illum") && material_open) { }
+      else
+        PF_ERROR_V("ObjLoader: Unknown command : " << tok <<
+                   "in material file " << mtlFileName <<
+                   "at line " << lineNumber <<
+                   ", \"" << currLine << "\"");
     }
-    else if (strequal(current_token, "o")) {} // object name
-    else if (strequal(current_token, "s")) {} // smoothing
-    else if (strequal(current_token, "g")) {} // group
-    else
-      printf("Unknown command '%s' in scene code at line %i: \"%s\".\n",
-             current_token, line_number, current_line);
+
+    fclose(mtlFile);
+    return 1;
   }
 
-  fclose(obj_file_stream);
-  return 1;
-}
+  int ObjLoader::loadObj(const char *fileName)
+  {
+    FILE* objFile;
+    int current_material = -1; 
+    char *tok = NULL;
+    char currLine[LINE_SZ];
+    int lineNumber = 0;
 
-static void obj_init_temp_storage(obj_growable_scene_data *growable)
-{
-  list_make(&growable->vertex_list, 10, 1);
-  list_make(&growable->vertex_normal_list, 10, 1);
-  list_make(&growable->vertex_texture_list, 10, 1);
-  list_make(&growable->face_list, 10, 1);
-  list_make(&growable->material_list, 10, 1);	
-}
+    // open scene
+    objFile = fopen(fileName, "r");
+    if (objFile == 0) {
+      PF_MSG ("ObjLoader: error reading file: " << fileName);
+      return 0;
+    }
 
-static void obj_free_temp_storage(obj_growable_scene_data *growable)
-{
-  obj_free_half_list(&growable->vertex_list);
-  obj_free_half_list(&growable->vertex_normal_list);
-  obj_free_half_list(&growable->vertex_texture_list);
-  obj_free_half_list(&growable->face_list);
-  obj_free_half_list(&growable->material_list);
-}
+    // parser loop
+    while (fgets(currLine, LINE_SZ, objFile)) {
+      char **saved = &this->objSaved;
+      tok = strtok_r(currLine, " \t\n\r", saved);
+      lineNumber++;
 
-static void obj_free_all_storage(obj_growable_scene_data *growable)
-{
-  list_free(&growable->vertex_list);
-  list_free(&growable->vertex_normal_list);
-  list_free(&growable->vertex_texture_list);
-  list_free(&growable->face_list);
-  list_free(&growable->material_list);
-}
+      // skip comments
+      if (tok == NULL || tok[0] == '#')
+        continue;
 
-static void delete_obj_data(obj_scene_data *data_out)
-{
-  PF_SAFE_DELETE_ARRAY(data_out->vertex_list);
-  PF_SAFE_DELETE_ARRAY(data_out->vertex_normal_list);
-  PF_SAFE_DELETE_ARRAY(data_out->vertex_texture_list);
-  PF_SAFE_DELETE_ARRAY(data_out->face_list);
-  PF_SAFE_DELETE_ARRAY(data_out->material_list);
-}
+      // parse objects
+      else if (strequal(tok, "v"))    // vertex
+        vertexList.push_back(this->parseVector());
+      else if (strequal(tok, "vn"))   // vertex normal
+        normalList.push_back(this->parseVector());
+      else if (strequal(tok, "vt"))   // vertex texture
+        textureList.push_back(this->parseVector());
+      else if (strequal(tok, "f")) {  // face
+        ObjLoaderFace *face = this->parseFace();
+        face->materialID = current_material;
+        faceList.push_back(face);
+      }
+      else if (strequal(tok, "usemtl"))   // usemtl
+        current_material = this->findMaterial(strtok_r(NULL, whiteSpace, saved));
+      else if (strequal(tok, "mtllib")) { //  mtllib
+        const char *mtlFileName = strtok_r(NULL, whiteSpace, saved);
+        if (this->loadMtl(mtlFileName, fileName) == 0) {
+          PF_ERROR_V("ObjLoader: Error loading " << mtlFileName);
+          return 0;
+        }
+        continue;
+      }
+      else if (strequal(tok, "p")) {} // point
+      else if (strequal(tok, "o")) {} // object name
+      else if (strequal(tok, "s")) {} // smoothing
+      else if (strequal(tok, "g")) {} // group
+      else
+        PF_ERROR_V("ObjLoader: Unknown command : " << tok <<
+                   "in obj file " << fileName <<
+                   "at line " << lineNumber <<
+                   ", \"" << currLine << "\"");
+    }
 
-static void obj_copy_to_out_storage(obj_scene_data *data_out, obj_growable_scene_data *growable)
-{
-  data_out->vertex_count = growable->vertex_list.item_count;
-  data_out->vertex_normal_count = growable->vertex_normal_list.item_count;
-  data_out->vertex_texture_count = growable->vertex_texture_list.item_count;
-
-  data_out->face_count = growable->face_list.item_count;
-
-  data_out->material_count = growable->material_list.item_count;
-
-  data_out->vertex_list = (obj_vector**)growable->vertex_list.items;
-  data_out->vertex_normal_list = (obj_vector**)growable->vertex_normal_list.items;
-  data_out->vertex_texture_list = (obj_vector**)growable->vertex_texture_list.items;
-
-  data_out->face_list = (obj_face**)growable->face_list.items;
-
-  data_out->material_list = (obj_material**)growable->material_list.items;
-}
-
-static int parse_obj_scene(obj_scene_data *data_out, const char *filename)
-{
-  obj_growable_scene_data growable;
-
-  obj_init_temp_storage(&growable);
-  growable.data = data_out;
-  if (obj_parse_obj_file(&growable, filename) == 0) {
-    obj_free_all_storage(&growable);
-    return 0;
+    fclose(objFile);
+    return 1;
   }
 
-  obj_copy_to_out_storage(data_out, &growable);
-  obj_free_temp_storage(&growable);
-  return 1;
-}
+  static inline bool cmp(ObjTriangle t0, ObjTriangle t1) {return t0.m < t1.m;}
 
-ObjLoader::ObjLoader(void) {
-  std::memset(this, 0, sizeof(ObjLoader));
-  data.faceAllocator = PF_NEW(GrowingPool<obj_face>);
-  data.vectorAllocator = PF_NEW(GrowingPool<obj_vector>);
-  data.matAllocator = PF_NEW(GrowingPool<obj_material>);
-}
+  Obj::Obj(void) { std::memset(this,0,sizeof(Obj)); }
 
-ObjLoader::~ObjLoader(void) {
-  PF_DELETE(data.faceAllocator);
-  PF_DELETE(data.vectorAllocator);
-  PF_DELETE(data.matAllocator);
-  delete_obj_data(&data);
-}
-
-int ObjLoader::load(const char *filename) {
-  int no_error = 1;
-  no_error = parse_obj_scene(&data, filename);
-  if (no_error) {
-    this->vertexCount = data.vertex_count;
-    this->normalCount = data.vertex_normal_count;
-    this->textureCount = data.vertex_texture_count;
-    this->faceCount = data.face_count;
-    this->materialCount = data.material_count;
-    this->vertexList = data.vertex_list;
-    this->normalList = data.vertex_normal_list;
-    this->textureList = data.vertex_texture_list;
-    this->faceList = data.face_list;
-    this->materialList = data.material_list;
-  }
-  return no_error;
-}
-
-static inline bool _cmp(ObjTriangle t0, ObjTriangle t1) {return t0.m < t1.m;}
-
-Obj::Obj(void) { std::memset(this,0,sizeof(Obj)); }
-
-INLINE uint32 str_hash(const char *key)
-{
+  INLINE uint32 str_hash(const char *key) {
     uint32 h = 5381;
     for (size_t i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k; // bernstein k=33 xor
     return h;
-}
+  }
 
-template <typename T>
-INLINE uint32 hash(const T &elem)
-{
-  const char *key = (const char *) &elem;
-  uint32 h = 5381;
-  for (size_t i = 0; i < sizeof(T); i++) h = ((h<<5)+h)^key[i];
-  return h;
-}
+  template <typename T>
+  INLINE uint32 hash(const T &elem) {
+    const char *key = (const char *) &elem;
+    uint32 h = 5381;
+    for (size_t i = 0; i < sizeof(T); i++) h = ((h<<5)+h)^key[i];
+    return h;
+  }
 
-bool
-Obj::load(const FileName &fileName)
-{
-  ObjLoader loader;
-  if (loader.load(fileName.c_str()) == 0)
-    return false;
-
-  // Sort vertices and create faces
-  struct vertex_key {
-    INLINE vertex_key(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
-    bool operator == (const vertex_key &other) const {
+  /*! Sort vertices faces */
+  struct VertexKey {
+    INLINE VertexKey(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
+    bool operator == (const VertexKey &other) const {
       return (p == other.p) && (n == other.n) && (t == other.t);
     }
-    bool operator < (const vertex_key &other) const {
+    bool operator < (const VertexKey &other) const {
       if (p != other.p) return p < other.p;
       if (n != other.n) return n < other.n;
       if (t != other.t) return t < other.t;
@@ -639,142 +382,154 @@ Obj::load(const FileName &fileName)
     int p,n,t;
   };
 
-  std::map<vertex_key, int> map;
-  struct poly { int v[4]; int mat; int n; };
-  std::vector<poly> polys;
-  int vert_n = 0;
-  for (int i = 0; i < loader.faceCount; ++i) {
-    const obj_face *face = loader.faceList[i];
-    if (face == NULL) {
-      PF_MSG_V ("ObjLoader: NULL face for " << fileName.str());
-      return false;
-    }
-    if (face->vertex_count > 4) {
-      PF_MSG_V ("ObjLoader: Too many vertices for " << fileName.str());
-      return false;
-    }
-    int v[] = {0,0,0,0};
-    for (int j = 0; j < face->vertex_count; ++j) {
-      const int p = face->vertex_index[j];
-      const int n = face->normal_index[j];
-      const int t = face->texture_index[j];
-      const vertex_key key(p,n,t);
-      const auto it = map.find(key);
-      if (it == map.end())
-        v[j] = map[key] = vert_n++;
-      else
-        v[j] = it->second;
-    }
-    const poly p = {{v[0],v[1],v[2],v[3]},face->material_index,face->vertex_count};
-    polys.push_back(p);
-  }
+  /*! Store face connectivity */
+  struct Poly { int v[4]; int mat; int n; };
 
-  // Create triangles now
-  std::vector<ObjTriangle> tris;
-  for (auto poly = polys.begin(); poly != polys.end(); ++poly) {
-    if (poly->n == 3) {
-      const ObjTriangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
-      tris.push_back(tri);
-    } else {
-      const ObjTriangle tri0(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
-      const ObjTriangle tri1(vec3i(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
-      tris.push_back(tri0);
-      tris.push_back(tri1);
+  bool
+  Obj::load(const FileName &fileName)
+  {
+    ObjLoader loader;
+    std::map<VertexKey, int> map;
+    std::vector<Poly> polys;
+    if (loader.loadObj(fileName.c_str()) == 0) return false;
+
+    int vert_n = 0;
+    for (size_t i = 0; i < loader.faceList.size(); ++i) {
+      const ObjLoaderFace *face = loader.faceList[i];
+      if (face == NULL) {
+        PF_MSG_V ("ObjLoader: NULL face for " << fileName.str());
+        return false;
+      }
+      if (face->vertexNum > 4) {
+        PF_MSG_V ("ObjLoader: Too many vertices for " << fileName.str());
+        return false;
+      }
+      int v[] = {0,0,0,0};
+      for (int j = 0; j < face->vertexNum; ++j) {
+        const int p = face->vertexID[j];
+        const int n = face->normalID[j];
+        const int t = face->textureID[j];
+        const VertexKey key(p,n,t);
+        const auto it = map.find(key);
+        if (it == map.end())
+          v[j] = map[key] = vert_n++;
+        else
+          v[j] = it->second;
+      }
+      const Poly p = {{v[0],v[1],v[2],v[3]},face->materialID,face->vertexNum};
+      polys.push_back(p);
     }
-  }
 
-  // Sort them by material and save the material group
-  std::sort(tris.begin(), tris.end(), _cmp);
-  std::vector<ObjMatGroup> matGrp;
-  int curr = tris[0].m;
-  matGrp.push_back(ObjMatGroup(0,0,curr));
-  for (size_t i = 0; i < tris.size(); ++i)
-    if (tris[i].m != curr) {
-      curr = tris[i].m;
-      matGrp.back().last = (int) (i-1);
-      matGrp.push_back(ObjMatGroup((int)i,0,curr));
+    // No face defined
+    if (polys.size() == 0) return true;
+
+    // Create triangles now
+    std::vector<ObjTriangle> tris;
+    for (auto poly = polys.begin(); poly != polys.end(); ++poly) {
+      if (poly->n == 3) {
+        const ObjTriangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+        tris.push_back(tri);
+      } else {
+        const ObjTriangle tri0(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+        const ObjTriangle tri1(vec3i(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
+        tris.push_back(tri0);
+        tris.push_back(tri1);
+      }
     }
-  matGrp.back().last = tris.size() - 1;
 
-  // Create all vertices and store them
-  const size_t vertNum = map.size();
-  std::vector<ObjVertex> verts;
-  verts.resize(vertNum);
-  for (auto it = map.begin(); it != map.end(); ++it) {
-    const vertex_key src = it->first;
-    const int dst = it->second;
-    ObjVertex &v = verts[dst];
-    const obj_vector *p = loader.vertexList[src.p];
-    const obj_vector *n = loader.normalList[src.n];
-    const obj_vector *t = loader.textureList[src.t];
-    assert(p != NULL && n != NULL && t != NULL);
-    v.p[0] = float(p->e[0]); v.p[1] = float(p->e[1]); v.p[2] = float(p->e[2]);
-    v.n[0] = float(n->e[0]); v.n[1] = float(n->e[1]); v.n[2] = float(n->e[2]);
-    v.t[0] = float(t->e[0]); v.t[1] = float(t->e[1]);
-  }
+    // Sort them by material and save the material group
+    std::sort(tris.begin(), tris.end(), cmp);
+    std::vector<ObjMatGroup> matGrp;
+    int curr = tris[0].m;
+    matGrp.push_back(ObjMatGroup(0,0,curr));
+    for (size_t i = 0; i < tris.size(); ++i)
+      if (tris[i].m != curr) {
+        curr = tris[i].m;
+        matGrp.back().last = (int) (i-1);
+        matGrp.push_back(ObjMatGroup((int)i,0,curr));
+      }
+    matGrp.back().last = tris.size() - 1;
 
-  // Allocate the ObjMaterial
-  ObjMaterial *mat = PF_NEW_ARRAY(ObjMaterial, loader.materialCount);
-  std::memset(mat, 0, sizeof(ObjMaterial) * loader.materialCount);
+    // Create all vertices and store them
+    const size_t vertNum = map.size();
+    std::vector<ObjVertex> verts;
+    verts.resize(vertNum);
+    for (auto it = map.begin(); it != map.end(); ++it) {
+      const VertexKey src = it->first;
+      const int dst = it->second;
+      ObjVertex &v = verts[dst];
+      const ObjLoaderVec *p = loader.vertexList[src.p];
+      const ObjLoaderVec *n = loader.normalList[src.n];
+      const ObjLoaderVec *t = loader.textureList[src.t];
+      assert(p != NULL && n != NULL && t != NULL);
+      v.p[0] = float(p->e[0]); v.p[1] = float(p->e[1]); v.p[2] = float(p->e[2]);
+      v.n[0] = float(n->e[0]); v.n[1] = float(n->e[1]); v.n[2] = float(n->e[2]);
+      v.t[0] = float(t->e[0]); v.t[1] = float(t->e[1]);
+    }
 
-#define COPY_FIELD(NAME)                                \
-  if (from.NAME) {                                      \
-    const size_t len = std::strlen(from.NAME);          \
-    to.NAME = PF_NEW_ARRAY(char, len + 1);              \
-    if (len) memcpy(to.NAME, from.NAME, len);           \
-    to.NAME[len] = 0;                                   \
-  }
-  for (int i = 0; i < loader.materialCount; ++i) {
-    const obj_material &from = *loader.materialList[i];
-    assert(loader.materialList[i] != NULL);
-    ObjMaterial &to = mat[i];
-    COPY_FIELD(name);
-    COPY_FIELD(map_Ka);
-    COPY_FIELD(map_Kd);
-    COPY_FIELD(map_D);
-    COPY_FIELD(map_Bump);
-  }
+    // Allocate the ObjMaterial
+    ObjMaterial *mat = PF_NEW_ARRAY(ObjMaterial, loader.materialList.size());
+    std::memset(mat, 0, sizeof(ObjMaterial) * loader.materialList.size());
+
+#define COPY_FIELD(NAME)                           \
+    if (from.NAME) {                               \
+      const size_t len = std::strlen(from.NAME);   \
+      to.NAME = PF_NEW_ARRAY(char, len + 1);       \
+      if (len) memcpy(to.NAME, from.NAME, len);    \
+      to.NAME[len] = 0;                            \
+    }
+    for (size_t i = 0; i < loader.materialList.size(); ++i) {
+      const ObjLoaderMat &from = *loader.materialList[i];
+      assert(loader.materialList[i] != NULL);
+      ObjMaterial &to = mat[i];
+      COPY_FIELD(name);
+      COPY_FIELD(map_Ka);
+      COPY_FIELD(map_Kd);
+      COPY_FIELD(map_D);
+      COPY_FIELD(map_Bump);
+    }
 #undef COPY_FIELD
 
-  // Now return the properly allocated Obj
-  std::memset(this, 0, sizeof(Obj));
-  this->triNum = tris.size();
-  this->vertNum = verts.size();
-  this->grpNum = matGrp.size();
-  this->matNum = loader.materialCount;
-  if (this->triNum) {
-    this->tri = PF_NEW_ARRAY(ObjTriangle, this->triNum);
-    std::memcpy(this->tri, &tris[0],  sizeof(ObjTriangle) * this->triNum);
+    // Now return the properly allocated Obj
+    std::memset(this, 0, sizeof(Obj));
+    this->triNum = tris.size();
+    this->vertNum = verts.size();
+    this->grpNum = matGrp.size();
+    this->matNum = loader.materialList.size();
+    if (this->triNum) {
+      this->tri = PF_NEW_ARRAY(ObjTriangle, this->triNum);
+      std::memcpy(this->tri, &tris[0],  sizeof(ObjTriangle) * this->triNum);
+    }
+    if (this->vertNum) {
+      this->vert = PF_NEW_ARRAY(ObjVertex, this->vertNum);
+      std::memcpy(this->vert, &verts[0], sizeof(ObjVertex) * this->vertNum);
+    }
+    if (this->grpNum) {
+      this->grp = PF_NEW_ARRAY(ObjMatGroup, this->grpNum);
+      std::memcpy(this->grp,  &matGrp[0],  sizeof(ObjMatGroup) * this->grpNum);
+    }
+    this->mat = mat;
+    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << triNum << " triangles");
+    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << vertNum << " vertices");
+    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << grpNum << " groups");
+    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << matNum << " materials");
+    return true;
   }
-  if (this->vertNum) {
-    this->vert = PF_NEW_ARRAY(ObjVertex, this->vertNum);
-    std::memcpy(this->vert, &verts[0], sizeof(ObjVertex) * this->vertNum);
-  }
-  if (this->grpNum) {
-    this->grp = PF_NEW_ARRAY(ObjMatGroup, this->grpNum);
-    std::memcpy(this->grp,  &matGrp[0],  sizeof(ObjMatGroup) * this->grpNum);
-  }
-  this->mat = mat;
-  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << triNum << " triangles");
-  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << vertNum << " vertices");
-  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << grpNum << " groups");
-  PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << matNum << " materials");
-  return true;
-}
 
-Obj::~Obj(void)
-{
-  PF_SAFE_DELETE_ARRAY(this->tri);
-  PF_SAFE_DELETE_ARRAY(this->vert);
-  PF_SAFE_DELETE_ARRAY(this->grp);
-  for (size_t i = 0; i < this->matNum; ++i) {
-    ObjMaterial &mat = this->mat[i];
-    PF_SAFE_DELETE_ARRAY(mat.name);
-    PF_SAFE_DELETE_ARRAY(mat.map_Ka);
-    PF_SAFE_DELETE_ARRAY(mat.map_Kd);
-    PF_SAFE_DELETE_ARRAY(mat.map_D);
-    PF_SAFE_DELETE_ARRAY(mat.map_Bump);
+  Obj::~Obj(void)
+  {
+    PF_SAFE_DELETE_ARRAY(this->tri);
+    PF_SAFE_DELETE_ARRAY(this->vert);
+    PF_SAFE_DELETE_ARRAY(this->grp);
+    for (size_t i = 0; i < this->matNum; ++i) {
+      ObjMaterial &mat = this->mat[i];
+      PF_SAFE_DELETE_ARRAY(mat.name);
+      PF_SAFE_DELETE_ARRAY(mat.map_Ka);
+      PF_SAFE_DELETE_ARRAY(mat.map_Kd);
+      PF_SAFE_DELETE_ARRAY(mat.map_D);
+      PF_SAFE_DELETE_ARRAY(mat.map_Bump);
+    }
+    PF_SAFE_DELETE_ARRAY(this->mat);
   }
-  PF_SAFE_DELETE_ARRAY(this->mat);
 }
 

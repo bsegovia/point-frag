@@ -21,7 +21,6 @@
 #include "renderer/texture.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
-
 #include <GL/freeglut.h>
 
 namespace pf

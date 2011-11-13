@@ -105,14 +105,30 @@ namespace pf
 #define PF_INFO " ######## " << PF_LOG_HERE
 
 /*! Verbose macros: they add logging position and thread ID */
-#define PF_WARNING_V(MSG) (*logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush)
-#define PF_ERROR_V(MSG)   (*logger << "ERROR " << MSG << PF_INFO << "\n" << loggerFlush)
-#define PF_MSG_V(MSG)     (*logger << MSG << PF_INFO << "\n" << loggerFlush)
+#define PF_WARNING_V(MSG) do {                                                \
+  if (logger) *logger << "WARNING " << MSG << PF_INFO << "\n" << loggerFlush; \
+} while (0)
+
+#define PF_ERROR_V(MSG)   do {                                                \
+  if (logger) *logger << "ERROR " << MSG << PF_INFO << "\n" << loggerFlush;   \
+} while (0)
+
+#define PF_MSG_V(MSG)     do {                                                \
+  if (logger) *logger << MSG << PF_INFO << "\n" << loggerFlush;               \
+} while (0)
 
 /*! Regular macros: just the user message */
-#define PF_WARNING(MSG) (*logger << "WARNING " << MSG << "\n" << loggerFlush)
-#define PF_ERROR(MSG)   (*logger << "ERROR " << MSG << "\n" << loggerFlush)
-#define PF_MSG(MSG)     (*logger << MSG << "\n" << loggerFlush)
+#define PF_WARNING(MSG) do {                                                  \
+  if (logger) *logger << "WARNING " << MSG << "\n" << loggerFlush;            \
+} while (0)
+
+#define PF_ERROR(MSG)   do {                                                  \
+  if (logger) *logger << "ERROR " << MSG << "\n" << loggerFlush;              \
+} while (0)
+
+#define PF_MSG(MSG)     do {                                                  \
+  if (logger) *logger << MSG << "\n" << loggerFlush;                          \
+} while (0)
 
 #endif /* __PF_LOGGING_HPP__ */
 

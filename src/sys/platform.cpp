@@ -34,7 +34,7 @@ namespace pf
     QueryPerformanceCounter(&val);
     return (double)val.QuadPart / (double)freq.QuadPart;
   }
-  void fatalBox(const char *msg) {
+  void Win32Fatal(const char *msg) {
     MessageBox(NULL, msg, "Fatal Error", MB_OK);
   }
 }

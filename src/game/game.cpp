@@ -92,11 +92,11 @@ namespace pf
     glutCreateWindow(argv[0]);
 
     renderer = PF_NEW(Renderer);
-    renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
+    //renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
     //renderObj = PF_NEW(RendererObj, *renderer, "Eco_mansionhouse.obj");
     //renderObj = PF_NEW(RendererObj, *renderer, "La_piazza_1.obj");
     //renderObj = PF_NEW(RendererObj, *renderer, "hop.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "arabic_city_II.obj");
+    renderObj = PF_NEW(RendererObj, *renderer, "arabic_city_II.obj");
     //renderObj = PF_NEW(RendererObj, *renderer, "3D_ARE_City100.obj");
   }
 
