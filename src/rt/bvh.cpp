@@ -18,8 +18,11 @@
 #include "rt_triangle.hpp"
 
 #include "math/bbox.hpp"
+#include "simd/ssef.hpp"
 #include "sys/logging.hpp"
-#include "sys/platform.hpp"
+#include "sys/logging.hpp"
+#include "sys/alloc.hpp"
+#include "sys/tasking.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -30,9 +33,30 @@
 
 namespace pf
 {
+#if 1
+  typedef BBox3f Box;
+  INLINE Box convertBox(const BBox3f &from) { return from; }
+#else
+  typedef BBox<ssef> Box;
+
+  /*! Computes half surface area of box. */
+  INLINE float halfArea(const Box& box) {
+    ssef d = size(box);
+    ssef a = d*shuffle<1,2,0,3>(d);
+    return extract<0>(reduce_add(a));
+  }
+
+  INLINE Box convertBox(const BBox3f &from) {
+    Box to;
+    for (size_t j = 0; j < 3; ++j) to.lower[j] = from.lower[j];
+    for (size_t j = 0; j < 3; ++j) to.upper[j] = from.upper[j];
+    return to;
+  }
+#endif
+
   /* Just the barycenter of a triangle */
   struct Centroid : public vec3f {
-    Centroid() {}
+    Centroid(void) {}
     Centroid(const RTTriangle &t) :
       vec3f(t.v[0].x + t.v[1].x + t.v[2].x,
             t.v[0].y + t.v[1].y + t.v[2].y,
@@ -54,8 +78,8 @@ namespace pf
   static const int remapOtherAxis[4] = {1, 2, 0, 1};
   enum {otherAxisNum = 2};
 
-  /*! Options to compile the BVH */
-  struct BVHCompilerOption {
+  /*! Options to compile the BVH2 */
+  struct BVH2CompilerOption {
     uint32 minPrimNum;
     uint32 maxPrimNum;
     float SAHIntersectionCost;
@@ -63,10 +87,10 @@ namespace pf
   };
 
   /*! n.log(n) compiler with bounding box sweeping and SAH */
-  struct BVHCompiler : public RefCount
+  struct BVH2Compiler : public RefCount
   {
-    BVHCompiler(void);
-    ~BVHCompiler(void);
+    BVH2Compiler(void);
+    ~BVH2Compiler(void);
     /*! Compute primitives centroids and sort then for each axis */
     template <typename T>
     int injection(const T * const RESTRICT soup, uint32 primNum);
@@ -77,14 +101,14 @@ namespace pf
     std::vector<uint32> IDs[3];
     std::vector<uint32> primID;
     std::vector<uint32> tmpIDs;
-    std::vector<BBox3f> aabbs;
-    std::vector<BBox3f> rlAABBs;
+    std::vector<Box> aabbs;
+    std::vector<Box> rlAABBs;
     int n;
     int nodeNum;
     uint32 currID;
-    BBox3f sceneAABB;
-    BVHNode * RESTRICT root;
-    BVHCompilerOption options;
+    Box sceneAABB;
+    BVH2Node * RESTRICT root;
+    BVH2CompilerOption options;
   };
 
   /*! Sort the centroids along the given axis */
@@ -97,21 +121,37 @@ namespace pf
     }
   };
 
+  /*! To perform the sorts in parallel */
+  template <uint32 axis>
+  class TaskCentroidSort : public Task {
+  public:
+    TaskCentroidSort(const std::vector<Centroid> &centroids,
+                     std::vector<uint32> &IDs) :
+      Task("TaskCentroidSort"), centroids(centroids), IDs(IDs) {}
+   virtual Task *run(void) {
+     for(size_t j = 0; j < IDs.size(); ++j) IDs[j] = j;
+     std::sort(IDs.begin(), IDs.end(), Sorter<axis>(centroids));
+    return NULL;
+   }
+  private:
+    const std::vector<Centroid> &centroids; //!< Centroids of the primitives
+    std::vector<uint32> &IDs;               //!< Array to sort
+  };
+
   template <typename T>
-  int BVHCompiler::injection(const T * const RESTRICT soup, uint32 primNum)
+  int BVH2Compiler::injection(const T * const RESTRICT soup, uint32 primNum)
   {
     std::vector<Centroid> centroids;
+    double t = getSeconds();
 
-    // Allocate nodes and leaves for the BVH
-    root = (BVHNode *) new BVHNode [2 * primNum + 1];
+    // Allocate nodes and leaves for the BVH2
+    root = (BVH2Node *) PF_NEW_ARRAY(BVH2Node, 2*primNum + 1);
     nodeNum = 2 * primNum + 1;
     if (root == 0) return -1;
 
     // Allocate the data for the compiler
-    for(int i = 0; i < 3; ++i) {
+    for(int i = 0; i < 3; ++i)
       IDs[i].resize(primNum);
-      if(IDs[i].size() < primNum) return -1;
-    }
     pos.resize(primNum);
     tmpIDs.resize(primNum);
     centroids.resize(primNum);
@@ -120,30 +160,30 @@ namespace pf
     n = primNum;
 
     // Compute centroids and bounding boxes
-    sceneAABB = BBox3f(empty);
+    sceneAABB = Box(empty);
     for(int j = 0; j < n; ++j) {
-      const T &pri = soup[j];
-      centroids[j] = Centroid(pri);
-      aabbs[j] = pri.getAABB();
+      const T &prim = soup[j];
+      centroids[j] = Centroid(prim);
+      //aabbs[j] = prim.getAABB();
+      aabbs[j] = convertBox(prim.getAABB());
       sceneAABB.grow(aabbs[j]);
     }
 
-    // Sort the centroids
-    for(int i = 0; i < 3; ++i)
-      for(int j = 0; j < n; ++j)
-        IDs[i][j] = j;
-    std::sort(IDs[0].begin(), IDs[0].end(), Sorter<0>(centroids));
-    std::sort(IDs[1].begin(), IDs[1].end(), Sorter<1>(centroids));
-    std::sort(IDs[2].begin(), IDs[2].end(), Sorter<2>(centroids));
-
+    Ref<Task> sortTask[3];
+    sortTask[0] = PF_NEW(TaskCentroidSort<0>, centroids, IDs[0]);
+    sortTask[1] = PF_NEW(TaskCentroidSort<1>, centroids, IDs[1]);
+    sortTask[2] = PF_NEW(TaskCentroidSort<2>, centroids, IDs[2]);
+    for (size_t i = 0; i < 3; ++i) sortTask[i]->scheduled();
+    for (size_t i = 0; i < 3; ++i) sortTask[i]->waitForCompletion();
+    PF_MSG_V("BVH2: Injection time, " << getSeconds() - t);
     return n;
   }
 
   /*! Explicit instantiation for RTTriangle */
-  template int BVHCompiler::injection<RTTriangle> (const RTTriangle * const RESTRICT, uint32);
+  template int BVH2Compiler::injection<RTTriangle> (const RTTriangle * const RESTRICT, uint32);
 
-  BVHCompiler::BVHCompiler() : currID(0) { }
-  BVHCompiler::~BVHCompiler() { }
+  BVH2Compiler::BVH2Compiler() : currID(0) { }
+  BVH2Compiler::~BVH2Compiler() { }
 
   /*! Grows up the bounding boxen to avoid precision problems */
   static const float aabbEps = 1e-6f;
@@ -155,13 +195,13 @@ namespace pf
     struct Elem {
       int first, last;
       uint32 id;
-      BBox3f aabb;
+      Box aabb;
       INLINE Elem(void) {}
-      INLINE Elem(int f, int l, uint32 index, const BBox3f &paabb)
+      INLINE Elem(int f, int l, uint32 index, const Box &paabb)
         : first(f), last(l), id(index), aabb(paabb) {}
     };
     /*! Push a new element on the stack */
-    INLINE void push(int a, int b, uint32 id, const BBox3f &aabb) {
+    INLINE void push(int a, int b, uint32 id, const Box &aabb) {
       data[n++] = Stack::Elem(a, b, id, aabb);
     }
     /*! Pop an element from the stack */
@@ -182,11 +222,11 @@ namespace pf
     Partition() {}
     Partition(int f, int l, uint32 d) :
       cost(FLT_MAX), axis(d) {
-      aabbs[ON_LEFT] = aabbs[ON_RIGHT] = BBox3f(empty);
+      aabbs[ON_LEFT] = aabbs[ON_RIGHT] = Box(empty);
       first[ON_RIGHT] = first[ON_LEFT] = f;
       last[ON_RIGHT] = last[ON_LEFT] = l;
     }
-    BBox3f aabbs[2];
+    Box aabbs[2];
     float cost;
     uint32 axis;
     int first[2], last[2];
@@ -194,8 +234,7 @@ namespace pf
 
   /*! Sweep left to right and find the best partition */
   template <uint32 axis>
-  static INLINE Partition doSweep(BVHCompiler &c, int first, int last)
-  {
+  static INLINE Partition doSweep(BVH2Compiler &c, int first, int last) {
     // We return the best partition
     Partition part(first, last, axis);
 
@@ -210,14 +249,14 @@ namespace pf
     // ignore the traversal cost since we only compare strategies which DO
     // use a traversal -> the other strategy (intersecting all primitives
     // with no traversal is done afterward))
-    BBox3f aabb(empty);
-    const uint32 primNum = (float) (last - first) + 1.f;
+    Box aabb(empty);
+    const uint32 primNum = last - first + 1;
     uint32 n = 1;
     part.cost = FLT_MAX;
     for(int j = first; j < last; ++j) {
       aabb.grow(c.aabbs[c.IDs[axis][j]]);
-      const float cost = area(aabb) * float(n)
-        + area(c.rlAABBs[c.IDs[axis][j + 1]]) * float(primNum - n);
+      const float cost = halfArea(aabb) * float(n)
+                       + halfArea(c.rlAABBs[c.IDs[axis][j + 1]]) * float(primNum - n);
       ++n;
       if(cost > part.cost) continue;
       part.cost = cost;
@@ -232,37 +271,38 @@ namespace pf
 
     // Test the last partition where all primitives are inside one node
     aabb.grow(c.aabbs[c.IDs[axis][last]]);
-    const float barea = area(aabb);
-    const float cost = c.options.SAHIntersectionCost * barea * primNum;
+    const float harea = halfArea(aabb);
+    const float cost = c.options.SAHIntersectionCost * harea * primNum;
     part.cost *= c.options.SAHIntersectionCost;
-    part.cost += c.options.SAHTraversalCost * barea;
+    part.cost += c.options.SAHTraversalCost * harea;
     if(cost <= part.cost) {
       part.cost = cost;
-      part.last[ON_LEFT] = -1;
-      part.last[ON_RIGHT] = -1;
-      part.first[ON_LEFT] = -1;
-      part.first[ON_RIGHT] = -1;
-      part.aabbs[ON_LEFT] = aabb;
-      part.aabbs[ON_RIGHT] = aabb;
+      part.last[ON_RIGHT]  = part.last[ON_LEFT]  = -1;
+      part.first[ON_RIGHT] = part.first[ON_LEFT] = -1;
+      part.aabbs[ON_RIGHT] = part.aabbs[ON_LEFT] = aabb;
     }
 
     return part;
   }
 
-  /*! Store a node in the BVH */
-  static INLINE void doMakeNode(BVHCompiler &c, const Stack::Elem &data, uint32 axis) {
+  /*! Basically convert box into a node */
+  static INLINE void doSetNodeBBox(BVH2Node &node, const Box &box) {
+    for (size_t j = 0; j < 3; ++j) node.pmin[j] = box.lower[j];
+    for (size_t j = 0; j < 3; ++j) node.pmax[j] = box.upper[j];
+  }
+
+  /*! Store a node in the BVH2 */
+  static INLINE void doMakeNode(BVH2Compiler &c, const Stack::Elem &data, uint32 axis) {
     c.root[data.id].setAxis(axis);
-    c.root[data.id].setMin(data.aabb.lower);
-    c.root[data.id].setMax(data.aabb.upper);
+    doSetNodeBBox(c.root[data.id], data.aabb);
     c.root[data.id].setOffset(c.currID + 1);
     c.root[data.id].setAsNonLeaf();
   }
 
-  /*! Store a leaf in the BVH */
-  static INLINE void doMakeLeaf(BVHCompiler &c, const Stack::Elem &data) {
+  /*! Store a leaf in the BVH2 */
+  static INLINE void doMakeLeaf(BVH2Compiler &c, const Stack::Elem &data) {
     const uint32 primNum = data.last - data.first + 1;
-    c.root[data.id].setMin(data.aabb.lower);
-    c.root[data.id].setMax(data.aabb.upper);
+    doSetNodeBBox(c.root[data.id], data.aabb);
     c.root[data.id].setPrimNum(primNum);
     c.root[data.id].setPrimID(c.primID.size());
     c.root[data.id].setAsLeaf();
@@ -271,7 +311,7 @@ namespace pf
   }
 
   /*! Grow the bounding boxen with an epsilon */
-  static INLINE void doGrowBBox3fs(BVHCompiler &c) {
+  static INLINE void doGrowBoxs(BVH2Compiler &c) {
     const int aabb_n = 2 * c.n - 1;
     for(int i = 0; i < aabb_n; ++i) {
       vec3f pmin = c.root[i].getMin();
@@ -285,14 +325,14 @@ namespace pf
     }
   }
 
-  int BVHCompiler::compile(void) {
+  int BVH2Compiler::compile(void) {
     Stack stack;
     Stack::Elem node;
 
     stack.push(0, n - 1, 0, sceneAABB);
     while(stack.isNotEmpty()) {
       node = stack.pop();
-      while(1) {
+      for (;;) {
 
         // We are done and we make a leaf
         const uint32 primNum = node.last - node.first + 1;
@@ -350,58 +390,59 @@ namespace pf
       }
     }
 
-    doGrowBBox3fs(*this);
+    doGrowBoxs(*this);
     return 0;
   }
 
-  /*! Compile a BVH */
   template <typename T>
-  bool compile(const T *t, uint32 primNum, BVH<T> &tree, uint32 minPrimNum, uint32 maxPrimNum)
+  bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &tree)
   {
-    PF_MSG_V("BVH: compiling BVH");
-    PF_MSG_V("BVH: number of primitives: " << primNum);
-    Ref<BVHCompiler> c = new BVHCompiler;
+    PF_MSG_V("BVH2: compiling BVH2");
+    PF_MSG_V("BVH2: " << primNum << " primitives");
+    Ref<BVH2Compiler> c = PF_NEW(BVH2Compiler);
     const double start = getSeconds();
-    c->options.minPrimNum = std::max(minPrimNum, (uint32) minPrimNumPerLeaf);
-    c->options.maxPrimNum = std::min(maxPrimNum, (uint32) maxPrimNumPerLeaf);
+    c->options.minPrimNum = minPrimNumPerLeaf;
+    c->options.maxPrimNum = maxPrimNumPerLeaf;
     c->options.SAHIntersectionCost = SAHIntersectionCost;
     c->options.SAHTraversalCost = SAHTraversalCost;
 
     if (UNLIKELY(c->options.maxPrimNum < c->options.minPrimNum))
-      FATAL("Bad BVH compilation parameters");
+      FATAL("Bad BVH2 compilation parameters");
 
     if (c->injection<T>(t, primNum) < 0) return false;
     c->compile();
 
     tree.node = c->root;
     tree.nodeNum = c->currID + 1;
-    PF_MSG_V("BVH: nodeNum " << tree.nodeNum);
-    PF_MSG_V("BVH: Copying primitive soup\n");
+    PF_MSG_V("BVH2: " << tree.nodeNum << " nodes");
+    PF_MSG_V("BVH2: Copying primitive soup");
     tree.primNum = primNum;
-    tree.prim = new T[primNum];
+    tree.prim = PF_NEW_ARRAY(T, primNum);
     assert(tree.prim);
     std::memcpy(tree.prim, t, sizeof(T) * primNum);
 
-    PF_MSG_V("BVH: Copying primitive IDs\n");
-    tree.primID = new uint32_t[tree.primNum];
+    PF_MSG_V("BVH2: Copying primitive IDs");
+    tree.primID = PF_NEW_ARRAY(uint32_t, tree.primNum);
     assert(tree.primID != NULL);
     std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32_t));
-    PF_MSG_V("BVH: Time to build " << getSeconds() - start << " sec");
+    PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
     return true;
   }
 
-  /*! Instantiation for RTTriangle */
-  template bool compile<RTTriangle> (const RTTriangle*, uint32, BVH<RTTriangle>&, uint32, uint32);
+  template <typename T>
+  BVH2<T>::BVH2(void) : node(NULL), prim(NULL), primID(NULL), nodeNum(0), primNum(0) {}
 
   template <typename T>
-  BVH<T>::BVH(void) : node(NULL), prim(NULL), primID(NULL), nodeNum(0), primNum(0) {}
-
-  template <typename T>
-  BVH<T>::~BVH(void) {
-    SAFE_DELETE_ARRAY(this->node);
-    SAFE_DELETE_ARRAY(this->primID);
-    SAFE_DELETE_ARRAY(this->prim);
+  BVH2<T>::~BVH2(void) {
+    PF_SAFE_DELETE_ARRAY(this->node);
+    PF_SAFE_DELETE_ARRAY(this->primID);
+    PF_SAFE_DELETE_ARRAY(this->prim);
   }
+
+  // Instantiation for RTTriangle
+  template bool BVH2Build<RTTriangle> (const RTTriangle*, uint32, BVH2<RTTriangle>&);
+  template BVH2<RTTriangle>::BVH2(void);
+  template BVH2<RTTriangle>::~BVH2(void);
 
 } /* namespace pf */
 

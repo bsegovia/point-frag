@@ -103,70 +103,63 @@ namespace pf
     size_t texNum;
   };
 
-  RendererObj::RendererObj(Renderer &renderer_, const FileName &fileName) :
-    renderer(renderer_), tex(NULL), texName(NULL), bbox(NULL), grp(NULL),
+  RendererObj::RendererObj(Renderer &renderer, const Obj &obj) :
+    renderer(renderer), tex(NULL), texName(NULL), bbox(NULL), grp(NULL),
     vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
   {
-    PF_MSG_V("RendererObj: loading .obj file \"" << fileName.base() << "\"");
     TextureStreamer &streamer = *renderer.streamer;
-    Obj *obj = PF_NEW(Obj);
-    bool isLoaded = false;
-    for (size_t i = 0; i < defaultPathNum; ++i) {
-      isLoaded = obj->load(FileName(defaultPath[i]) + fileName);
-      if (isLoaded) break;
-    }
 
-    if (isLoaded) {
+    if (obj.isValid()) {
       PF_MSG_V("RendererObj: asynchronously loading textures");
 
       // Map each material group to the texture name
-      this->tex = PF_NEW_ARRAY(Ref<Texture2D>, obj->grpNum);
-      this->texName = PF_NEW_ARRAY(std::string, obj->grpNum);
-      for (size_t i = 0; i < obj->grpNum; ++i) {
-        const int mat = obj->grp[i].m;
+      this->tex = PF_NEW_ARRAY(Ref<Texture2D>, obj.grpNum);
+      this->texName = PF_NEW_ARRAY(std::string, obj.grpNum);
+      for (size_t i = 0; i < obj.grpNum; ++i) {
+        const int mat = obj.grp[i].m;
         this->tex[i] = renderer.defaultTex;
         if (mat >= 0)
-          this->texName[i] = obj->mat[mat].map_Kd;
+          this->texName[i] = obj.mat[mat].map_Kd;
         else
           this->texName[i] = "";
       }
 
       // Start to load the textures
-      this->texLoading= PF_NEW(TaskLoadObjTexture, streamer, *this, *obj);
+      this->texLoading= PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
       this->texLoading->scheduled();
 
       // Compute each object bounding box and group of triangles
       PF_MSG_V("RendererObj: computing bounding boxes");
-      this->grpNum = obj->grpNum;
-      this->bbox = PF_NEW_ARRAY(BBox3f, obj->grpNum);
+      this->grpNum = obj.grpNum;
+      this->bbox = PF_NEW_ARRAY(BBox3f, obj.grpNum);
       this->grp = PF_NEW_ARRAY(RendererObj::Group, this->grpNum);
-      for (size_t i = 0; i < obj->grpNum; ++i) {
-        const size_t first = obj->grp[i].first, last = obj->grp[i].last;
+      for (size_t i = 0; i < obj.grpNum; ++i) {
+        const size_t first = obj.grp[i].first, last = obj.grp[i].last;
         this->grp[i].first = first;
         this->grp[i].last = last;
         this->bbox[i] = BBox3f(empty);
         for (size_t j = first; j < last; ++j) {
-          this->bbox[i].grow(obj->vert[obj->tri[j].v[0]].p);
-          this->bbox[i].grow(obj->vert[obj->tri[j].v[1]].p);
-          this->bbox[i].grow(obj->vert[obj->tri[j].v[2]].p);
+          this->bbox[i].grow(obj.vert[obj.tri[j].v[0]].p);
+          this->bbox[i].grow(obj.vert[obj.tri[j].v[1]].p);
+          this->bbox[i].grow(obj.vert[obj.tri[j].v[2]].p);
         }
       }
 
       // Create the vertex buffer
       PF_MSG_V("RendererObj: creating OGL objects");
-      const size_t vertexSize = obj->vertNum * sizeof(ObjVertex);
+      const size_t vertexSize = obj.vertNum * sizeof(ObjVertex);
       R_CALL (GenBuffers, 1, &this->arrayBuffer);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
-      R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, obj->vert, GL_STATIC_DRAW);
+      R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, obj.vert, GL_STATIC_DRAW);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
 
       // Build the indices
-      GLuint *indices = PF_NEW_ARRAY(GLuint, obj->triNum * 3);
-      const size_t indexSize = sizeof(GLuint[3]) * obj->triNum;
-      for (size_t from = 0, to = 0; from < obj->triNum; ++from, to += 3) {
-        indices[to+0] = obj->tri[from].v[0];
-        indices[to+1] = obj->tri[from].v[1];
-        indices[to+2] = obj->tri[from].v[2];
+      GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
+      const size_t indexSize = sizeof(GLuint[3]) * obj.triNum;
+      for (size_t from = 0, to = 0; from < obj.triNum; ++from, to += 3) {
+        indices[to+0] = obj.tri[from].v[0];
+        indices[to+1] = obj.tri[from].v[1];
+        indices[to+2] = obj.tri[from].v[2];
       }
       R_CALL (GenBuffers, 1, &this->elementBuffer);
       R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
@@ -185,9 +178,6 @@ namespace pf
       R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_TEXCOORD);
       R_CALL (BindVertexArray, 0);
     }
-
-    // We do not need anymore the OBJ structure
-    PF_DELETE(obj);
   }
 
   RendererObj::~RendererObj(void) {

@@ -20,6 +20,9 @@
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
+#include "rt/bvh.hpp"
+#include "rt/rt_triangle.hpp"
+#include "models/obj.hpp"
 
 #include <GL/freeglut.h>
 #include <cstdio>
@@ -30,36 +33,34 @@ namespace pf
   static const int defaultWidth = 800, defaultHeight = 600;
   Renderer *renderer = NULL;
   Ref<RendererObj> renderObj = NULL;
+  Ref<BVH2<RTTriangle>> bvh = NULL;
   LoggerStream *coutStream = NULL;
   LoggerStream *fileStream = NULL;
 
-  class CoutStream : public LoggerStream
-  {
-    public:
-      virtual LoggerStream& operator<< (const std::string &str) {
-        std::cout << str;
-        return *this;
-      }
+  class CoutStream : public LoggerStream {
+  public:
+    virtual LoggerStream& operator<< (const std::string &str) {
+      std::cout << str;
+      return *this;
+    }
   };
 
-  class FileStream : public LoggerStream
-  {
-    public:
-      FileStream(void) {
-        file = fopen("log.txt", "w");
-        assert(file);
-      }
-      virtual ~FileStream(void) {fclose(file);}
-      virtual LoggerStream& operator<< (const std::string &str) {
-        fprintf(file, str.c_str());
-        return *this;
-      }
-    private:
-      FILE *file;
+  class FileStream : public LoggerStream {
+  public:
+    FileStream(void) {
+      file = fopen("log.txt", "w");
+      assert(file);
+    }
+    virtual ~FileStream(void) {fclose(file);}
+    virtual LoggerStream& operator<< (const std::string &str) {
+      fprintf(file, str.c_str());
+      return *this;
+    }
+  private:
+    FILE *file;
   };
 
-  void LoggerStart(void)
-  {
+  static void LoggerStart(void) {
     logger = PF_NEW(Logger);
     coutStream = PF_NEW(CoutStream);
     fileStream = PF_NEW(FileStream);
@@ -67,8 +68,7 @@ namespace pf
     logger->insert(*fileStream);
   }
 
-  void LoggerEnd(void)
-  {
+  static void LoggerEnd(void) {
     logger->remove(*fileStream);
     logger->remove(*coutStream);
     PF_DELETE(fileStream);
@@ -77,8 +77,19 @@ namespace pf
     logger = NULL;
   }
 
-  void GameStart(int argc, char **argv)
-  {
+  //static const FileName objName("f000.obj");
+  static const FileName objName("arabic_city_II.obj");
+
+  static RTTriangle *ObjComputeTriangle(const Obj &obj) {
+    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
+    for (size_t i = 0; i < obj.triNum; ++i)
+      for (size_t j = 0; j < 3; ++j)
+        tris[i].v[j] = obj.vert[obj.tri[i].v[j]].p;
+    return tris;
+  }
+
+  static void GameStart(int argc, char **argv) {
+    size_t path = 0;
     PF_MSG_V("GLUT: initialization");
     glutInitWindowSize(defaultWidth, defaultHeight);
     glutInitWindowPosition(64, 64);
@@ -92,17 +103,28 @@ namespace pf
     glutCreateWindow(argv[0]);
 
     renderer = PF_NEW(Renderer);
-    renderObj = PF_NEW(RendererObj, *renderer, "f000.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "Eco_mansionhouse.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "La_piazza_1.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "hop.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "arabic_city_II.obj");
-    //renderObj = PF_NEW(RendererObj, *renderer, "3D_ARE_City100.obj");
+    Obj obj;
+    for (path = 0; path < defaultPathNum; ++path)
+      if (obj.load(FileName(defaultPath[path]) + objName)) {
+        PF_MSG_V("Obj: " << objName << "loaded from " << defaultPath[path]);
+        break;
+      }
+    if (path == defaultPathNum)
+      PF_WARNING_V("Obj: " << objName << "not found");
+
+    // Build the BVH
+    RTTriangle *tris = ObjComputeTriangle(obj);
+    bvh = PF_NEW(BVH2<RTTriangle>);
+    BVH2Build(tris, obj.triNum, *bvh);
+
+    // Build the renderer OBJ
+    renderObj = PF_NEW(RendererObj, *renderer, obj);
+    PF_DELETE_ARRAY(tris);
   }
 
-  void GameEnd()
-  {
-    renderObj = NULL;
+  static void GameEnd(void) {
+    bvh = NULL;       // This properly releases it
+    renderObj = NULL; // idem
     PF_DELETE(renderer);
     renderer = NULL;
   }

@@ -54,6 +54,9 @@ namespace pf
   /*! computes the volume of a bounding box */
   template<typename T> INLINE T volume(const BBox<T>& b) { return reduce_mul(size(b)); }
 
+  /*! computes the surface half area of a bounding box */
+  template<typename T> INLINE T halfArea(const BBox<vec3<T> >& b) { const vec3<T> d = size(b); return d.x*(d.y+d.z)+d.y*d.z; }
+
   /*! computes the surface area of a bounding box */
   template<typename T> INLINE T area(const BBox<vec2<T> >& b) { const vec2<T> d = size(b); return d.x*d.y; }
   template<typename T> INLINE T area(const BBox<vec3<T> >& b) { const vec3<T> d = size(b); return T(2)*(d.x*(d.y+d.z)+d.y*d.z); }

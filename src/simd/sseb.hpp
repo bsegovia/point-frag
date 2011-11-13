@@ -32,101 +32,101 @@ namespace pf
 
     typedef sseb Mask;
 
-    INLINE sseb           ( ) {}
-    INLINE sseb           ( const sseb& other ) { m128 = other.m128; }
-    INLINE sseb& operator=( const sseb& other ) { m128 = other.m128; return *this; }
+    INLINE sseb           () {}
+    INLINE sseb           (const sseb& other) { m128 = other.m128; }
+    INLINE sseb& operator=(const sseb& other) { m128 = other.m128; return *this; }
 
-    INLINE sseb( const __m128  input ) : m128(input) {}
-    INLINE sseb( const __m128i input ) : m128(_mm_castsi128_ps(input)) {}
-    INLINE sseb( const __m128d input ) : m128(_mm_castpd_ps(input)) {}
+    INLINE sseb(const __m128  input) : m128(input) {}
+    INLINE sseb(const __m128i input) : m128(_mm_castsi128_ps(input)) {}
+    INLINE sseb(const __m128d input) : m128(_mm_castpd_ps(input)) {}
 
-    INLINE sseb( const bool input )
+    INLINE sseb(const bool input)
       : m128(input ? _mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128())) : _mm_setzero_ps()) {}
-    INLINE sseb( const bool input_0, const bool input_1, const bool input_2, const bool input_3 )
+    INLINE sseb(const bool input_0, const bool input_1, const bool input_2, const bool input_3)
       : m128(_mm_lookupmask_ps[(size_t(input_3) << 3) | (size_t(input_2) << 2) | (size_t(input_1) << 1) | size_t(input_0)]) {}
 
-    INLINE operator const __m128&( void ) const { return m128; }
-    INLINE operator const __m128i( void ) const { return _mm_castps_si128(m128); }
-    INLINE operator const __m128d( void ) const { return _mm_castps_pd(m128); }
+    INLINE operator const __m128&(void) const { return m128; }
+    INLINE operator const __m128i(void) const { return _mm_castps_si128(m128); }
+    INLINE operator const __m128d(void) const { return _mm_castps_pd(m128); }
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Constants
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE sseb( FalseTy ) : m128(_mm_setzero_ps()) {}
-    INLINE sseb( TrueTy  ) : m128(_mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()))) {}
+    INLINE sseb(FalseTy) : m128(_mm_setzero_ps()) {}
+    INLINE sseb(TrueTy ) : m128(_mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()))) {}
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Properties
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE bool   operator []( const size_t index ) const { assert(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
-    INLINE int32& operator []( const size_t index )       { assert(index < 4); return v[index]; }
+    INLINE bool   operator [](const size_t index) const { assert(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
+    INLINE int32& operator [](const size_t index)       { assert(index < 4); return v[index]; }
   };
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Unary Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  INLINE const sseb operator !( const sseb& a ) { return _mm_xor_ps(a, sseb(True)); }
+  INLINE const sseb operator !(const sseb& a) { return _mm_xor_ps(a, sseb(True)); }
 
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Binary Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  INLINE const sseb operator &( const sseb& a, const sseb& b ) { return _mm_and_ps(a, b); }
-  INLINE const sseb operator |( const sseb& a, const sseb& b ) { return _mm_or_ps (a, b); }
-  INLINE const sseb operator ^( const sseb& a, const sseb& b ) { return _mm_xor_ps(a, b); }
+  INLINE const sseb operator &(const sseb& a, const sseb& b) { return _mm_and_ps(a, b); }
+  INLINE const sseb operator |(const sseb& a, const sseb& b) { return _mm_or_ps (a, b); }
+  INLINE const sseb operator ^(const sseb& a, const sseb& b) { return _mm_xor_ps(a, b); }
 
-  INLINE sseb operator &=( sseb& a, const sseb& b ) { return a = a & b; }
-  INLINE sseb operator |=( sseb& a, const sseb& b ) { return a = a | b; }
-  INLINE sseb operator ^=( sseb& a, const sseb& b ) { return a = a ^ b; }
+  INLINE sseb operator &=(sseb& a, const sseb& b) { return a = a & b; }
+  INLINE sseb operator |=(sseb& a, const sseb& b) { return a = a | b; }
+  INLINE sseb operator ^=(sseb& a, const sseb& b) { return a = a ^ b; }
 
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Comparison Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  INLINE const sseb operator !=( const sseb& a, const sseb& b ) { return _mm_xor_ps(a, b); }
-  INLINE const sseb operator ==( const sseb& a, const sseb& b ) { return _mm_cmpeq_epi32(a, b); }
+  INLINE const sseb operator !=(const sseb& a, const sseb& b) { return _mm_xor_ps(a, b); }
+  INLINE const sseb operator ==(const sseb& a, const sseb& b) { return _mm_cmpeq_epi32(a, b); }
 
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Reduction Operations
   ////////////////////////////////////////////////////////////////////////////////
 
-  INLINE bool reduce_and( const sseb& a ) { return _mm_movemask_ps(a) == 0xf; }
-  INLINE bool reduce_or ( const sseb& a ) { return _mm_movemask_ps(a) != 0x0; }
-  INLINE bool all       ( const sseb& b ) { return _mm_movemask_ps(b) == 0xf; }
-  INLINE bool any       ( const sseb& b ) { return _mm_movemask_ps(b) != 0x0; }
-  INLINE bool none      ( const sseb& b ) { return _mm_movemask_ps(b) == 0x0; }
+  INLINE bool reduce_and(const sseb& a) { return _mm_movemask_ps(a) == 0xf; }
+  INLINE bool reduce_or (const sseb& a) { return _mm_movemask_ps(a) != 0x0; }
+  INLINE bool all       (const sseb& b) { return _mm_movemask_ps(b) == 0xf; }
+  INLINE bool any       (const sseb& b) { return _mm_movemask_ps(b) != 0x0; }
+  INLINE bool none      (const sseb& b) { return _mm_movemask_ps(b) == 0x0; }
 
-  INLINE size_t movemask( const sseb& a ) { return _mm_movemask_ps(a); }
+  INLINE size_t movemask(const sseb& a) { return _mm_movemask_ps(a); }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Movement/Shifting/Shuffling Functions
   ////////////////////////////////////////////////////////////////////////////////
 
   template<size_t index_0, size_t index_1, size_t index_2, size_t index_3>
-    INLINE const sseb shuffle( const sseb& a )
+    INLINE const sseb shuffle(const sseb& a)
   {
     return _mm_shuffle_epi32(a, _MM_SHUFFLE(index_3, index_2, index_1, index_0));
   }
 
-  template<> INLINE const sseb shuffle<0, 0, 2, 2>( const sseb& a ) { return _mm_moveldup_ps(a); }
-  template<> INLINE const sseb shuffle<1, 1, 3, 3>( const sseb& a ) { return _mm_movehdup_ps(a); }
-  template<> INLINE const sseb shuffle<0, 1, 0, 1>( const sseb& a ) { return _mm_movedup_pd(a); }
-  template<size_t index> INLINE const sseb expand( const sseb& a ) { return shuffle<index, index, index, index>(a); }
+  //template<> INLINE const sseb shuffle<0, 0, 2, 2>(const sseb& a) { return _mm_moveldup_ps(a); }
+  //template<> INLINE const sseb shuffle<1, 1, 3, 3>(const sseb& a) { return _mm_movehdup_ps(a); }
+  //template<> INLINE const sseb shuffle<0, 1, 0, 1>(const sseb& a) { return _mm_movedup_pd(a); }
+  template<size_t index> INLINE const sseb expand(const sseb& a) { return shuffle<index, index, index, index>(a); }
 
   template<size_t index_0, size_t index_1, size_t index_2, size_t index_3>
-    INLINE const sseb shuffle( const sseb& a, const sseb& b )
+    INLINE const sseb shuffle(const sseb& a, const sseb& b)
   {
     return _mm_shuffle_ps(a, b, _MM_SHUFFLE(index_3, index_2, index_1, index_0));
   }
 
-  INLINE const sseb unpacklo( const sseb& a, const sseb& b ) { return _mm_unpacklo_ps(a, b); }
-  INLINE const sseb unpackhi( const sseb& a, const sseb& b ) { return _mm_unpackhi_ps(a, b); }
+  INLINE const sseb unpacklo(const sseb& a, const sseb& b) { return _mm_unpacklo_ps(a, b); }
+  INLINE const sseb unpackhi(const sseb& a, const sseb& b) { return _mm_unpackhi_ps(a, b); }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Output Operators

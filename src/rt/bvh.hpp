@@ -24,7 +24,7 @@
 namespace pf
 {
   /*! 32 bytes BVH Node */
-  struct BVHNode
+  struct ALIGNED(16) BVH2Node
   {
     /*! Lower bound */
     INLINE const vec3f& getMin(void)  const { return this->pmin; }
@@ -66,8 +66,6 @@ namespace pf
     INLINE void setAsLeaf(void)     { this->offsetFlag |= BIT_FLAG; }
     /*! Set the node as a non-leaf */
     INLINE void setAsNonLeaf(void)  { this->offsetFlag &= ~BIT_FLAG; }
-
-  private:
     /*! Lower bound */
     vec3f pmin;
     /*! Number of primitives (for leaves) or child offset (for the rest) */
@@ -85,18 +83,23 @@ namespace pf
     static const uint32 BIT_FLAG = 0x80000000;
   };
 
-  /*! The BVH tree */
+  /*! Binary BVH tree */
   template <typename T>
-  struct BVH : public RefCount
+  struct BVH2 : public RefCount
   {
-    BVH(void);      //!< Empty tree
-    ~BVH(void);     //!< Release everything
-    BVHNode *node;  //!< All nodes. node[0] is the root
+    BVH2(void);  //!< Empty tree
+    ~BVH2(void); //!< Release everything
+
+    BVH2Node *node; //!< All nodes. node[0] is the root
     T *prim;        //!< Primitives the BVH sorts
     uint32 *primID; //!< Indices of primitives per leaf
     uint32 nodeNum; //!< Number of nodes in the tree
     uint32 primNum; //!< The number of primitives
   };
+
+  /*! Compile a BVH */
+  template <typename T> bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &bvh);
+
 } /* namespace pf */
 
 #endif /* __PF_BVH_HPP__ */

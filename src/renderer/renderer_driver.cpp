@@ -1,62 +1,28 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "renderer_driver.hpp"
 #include "sys/logging.hpp"
 #include "sys/tasking.hpp"
 
 #include <cstring>
 
-#if defined(__LINUX__)
-#include <GL/freeglut.h>
-#include "GL/glx.h"
-#include "GL/glxext.h"
-#endif
-
 namespace pf
 {
-#if defined(__LINUX__)
-#define OGL_NAME (&driver)
-  class TaskCreateOGLContext : public Task
-  {
-  public:
-    TaskCreateOGLContext(RendererDriver &driver, int threadID) :
-      Task("TaskCreateOGLContext"), driver(driver), threadID(threadID)
-    {
-      this->setAffinity(threadID);
-    }
-    virtual Task *run(void) {
-      glutInitWindowSize(16, 16);
-      glutInitWindowPosition(64, 64);
-      glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-      glutInitContextVersion(3, 3);
-      glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-      glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
-      glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-      PF_MSG_V("GLUT: creating window");
-      glutCreateWindow("DDD");
-      glutHideWindow();
-      R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
-      return NULL;
-    }
-    RendererDriver &driver;
-    int threadID;
-  };
-#undef OGL_NAME
-#endif
-
 #define OGL_NAME this
-
-  /*! Where you may find data files and shaders */
-  const char *defaultPath[] = {
-    "./share/",
-    "../share/",
-    "../../share/",
-    "./",
-    "../",
-    "../../",
-    "./data/",
-    "../data/",
-    "../../data/",
-  };
-  const size_t defaultPathNum = ARRAY_ELEM_NUM(defaultPath);
 
   GLuint RendererDriver::makeGBufferTexture(int internal, int w, int h, int data, int type) {
     GLuint tex = 0;

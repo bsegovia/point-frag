@@ -23,14 +23,16 @@
 
 namespace pf
 {
-  /*! Renderer owns all RendererObj */
+  // Renderer owns all RendererObj
   class Renderer;
+  // We build the renderer obj from a Wavefront OBJ
+  class Obj;
 
   /*! Entity used for rendering of OBJ models */
   class RendererObj : public RefCount {
   public:
     /*! Note that this object actually belongs to a renderer */
-    RendererObj(Renderer &renderer, const FileName &fileName);
+    RendererObj(Renderer &renderer, const Obj &obj);
     /*! Release it (still from a renderer */
     ~RendererObj(void);
     /*! Valid means it is OGL uploaded */

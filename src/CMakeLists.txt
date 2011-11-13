@@ -17,6 +17,7 @@ set (SRC
   sys/platform.cpp
   sys/string.cpp
   sys/logging.cpp
+  sys/default_path.cpp
   image/stb_image.cpp
   image/squish/alpha.cpp
   image/squish/clusterfit.cpp
