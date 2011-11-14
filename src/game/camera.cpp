@@ -2,6 +2,13 @@
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
+#include "rt/bvh.hpp"
+#include "rt/ray.hpp"
+#include "rt/rt_camera.hpp"
+#include "rt/rt_triangle.hpp"
+
+#include "image/stb_image.hpp" // XXX to test the ray tracer
+
 namespace pf {
 
   const float FlyCamera::defaultSpeed = 1.f;
@@ -66,6 +73,36 @@ namespace pf {
   TaskCamera::TaskCamera(FlyCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
+  /* XXX to test the ray tracing */
+  extern Ref<BVH2<RTTriangle>> bvh;
+  template <typename T> void trace(const BVH2<T> &bvh, const Ray &ray, Hit &hit);
+  static const int CAMW = 1024, CAMH = 1024;
+  static void rayTrace(const FlyCamera &flyCam, int w, int h)
+  {
+    const RTCamera cam(flyCam.pos, flyCam.lookAt, flyCam.up, flyCam.fov, flyCam.ratio);
+    RTCameraRayGenerator gen;
+    cam.createGenerator(gen, w, h);
+    uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
+    uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
+    for (uint32 i = 0; i < bvh->primNum; ++i) c[i] = rand();
+    const double t = getSeconds();
+    for (int y = 0; y < h; ++y)
+    for (int x = 0; x < w; ++x) {
+      const Ray ray = gen.generate(x,y);
+      Hit hit;
+      trace(*bvh, ray, hit);
+      if (hit)
+        rgba[x + y * w] = c[hit.id0];
+      else
+        rgba[x + y * w] = 0;
+    }
+    PF_MSG_V("ray tracing time: " << getSeconds() - t);
+
+    stbi_write_bmp("hop.bmp", w, h, 4, rgba);
+    PF_DELETE_ARRAY(rgba);
+    PF_DELETE_ARRAY(c);
+  }
+
   Task *TaskCamera::run(void)
   {
     // Change mouse position
@@ -76,6 +113,8 @@ namespace pf {
     if (event->getKey('d')) d.x -= float(event->dt) * cam->speed;
     if (event->getKey('r')) d.y += float(event->dt) * cam->speed;
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
+
+    if (event->getKey('p')) rayTrace(*cam, CAMW, CAMH); // XXX
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
 

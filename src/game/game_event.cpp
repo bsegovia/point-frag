@@ -96,7 +96,7 @@ namespace pf
     glutKeyboardUpFunc(TaskEvent::keyUp);
   }
 
-  static double prevT0 = 0.;
+  // static double prevT0 = 0.;
   Task *TaskEvent::run(void)
   {
 #if 0
@@ -106,8 +106,9 @@ namespace pf
       task->scheduled();
       return NULL;
     }
-#endif
     prevT0 = getSeconds();
+#endif
+
     if (UNLIKELY(taskEvent == NULL)) TaskEvent::init();
     taskEvent = this;
     this->current->time = getSeconds();

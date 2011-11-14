@@ -19,6 +19,7 @@ set (SRC
   sys/logging.cpp
   sys/default_path.cpp
   image/stb_image.cpp
+  image/stb_image_write.cpp
   image/squish/alpha.cpp
   image/squish/clusterfit.cpp
   image/squish/colourblock.cpp

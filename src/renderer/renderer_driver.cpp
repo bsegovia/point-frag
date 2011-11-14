@@ -132,7 +132,7 @@ namespace pf
     "} Out;\n"
     "void main() {\n"
     "  Out.c = c;\n"
-    "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
+    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
     "}\n"
   };
   static const char plainFrag[] = {
@@ -180,7 +180,7 @@ namespace pf
     "} Out;\n"
     "void main() {	\n"
     "  Out.t = t;\n"
-    "  gl_Position = MVP * vec4(p.x, -p.y, p.z, 1.f);\n"
+    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
     "}\n"
   };
   static const char diffuseFrag[] = {

@@ -48,6 +48,9 @@ namespace pf
   {
     const float rw = 1.f / (float) w;
     const float rh = 1.f / (float) h;
+    gen.org.x = this->org.x;
+    gen.org.y = this->org.y;
+    gen.org.z = this->org.z;
     gen.imagePlaneOrg.x = this->imagePlaneOrg.x;
     gen.imagePlaneOrg.y = this->imagePlaneOrg.y;
     gen.imagePlaneOrg.z = this->imagePlaneOrg.z;

@@ -39,7 +39,7 @@ namespace pf
   struct Hit
   {
     /*! an ID == -1 means no intersection */
-    INLINE Hit(void) : id0(-1), id1(-1) {}
+    INLINE Hit(void) : t(FLT_MAX), id0(-1), id1(-1) {}
     /*! Tests if we hit something. */
     INLINE operator bool(void) { return id0 != -1; }
     float t, u, v; //!< Intersection coordinates (in the triangle)

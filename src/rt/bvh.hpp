@@ -87,9 +87,8 @@ namespace pf
   template <typename T>
   struct BVH2 : public RefCount
   {
-    BVH2(void);  //!< Empty tree
-    ~BVH2(void); //!< Release everything
-
+    BVH2(void);     //!< Empty tree
+    ~BVH2(void);    //!< Release everything
     BVH2Node *node; //!< All nodes. node[0] is the root
     T *prim;        //!< Primitives the BVH sorts
     uint32 *primID; //!< Indices of primitives per leaf

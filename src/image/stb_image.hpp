@@ -14,5 +14,14 @@ extern stbi_uc *stbi_load(char const *filename,int *x, int *y, int *comp, int re
 /*! Load an image from a FILE handle */
 extern stbi_uc *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req_comp);
 
+/*! Write a png image into file "filename" */
+extern int stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);
+
+/*! Write a bmp image into file "filename" */
+extern int stbi_write_bmp(char const *filename, int w, int h, int comp, const void *data);
+
+/*! Write a tga image into file "filename" */
+extern int stbi_write_tga(char const *filename, int w, int h, int comp, const void *data);
+
 #endif /* __STB_IMAGE_HPP__ */
 

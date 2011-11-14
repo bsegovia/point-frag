@@ -149,7 +149,7 @@ namespace pf
       }
     }
 
-    // We force RGBA
+    // We forced RGBA only while using DXT compression
     channel = request.fmt == PF_TEX_FORMAT_PLAIN ? channel : reqComp;
 
     // We found the image

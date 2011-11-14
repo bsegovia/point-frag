@@ -10,8 +10,8 @@ namespace pf
   class FlyCamera : public RefCount
   {
   public:
-    FlyCamera(const vec3f &pos_ = vec3f(0.f,-1.f,-2.f),
-              const vec3f &up_ = vec3f(0.f,-1.f,0.f),
+    FlyCamera(const vec3f &pos_ = vec3f(0.f,1.f,-2.f),
+              const vec3f &up_ = vec3f(0.f,1.f,0.f),
               const vec3f &view_ = vec3f(0.f,0.f,1.f),
               float fov_ = 45.f,
               float ratio_ = 1.f,
