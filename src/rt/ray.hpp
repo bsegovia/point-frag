@@ -17,10 +17,13 @@
 #ifndef __PF_RAY_HPP__
 #define __PF_RAY_HPP__
 
+#include "math/vec.hpp"
+
 namespace pf
 {
-  /*! Ray */
-  struct Ray {
+  /*! Single ray */
+  struct Ray
+  {
     /*! Default construction does nothing. */
     INLINE Ray(void) {}
     /*! Ray from origin, direction, and ray segment. near < far */
@@ -33,13 +36,14 @@ namespace pf
   };
 
   /*! Hit point */
-  struct Hit {
+  struct Hit
+  {
     /*! an ID == -1 means no intersection */
     INLINE Hit(void) : id0(-1), id1(-1) {}
     /*! Tests if we hit something. */
-    INLINE  operator bool() { return id0 != -1; }
+    INLINE operator bool(void) { return id0 != -1; }
     float t, u, v; //!< Intersection coordinates (in the triangle)
-    int id0, id1;  //!< Two IDs the hit can return
+    int id0, id1;  //!< Two IDs hit
   };
 
 } /* namespace pf */

@@ -35,7 +35,7 @@ namespace pf
     /*! Child offset */
     INLINE uint32 getOffset(void) const { return this->offsetFlag & ~BIT_FLAG; }
     /*! Number of primitives if this is a leaf */
-    INLINE uint32 getTriNum(void) const { return this->primNum & ~BIT_FLAG; }
+    INLINE uint32 getPrimNum(void) const { return this->primNum & ~BIT_FLAG; }
     /*! Get the primitive ID index */
     INLINE uint32 getPrimID(void)  const { return this->primID; }
     /*! Get the main axis if this is not a leaf */
@@ -75,7 +75,7 @@ namespace pf
     };
     /*! Upper bound */
     vec3f pmax;
-    /*! Triangle ID or sorting axis */
+    /*! Primitive ID or sorting axis */
     union {
       uint32 primID;
       uint32 axis;

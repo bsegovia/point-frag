@@ -194,12 +194,12 @@ namespace pf
   {
     /*! First and last index, ID and AAB of the currently processed node */
     struct Elem {
+      INLINE Elem(void) {}
+      INLINE Elem(int first, int last, uint32 index, const Box &aabb)
+        : first(first), last(last), id(index), aabb(aabb) {}
       int first, last;
       uint32 id;
       Box aabb;
-      INLINE Elem(void) {}
-      INLINE Elem(int f, int l, uint32 index, const Box &paabb)
-        : first(f), last(l), id(index), aabb(paabb) {}
     };
     /*! Push a new element on the stack */
     INLINE void push(int a, int b, uint32 id, const Box &aabb) {

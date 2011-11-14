@@ -34,7 +34,9 @@ set (SRC
   renderer/renderer.cpp
   renderer/renderer_obj.cpp
   renderer/renderer_driver.cpp
-  rt/bvh.cpp)
+  rt/bvh.cpp
+  rt/bvh_traverser.cpp
+  rt/rt_camera.cpp)
 include_directories (.)
 add_executable (app ${SRC})
 if (UNIX)

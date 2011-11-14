@@ -102,8 +102,8 @@ namespace pf
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
 
-    // flush to zero and no denormals
 #if defined(__SSE__)
+    // flush to zero and no denormals
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
 #endif /* __SSE__ */
 
