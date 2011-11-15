@@ -131,14 +131,10 @@
 #define PF_TASK_USE_DEDICATED_ALLOCATOR 1
 
 /*! Store or not run-time statistics in the tasking system */
-#define PF_TASK_STATICTICS 1
+#define PF_TASK_STATICTICS 0
 
 /*! Give number of tries before yielding (multiplied by number of threads) */
-#define PF_TASK_TRIES_BEFORE_YIELD 256
-
-/*! Maximum time in milliseconds the thread can be swicthed off */
-//#define PF_TASK_MAX_YIELD_TIME 1024
-#define PF_TASK_MAX_YIELD_TIME 16
+#define PF_TASK_TRIES_BEFORE_YIELD 8
 
 /*! Main thread (the one that the system gives us) is always 0 */
 #define PF_TASK_MAIN_THREAD 0
@@ -147,8 +143,8 @@
 #define PF_TASK_NO_AFFINITY 0xffffu
 
 /*! Maximum time the thread is yielded */
-namespace pf {
-
+namespace pf
+{
   /*! A task with a higher priority will be preferred to a task with a lower
    *  priority. Note that the system does not completely comply with
    *  priorities. Basically, because the system is distributed, it is possible
