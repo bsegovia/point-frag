@@ -18,6 +18,7 @@ set (SRC
   sys/string.cpp
   sys/logging.cpp
   sys/default_path.cpp
+  simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image_write.cpp
   image/squish/alpha.cpp
@@ -37,6 +38,7 @@ set (SRC
   renderer/renderer_driver.cpp
   rt/bvh.cpp
   rt/bvh_traverser.cpp
+  rt/ray_packet.cpp
   rt/rt_camera.cpp)
 include_directories (.)
 add_executable (app ${SRC})

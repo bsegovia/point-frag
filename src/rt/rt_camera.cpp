@@ -44,7 +44,7 @@ namespace pf
     this->xAxis *= this->aspect;
   }
 
-  void RTCamera::createGenerator(RTCameraRayGenerator &gen, int w, int h) const
+  void RTCamera::createGenerator(RTCameraRayGen &gen, int w, int h) const
   {
     const float rw = 1.f / (float) w;
     const float rh = 1.f / (float) h;
@@ -60,6 +60,22 @@ namespace pf
     gen.zAxis.x = this->zAxis.x * rh;
     gen.zAxis.y = this->zAxis.y * rh;
     gen.zAxis.z = this->zAxis.z * rh;
+  }
+
+  void RTCamera::createGenerator(RTCameraPacketGen &gen, int w, int h) const
+  {
+    const float rw = 1.f / (float) w;
+    const float rh = 1.f / (float) h;
+    gen.aOrg = ssef(&this->org.x);
+    gen.aImagePlaneOrg = ssef(&this->imagePlaneOrg.x);
+    gen.axAxis = ssef(&this->xAxis.x) * rw;
+    gen.azAxis = ssef(&this->zAxis.x) * rh;
+    gen.org    = sse3f(gen.aOrg.xxxx(),   gen.aOrg.yyyy(),   gen.aOrg.zzzz());
+    gen.xAxis  = sse3f(gen.axAxis.xxxx(), gen.axAxis.yyyy(), gen.axAxis.zzzz());
+    gen.zAxis  = sse3f(gen.azAxis.xxxx(), gen.azAxis.yyyy(), gen.azAxis.zzzz());
+    gen.imagePlaneOrg = sse3f(gen.aImagePlaneOrg.xxxx(),
+                              gen.aImagePlaneOrg.yyyy(),
+                              gen.aImagePlaneOrg.zzzz());
   }
 
 } /* namespace pf */

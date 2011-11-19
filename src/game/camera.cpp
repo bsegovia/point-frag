@@ -9,6 +9,7 @@
 
 #include "image/stb_image.hpp" // XXX to test the ray tracer
 
+#include <cstring>
 namespace pf {
 
   const float FlyCamera::defaultSpeed = 1.f;
@@ -22,7 +23,7 @@ namespace pf {
                        float ratio_,
                        float near_,
                        float far_) :
-    pos(pos_), up(up_), view(view_), lookAt(up_+view_),
+    pos(pos_), up(up_), view(view_), lookAt(pos_+view_),
     fov(fov_), ratio(ratio_), near(near_), far(far_),
     speed(defaultSpeed), angularSpeed(defaultAngularSpeed)
   {}
@@ -31,6 +32,7 @@ namespace pf {
     this->pos = other.pos;
     this->up = other.up;
     this->view = other.view;
+    this->lookAt = other.lookAt;
     this->fov = other.fov;
     this->ratio = other.ratio;
     this->near = other.near;
@@ -77,27 +79,52 @@ namespace pf {
   extern Ref<BVH2<RTTriangle>> bvh;
   template <typename T> void trace(const BVH2<T> &bvh, const Ray &ray, Hit &hit);
   static const int CAMW = 1024, CAMH = 1024;
+
+  class TaskRayTrace : public TaskSet
+  {
+  public:
+    INLINE TaskRayTrace(const BVH2<RTTriangle> &bvh,
+                        const RTCameraRayGen &gen,
+                        const uint32 *c,
+                        uint32 *rgba,
+                        uint32 w, uint32 h) :
+      TaskSet(h, "TaskRayTrace"), bvh(bvh), gen(gen), c(c), rgba(rgba), w(w) {}
+    virtual void run(size_t y) {
+      for (uint32 x = 0; x < w; ++x) {
+        Ray ray;
+        Hit hit;
+        gen.generate(ray, x, y);
+        trace(bvh, ray, hit);
+        rgba[x + y*w] = hit ? c[hit.id0] : 0u;
+      }
+    }
+    const BVH2<RTTriangle> &bvh;
+    const RTCameraRayGen &gen;
+    const uint32 *c;
+    uint32 *rgba;
+    uint32 w;
+  };
+
   static void rayTrace(const FlyCamera &flyCam, int w, int h)
   {
     const RTCamera cam(flyCam.pos, flyCam.lookAt, flyCam.up, flyCam.fov, flyCam.ratio);
-    RTCameraRayGenerator gen;
+    RTCameraRayGen gen;
     cam.createGenerator(gen, w, h);
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
     uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
-    for (uint32 i = 0; i < bvh->primNum; ++i) c[i] = rand();
-    const double t = getSeconds();
-    for (int y = 0; y < h; ++y)
-    for (int x = 0; x < w; ++x) {
-      const Ray ray = gen.generate(x,y);
-      Hit hit;
-      trace(*bvh, ray, hit);
-      if (hit)
-        rgba[x + y * w] = c[hit.id0];
-      else
-        rgba[x + y * w] = 0;
+    std::memset(rgba, 0, sizeof(uint32) * w * h);
+    for (uint32 i = 0; i < bvh->primNum; ++i) {
+      ((uint8*)&c[i])[0] = (rand() >> 16) & 0xff;
+      ((uint8*)&c[i])[1] = 0xff;
+      ((uint8*)&c[i])[2] = (rand() >> 16) & 0xff;
+      ((uint8*)&c[i])[3] = (rand() >> 16) & 0xff;
     }
-    PF_MSG_V("ray tracing time: " << getSeconds() - t);
-
+    const double t = getSeconds();
+    Ref<Task> rayTask = PF_NEW(TaskRayTrace, *bvh, gen, c, rgba, w, h);
+    rayTask->scheduled();
+    rayTask->waitForCompletion();
+    const double dt = getSeconds() - t;
+    PF_MSG_V("ray tracing time: " << dt);
     stbi_write_bmp("hop.bmp", w, h, 4, rgba);
     PF_DELETE_ARRAY(rgba);
     PF_DELETE_ARRAY(c);

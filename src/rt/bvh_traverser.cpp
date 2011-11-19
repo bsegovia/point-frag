@@ -14,8 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ray.hpp"
 #include "bvh.hpp"
+#include "ray.hpp"
+#include "ray_packet.hpp"
 #include "rt_triangle.hpp"
 
 namespace pf
@@ -110,13 +111,9 @@ namespace pf
     const float u = dot(v0, ray.dir);
     const float v = dot(v1, ray.dir);
     const float w = dot(v2, ray.dir);
-#if USE_BACKFACE_CULLING
-    bool sameSign = ((u < 0) & (v < 0) & (w < 0));
-#else
-    bool sameSign = (((u > 0) & (v > 0) & (w > 0)) | ((u < 0) & (v < 0) & (w < 0)));
-#endif
+    const bool sameSign = (((u > 0) & (v > 0) & (w > 0)) |
+                           ((u < 0) & (v < 0) & (w < 0)));
     if (!sameSign) return;
-
     const float n0 = dot(n, ray.dir);
     const float t = num / n0;
     if ((t > hit.t) || (t < 0.f)) return;

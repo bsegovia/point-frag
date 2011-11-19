@@ -24,7 +24,8 @@ namespace pf
   /*! 4-wide SSE bool type. */
   struct sseb
   {
-    union { __m128 m128; int32 v[4]; };
+    //union { __m128 m128; int32 v[4]; };
+    __m128 m128;
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Constructors, Assignment & Cast Operators
@@ -32,17 +33,17 @@ namespace pf
 
     typedef sseb Mask;
 
-    INLINE sseb           () {}
-    INLINE sseb           (const sseb& other) { m128 = other.m128; }
-    INLINE sseb& operator=(const sseb& other) { m128 = other.m128; return *this; }
+    INLINE sseb(void) {}
+    INLINE sseb(const sseb& other) { m128 = other.m128; }
+    INLINE sseb& operator= (const sseb& other) { m128 = other.m128; return *this; }
 
     INLINE sseb(const __m128  input) : m128(input) {}
     INLINE sseb(const __m128i input) : m128(_mm_castsi128_ps(input)) {}
     INLINE sseb(const __m128d input) : m128(_mm_castpd_ps(input)) {}
 
-    INLINE sseb(const bool input)
+    INLINE sseb(bool input)
       : m128(input ? _mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128())) : _mm_setzero_ps()) {}
-    INLINE sseb(const bool input_0, const bool input_1, const bool input_2, const bool input_3)
+    INLINE sseb(bool input_0, bool input_1, bool input_2, bool input_3)
       : m128(_mm_lookupmask_ps[(size_t(input_3) << 3) | (size_t(input_2) << 2) | (size_t(input_1) << 1) | size_t(input_0)]) {}
 
     INLINE operator const __m128&(void) const { return m128; }
@@ -54,27 +55,18 @@ namespace pf
     ////////////////////////////////////////////////////////////////////////////////
 
     INLINE sseb(FalseTy) : m128(_mm_setzero_ps()) {}
-    INLINE sseb(TrueTy ) : m128(_mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()))) {}
+    INLINE sseb(TrueTy)  : m128(_mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()))) {}
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Properties
     ////////////////////////////////////////////////////////////////////////////////
 
     INLINE bool   operator [](const size_t index) const { assert(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
-    INLINE int32& operator [](const size_t index)       { assert(index < 4); return v[index]; }
+    INLINE int32& operator [](const size_t index) {
+      assert(index < 4); return ((int32*)&this->m128)[index]; }
   };
 
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Unary Operators
-  ////////////////////////////////////////////////////////////////////////////////
-
   INLINE const sseb operator !(const sseb& a) { return _mm_xor_ps(a, sseb(True)); }
-
-
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Binary Operators
-  ////////////////////////////////////////////////////////////////////////////////
-
   INLINE const sseb operator &(const sseb& a, const sseb& b) { return _mm_and_ps(a, b); }
   INLINE const sseb operator |(const sseb& a, const sseb& b) { return _mm_or_ps (a, b); }
   INLINE const sseb operator ^(const sseb& a, const sseb& b) { return _mm_xor_ps(a, b); }
@@ -83,18 +75,8 @@ namespace pf
   INLINE sseb operator |=(sseb& a, const sseb& b) { return a = a | b; }
   INLINE sseb operator ^=(sseb& a, const sseb& b) { return a = a ^ b; }
 
-
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Comparison Operators
-  ////////////////////////////////////////////////////////////////////////////////
-
   INLINE const sseb operator !=(const sseb& a, const sseb& b) { return _mm_xor_ps(a, b); }
   INLINE const sseb operator ==(const sseb& a, const sseb& b) { return _mm_cmpeq_epi32(a, b); }
-
-
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Reduction Operations
-  ////////////////////////////////////////////////////////////////////////////////
 
   INLINE bool reduce_and(const sseb& a) { return _mm_movemask_ps(a) == 0xf; }
   INLINE bool reduce_or (const sseb& a) { return _mm_movemask_ps(a) != 0x0; }
@@ -103,10 +85,7 @@ namespace pf
   INLINE bool none      (const sseb& b) { return _mm_movemask_ps(b) == 0x0; }
 
   INLINE size_t movemask(const sseb& a) { return _mm_movemask_ps(a); }
-
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Movement/Shifting/Shuffling Functions
-  ////////////////////////////////////////////////////////////////////////////////
+  INLINE sseb unmovemask(size_t m)      { return _mm_lookupmask_ps[m]; }
 
   template<size_t index_0, size_t index_1, size_t index_2, size_t index_3>
     INLINE const sseb shuffle(const sseb& a)
@@ -127,10 +106,6 @@ namespace pf
 
   INLINE const sseb unpacklo(const sseb& a, const sseb& b) { return _mm_unpacklo_ps(a, b); }
   INLINE const sseb unpackhi(const sseb& a, const sseb& b) { return _mm_unpackhi_ps(a, b); }
-
-  ////////////////////////////////////////////////////////////////////////////////
-  /// Output Operators
-  ////////////////////////////////////////////////////////////////////////////////
 
   inline std::ostream& operator<<(std::ostream& cout, const sseb& a) {
     return cout << "<" << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ">";
