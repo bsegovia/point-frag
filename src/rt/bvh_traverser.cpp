@@ -21,6 +21,10 @@
 
 namespace pf
 {
+  ///////////////////////////////////////////////////////////////////////////
+  /// Single Ray Routines
+  ///////////////////////////////////////////////////////////////////////////
+
   /*! Generic ray / primitive intersection */
   template <typename T>
   static INLINE void PrimIntersect(const T &prim, uint32_t id, const Ray &ray, Hit &hit);
@@ -42,15 +46,15 @@ namespace pf
   struct RayStack
   {
     /*! Stack is empty */
-    INLINE RayStack(void) : idx(0) {}
+    INLINE RayStack(void) : top(0) {}
     /*! Remove one element from the stack */
-    INLINE bool pop(void) { return --idx >= 0; }
+    INLINE bool pop(void) { return --top >= 0; }
     /*! Maximum stack depth */
     enum { MAX_DEPTH = 128 };
     /*! All the pushed nodes */
     const BVH2Node * RESTRICT elem[MAX_DEPTH];
     /*! Current size of the stack */
-    int32 idx;
+    int32 top;
   };
 
   /*! Generic ray / BVH intersection algorithm */
@@ -65,20 +69,20 @@ namespace pf
     };
 
     stack.elem[0] = bvh.node;
-    ++stack.idx;
+    ++stack.top;
 
   popLabel:
     // Recurse until we find a leaf
     while (LIKELY(stack.pop())) {
-      const BVH2Node * RESTRICT node = stack.elem[stack.idx];
+      const BVH2Node * RESTRICT node = stack.elem[stack.top];
       while (LIKELY(!node->isLeaf())) {
         if (!NodeIntersect(*node, ray, hit.t)) goto popLabel;
         const uint32 offset = node->getOffset();
         const uint32 first = signs[node->getAxis()];
         const uint32 next = first ^ 1;
         const BVH2Node * RESTRICT left = &bvh.node[offset + next];
-        const uint32 idx = stack.idx++;
-        stack.elem[idx] = left;
+        const uint32 top = stack.top++;
+        stack.elem[top] = left;
         node = &bvh.node[node->getOffset() + first];
       }
 
@@ -125,6 +129,11 @@ namespace pf
 
   /*! Explicit instantiation for BVH2s of RTTriangle */
   template void trace(const BVH2<RTTriangle>&, const Ray&, Hit&);
+
+  ///////////////////////////////////////////////////////////////////////////
+  /// Ray Packet Routines
+  ///////////////////////////////////////////////////////////////////////////
+
 
 } /* namespace BKY */
 

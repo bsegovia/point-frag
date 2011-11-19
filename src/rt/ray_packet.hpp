@@ -48,9 +48,7 @@ namespace pf
     ssef iaMaxrDir;       //!< Maximum rcp(direction) for IA
     sseb iasign;          //!< Sign of the IA directions
     uint32 signs;         //!< Says which directions have different signs
-    uint32 cr;            //!< Does the packet have corner rays?
-    uint32 co;            //!< Does the packet have a common origin?
-    uint32 ia;            //!< Does the packet use interval arithmetic?
+    uint32 properties;    //!< CR / IA / CO (see above)
   };
 
   /*! Set of hit points for a ray packet */

@@ -160,6 +160,7 @@ namespace pf
     this->generateRay(pckt,x,y);
     this->generateIA(pckt,x,y);
     this->generateCR(pckt,x,y);
+    pckt.properties = RAY_PACKET_CO | RAY_PACKET_CR | RAY_PACKET_IA;
   }
 
 } /* namespace pf */
