@@ -91,10 +91,7 @@ namespace pf
   }
 
   INLINE const ssef sign (const ssef& a) { return _mm_blendv_ps(ssef(one), -ssef(one), _mm_cmplt_ps (a,ssef(zero))); }
-  INLINE const ssef rcp  (const ssef& a) {
-    const ssef r = _mm_rcp_ps(a.m128);
-    return _mm_sub_ps(_mm_add_ps(r, r), _mm_mul_ps(_mm_mul_ps(r, r), a));
-  }
+  INLINE const ssef rcp  (const ssef& a) { return _mm_div_ps(ssef::one(), a.m128); }
 
   INLINE const ssef sqrt (const ssef& a) { return _mm_sqrt_ps(a.m128); }
   INLINE const ssef sqr  (const ssef& a) { return _mm_mul_ps(a,a); }
@@ -109,15 +106,15 @@ namespace pf
   INLINE ssef operator+ (const ssef& a, const ssef& b) { return _mm_add_ps(a.m128, b.m128); }
   INLINE ssef operator- (const ssef& a, const ssef& b) { return _mm_sub_ps(a.m128, b.m128); }
   INLINE ssef operator* (const ssef& a, const ssef& b) { return _mm_mul_ps(a.m128, b.m128); }
-  INLINE ssef operator/ (const ssef& a, const ssef& b) { return a * rcp(b); }
+  INLINE ssef operator/ (const ssef& a, const ssef& b) { return _mm_div_ps(a.m128, b.m128); }
   INLINE ssef operator+ (const ssef& a, float b) { return a + ssef(b); }
   INLINE ssef operator- (const ssef& a, float b) { return a - ssef(b); }
   INLINE ssef operator* (const ssef& a, float b) { return a * ssef(b); }
-  INLINE ssef operator/ (const ssef& a, float b) { return a * rcp(b); }
+  INLINE ssef operator/ (const ssef& a, float b) { return a / ssef(b); }
   INLINE ssef operator+ (float a, const ssef& b) { return ssef(a) + b; }
   INLINE ssef operator- (float a, const ssef& b) { return ssef(a) - b; }
   INLINE ssef operator* (float a, const ssef& b) { return ssef(a) * b; }
-  INLINE ssef operator/ (float a, const ssef& b) { return a * rcp(b); }
+  INLINE ssef operator/ (float a, const ssef& b) { return ssef(a) / b; }
   INLINE ssef& operator+= (ssef& a, const ssef& b) { return a = a + b; }
   INLINE ssef& operator-= (ssef& a, const ssef& b) { return a = a - b; }
   INLINE ssef& operator*= (ssef& a, const ssef& b) { return a = a * b; }

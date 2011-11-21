@@ -105,6 +105,7 @@ namespace pf {
       }
     }
 #else
+#define USE_MORTON 0
     virtual void run(size_t jobID)
     {
       RTCameraPacketGen gen;
@@ -113,13 +114,24 @@ namespace pf {
       for (uint32 x = 0; x < w; x += RayPacket::width) {
         RayPacket pckt;
         PacketHit hit;
+#if USE_MORTON
+        gen.generateMorton(pckt, x, y);
+#else
         gen.generate(pckt, x, y);
+#endif
         bvh.traverse(pckt, hit);
         const int32 *IDs = (const int32 *) hit.id0;
         uint32 curr = 0;
         for (uint32 j = 0; j < pckt.height; ++j)
         for (uint32 i = 0; i < pckt.width; ++i, ++curr) {
-          const uint32 offset = x + i + (y + j) * w;
+#if USE_MORTON
+          const uint32 i0 = RTCameraPacketGen::mortonX[curr];
+          const uint32 j0 = RTCameraPacketGen::mortonY[curr];
+#else
+          const uint32 i0 = i;
+          const uint32 j0 = j;
+#endif
+          const uint32 offset = x + i0 + (y + j0) * w;
           rgba[offset] = IDs[curr] != -1 ? c[IDs[curr]] : 0u;
         }
       }

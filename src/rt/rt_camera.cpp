@@ -78,5 +78,8 @@ namespace pf
                               gen.aImagePlaneOrg.zzzz());
   }
 
+// Look-up tables for z ordered rays
+#include "morton.hxx"
+
 } /* namespace pf */
 

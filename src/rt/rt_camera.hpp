@@ -65,14 +65,24 @@ namespace pf
   /*! Generate packet of rays from a pinhole camera */
   struct RTCameraPacketGen
   {
-    /*! Generate the ray data */
+    /*! Generate a ray at pixel (x,y) */
+    INLINE void generate(RayPacket &pckt, int x, int y) const;
+    /*! Idem but with a z-curve order for the rays */
+    INLINE void generateMorton(RayPacket &pckt, int x, int y) const;
+    /*! Look up table for Morton curve (X coordinate) */
+    static const int32 mortonX[];
+    /*! Look up table for Morton curve (Y coordinate) */
+    static const int32 mortonY[];
+  private:
+    friend class RTCamera; //!< Create this structure
+    /*! Generate the rays */
     INLINE void generateRay(RayPacket &pckt, int x, int y) const;
+    /*! Generate the ray data (in Morton order) */
+    INLINE void generateRayMorton(RayPacket &pckt, int x, int y) const;
     /*! Generate the corner rays */
     INLINE void generateCR(RayPacket &pckt, int x, int y) const;
     /*! Generate the interval arithmetic vector. Says if IA can be used */
     INLINE bool generateIA(RayPacket &pckt, int x, int y) const;
-    /*! Generate a ray at pixel (x,y) */
-    INLINE void generate(RayPacket &pckt, int x, int y) const;
     sse3f org;            //!< Origin
     sse3f imagePlaneOrg;  //!< Image plane origin
     sse3f xAxis;          //!< X axis of the image plane
@@ -99,32 +109,61 @@ namespace pf
 
   INLINE void RTCameraPacketGen::generateRay(RayPacket &pckt, int x, int y) const
   {
-    ssef left = ssef(ssei(x))+ ssef::identity();
-    ssef line = ssef(ssei(y));
+    const sse3f org(aOrg.xxxx(), aOrg.yyyy(), aOrg.zzzz());
+    const ssef left = ssef(ssei(x))+ ssef::identity();
+    ssef row = ssef(ssei(y));
     uint32 id = 0;
 
     // avoid issues with unused w
     pckt.iaMinOrg = pckt.iaMaxOrg = aOrg.xyzz();
     for(uint32 j = 0; j < pckt.height; ++j) {
-      ssef row = left;
-      const sse3f org(aOrg.xxxx(), aOrg.yyyy(), aOrg.zzzz());
+      ssef column = left;
       for(uint32 i = 0; i < pckt.width; i += ssef::laneNum(), ++id) {
         pckt.org[id]   = org;
-        pckt.dir[id].x = fixup(imagePlaneOrg.x + row*xAxis.x + line*zAxis.x);
-        pckt.dir[id].y = fixup(imagePlaneOrg.y + row*xAxis.y + line*zAxis.y);
-        pckt.dir[id].z = fixup(imagePlaneOrg.z + row*xAxis.z + line*zAxis.z);
+        pckt.dir[id].x = fixup(imagePlaneOrg.x + column*xAxis.x + row*zAxis.x);
+        pckt.dir[id].y = fixup(imagePlaneOrg.y + column*xAxis.y + row*zAxis.y);
+        pckt.dir[id].z = fixup(imagePlaneOrg.z + column*xAxis.z + row*zAxis.z);
+        pckt.dir[id].x = (imagePlaneOrg.x + column*xAxis.x + row*zAxis.x);
+        pckt.dir[id].y = (imagePlaneOrg.y + column*xAxis.y + row*zAxis.y);
+        pckt.dir[id].z = (imagePlaneOrg.z + column*xAxis.z + row*zAxis.z);
+        //pckt.dir[id] = normalize(pckt.dir[id]);
+        pckt.rdir[id].x = rcp(pckt.dir[id].x);
+        pckt.rdir[id].y = rcp(pckt.dir[id].y);
+        pckt.rdir[id].z = rcp(pckt.dir[id].z);
+        column += ssef::laneNumv();
+      }
+      row += ssef::one();
+    }
+  }
+
+  INLINE void RTCameraPacketGen::generateRayMorton(RayPacket &pckt, int x, int y) const
+  {
+    const sse3f org(aOrg.xxxx(), aOrg.yyyy(), aOrg.zzzz());
+    const ssef left = ssef(ssei(x));
+    const ssef top  = ssef(ssei(y));
+    uint32 id = 0;
+
+    // avoid issues with unused w
+    pckt.iaMinOrg = pckt.iaMaxOrg = aOrg.xyzz();
+    for(uint32 j = 0; j < pckt.height; ++j) {
+      for(uint32 i = 0; i < pckt.width; i += ssef::laneNum(), ++id) {
+        const ssei xcoord = ssei(mortonX + 4 * id);
+        const ssei ycoord = ssei(mortonY + 4 * id);
+        const ssef column  = left + ssef(xcoord);
+        const ssef row = top  + ssef(ycoord);
+        pckt.org[id]   = org;
+        pckt.dir[id].x = fixup(imagePlaneOrg.x + column*xAxis.x + row*zAxis.x);
+        pckt.dir[id].y = fixup(imagePlaneOrg.y + column*xAxis.y + row*zAxis.y);
+        pckt.dir[id].z = fixup(imagePlaneOrg.z + column*xAxis.z + row*zAxis.z);
         pckt.dir[id] = normalize(pckt.dir[id]);
         pckt.rdir[id].x = rcp(pckt.dir[id].x);
         pckt.rdir[id].y = rcp(pckt.dir[id].y);
         pckt.rdir[id].z = rcp(pckt.dir[id].z);
-        row += ssef::laneNumv();
       }
-      line += ssef::one();
     }
   }
 
   // Unused since we do not use back face culling right now
-#if 0
   INLINE void RTCameraPacketGen::generateCR(RayPacket &pckt, int x, int y) const
   {
     const ssef left = ssef(ssei(x)) + pckt.crx;
@@ -133,7 +172,6 @@ namespace pf
     pckt.crdir.y = imagePlaneOrg.y + left*xAxis.y + top*zAxis.y;
     pckt.crdir.z = imagePlaneOrg.z + left*xAxis.z + top*zAxis.z;
   }
-#endif
 
   INLINE bool RTCameraPacketGen::generateIA(RayPacket &pckt, int x, int y) const
   {
@@ -161,9 +199,22 @@ namespace pf
 
   INLINE void RTCameraPacketGen::generate(RayPacket &pckt, int x, int y) const
   {
+    pckt.properties = 0;
     this->generateRay(pckt,x,y);
+    // Unused since we do not use back face culling right now
     // this->generateCR(pckt,x,y);
-    pckt.properties = RAY_PACKET_CO | RAY_PACKET_CR;
+    pckt.properties = RAY_PACKET_CO;
+    if (this->generateIA(pckt,x,y))
+      pckt.properties |= RAY_PACKET_IA;
+  }
+
+  INLINE void RTCameraPacketGen::generateMorton(RayPacket &pckt, int x, int y) const
+  {
+    pckt.properties = 0;
+    this->generateRayMorton(pckt,x,y);
+    // Unused since we do not use back face culling right now
+    // this->generateCR(pckt,x,y);
+    pckt.properties = RAY_PACKET_CO;
     if (this->generateIA(pckt,x,y))
       pckt.properties |= RAY_PACKET_IA;
   }

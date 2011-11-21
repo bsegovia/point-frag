@@ -191,6 +191,7 @@ namespace pf
   static INLINE bool AABBIntersect
     (const BVH2Node &node, const RayPacket &pckt, const PacketHit &hit, uint32 &first)
   {
+//    return true;
     // Avoid issues with w unused channel
     const ssef lower = ssef(&node.pmin.x).xyzz();
     const ssef upper = ssef(&node.pmax.x).xyzz();
@@ -209,8 +210,8 @@ namespace pf
       for (uint32 i = first; i < pckt.packetNum; ++i) {
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
-        const sseb test = (far < near) | sseb(far) | (near >= hit.t[i]);
-        if (movemask(test) == 0) {
+        const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
+        if (movemask(test)) {
           first = i;
           return true;
         }
@@ -223,8 +224,8 @@ namespace pf
         const sse3f dmax = pmax - pckt.org[i];
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
-        const sseb test = (far < near) | sseb(far) | (near >= hit.t[i]);
-        if (movemask(test) == 0) {
+        const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
+        if (movemask(test)) {
           first = i;
           return true;
         }
@@ -258,8 +259,8 @@ namespace pf
       for(uint32 i = first; i < pckt.packetNum; ++i) {
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
-        const sseb test = (far < near) | sseb(far) | (near >= hit.t[i]);
-        if (movemask(test) == 0) {
+        const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
+        if (movemask(test)) {
           active[activeNum++] = i;
           isIntersected = true;
         }
@@ -272,8 +273,8 @@ namespace pf
         const sse3f dmax = pmax - pckt.org[i];
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
-        const sseb test = (far < near) | sseb(far) | (near >= hit.t[i]);
-        if (movemask(test) == 0) {
+        const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
+        if (movemask(test)) {
           active[activeNum++] = i;
           isIntersected = true;
         }
