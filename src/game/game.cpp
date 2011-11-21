@@ -20,7 +20,7 @@
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
-#include "rt/bvh.hpp"
+#include "rt/bvh2.hpp"
 #include "rt/rt_triangle.hpp"
 #include "models/obj.hpp"
 

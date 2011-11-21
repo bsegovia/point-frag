@@ -36,8 +36,8 @@ set (SRC
   renderer/renderer.cpp
   renderer/renderer_obj.cpp
   renderer/renderer_driver.cpp
-  rt/bvh.cpp
-  rt/bvh_traverser.cpp
+  rt/bvh2.cpp
+  rt/bvh2_traverser.cpp
   rt/ray_packet.cpp
   rt/rt_camera.cpp)
 include_directories (.)

@@ -2,8 +2,8 @@
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
-#include "rt/bvh.hpp"           // XXX to test the ray tracer
 #include "rt/ray.hpp"           // XXX to test the ray tracer
+#include "rt/bvh2.hpp"          // XXX to test the ray tracer
 #include "rt/rt_camera.hpp"     // XXX to test the ray tracer
 #include "rt/rt_triangle.hpp"   // XXX to test the ray tracer
 #include "image/stb_image.hpp"  // XXX to test the ray tracer

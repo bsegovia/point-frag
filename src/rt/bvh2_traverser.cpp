@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "bvh.hpp"
+#include "bvh2.hpp"
 #include "bvh2_node.hpp"
 #include "ray.hpp"
 #include "ray_packet.hpp"
