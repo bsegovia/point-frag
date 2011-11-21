@@ -15,12 +15,10 @@
 // ======================================================================== //
 
 #include "bvh.hpp"
+#include "bvh2_node.hpp"
 #include "rt_triangle.hpp"
 
-#if defined(__SSE__)
 #include "simd/ssef.hpp"
-#endif /* __SSE__ */
-
 #include "math/bbox.hpp"
 #include "sys/logging.hpp"
 #include "sys/logging.hpp"
@@ -68,10 +66,6 @@ namespace pf
 
   /*! To sort primitives */
   enum { ON_LEFT = 0, ON_RIGHT = 1 };
-
-  /*! Maximum and minimum number of primitives in a leaf */
-  enum { minPrimNumPerLeaf = 2 };
-  enum { maxPrimNumPerLeaf = 14 };
 
   /*! SAH cost for traversal and intersection */
   static const float SAHIntersectionCost = 1.f;
@@ -402,8 +396,8 @@ namespace pf
     PF_MSG_V("BVH2: " << primNum << " primitives");
     Ref<BVH2Builder> c = PF_NEW(BVH2Builder);
     const double start = getSeconds();
-    c->options.minPrimNum = minPrimNumPerLeaf;
-    c->options.maxPrimNum = maxPrimNumPerLeaf;
+    c->options.minPrimNum = BVH2_MIN_PRIM_NUM_PER_LEAF;
+    c->options.maxPrimNum = BVH2_MAX_PRIM_NUM_PER_LEAF;
     c->options.SAHIntersectionCost = SAHIntersectionCost;
     c->options.SAHTraversalCost = SAHTraversalCost;
 

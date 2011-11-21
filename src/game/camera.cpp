@@ -2,12 +2,11 @@
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
-#include "rt/bvh.hpp"
-#include "rt/ray.hpp"
-#include "rt/rt_camera.hpp"
-#include "rt/rt_triangle.hpp"
-
-#include "image/stb_image.hpp" // XXX to test the ray tracer
+#include "rt/bvh.hpp"           // XXX to test the ray tracer
+#include "rt/ray.hpp"           // XXX to test the ray tracer
+#include "rt/rt_camera.hpp"     // XXX to test the ray tracer
+#include "rt/rt_triangle.hpp"   // XXX to test the ray tracer
+#include "image/stb_image.hpp"  // XXX to test the ray tracer
 
 #include <cstring>
 namespace pf {
@@ -77,55 +76,80 @@ namespace pf {
 
   /* XXX to test the ray tracing */
   extern Ref<BVH2<RTTriangle>> bvh;
-  template <typename T> void trace(const BVH2<T> &bvh, const Ray &ray, Hit &hit);
   static const int CAMW = 1024, CAMH = 1024;
 
   class TaskRayTrace : public TaskSet
   {
   public:
     INLINE TaskRayTrace(const BVH2<RTTriangle> &bvh,
-                        const RTCameraRayGen &gen,
+                        const RTCamera &cam,
                         const uint32 *c,
                         uint32 *rgba,
-                        uint32 w, uint32 h) :
-      TaskSet(h, "TaskRayTrace"), bvh(bvh), gen(gen), c(c), rgba(rgba), w(w) {}
-    virtual void run(size_t y) {
-      for (uint32 x = 0; x < w; ++x) {
-        Ray ray;
-        Hit hit;
-        gen.generate(ray, x, y);
-        trace(bvh, ray, hit);
-        rgba[x + y*w] = hit ? c[hit.id0] : 0u;
+                        uint32 w, uint32 jobNum) :
+      TaskSet(jobNum, "TaskRayTrace"),
+      bvh(bvh), cam(cam), c(c), rgba(rgba), w(w), h(jobNum * RayPacket::height) {}
+#if 0
+    virtual void run(size_t jobID)
+    {
+      RTCameraRayGen gen;
+      cam.createGenerator(gen, w, h);
+      for (uint32 row = 0; row < RayPacket::height; ++row) {
+        const uint32 y = row + jobID * RayPacket::height;
+        for (uint32 x = 0; x < w; ++x) {
+          Ray ray;
+          Hit hit;
+          gen.generate(ray, x, y);
+          bvh.traverse(ray, hit);
+          rgba[x + y*w] = hit ? c[hit.id0] : 0u;
+        }
       }
     }
+#else
+    virtual void run(size_t jobID)
+    {
+      RTCameraPacketGen gen;
+      cam.createGenerator(gen, w, h);
+      const uint32 y = jobID * RayPacket::height;
+      for (uint32 x = 0; x < w; x += RayPacket::width) {
+        RayPacket pckt;
+        PacketHit hit;
+        gen.generate(pckt, x, y);
+        bvh.traverse(pckt, hit);
+        const int32 *IDs = (const int32 *) hit.id0;
+        uint32 curr = 0;
+        for (uint32 j = 0; j < pckt.height; ++j)
+        for (uint32 i = 0; i < pckt.width; ++i, ++curr) {
+          const uint32 offset = x + i + (y + j) * w;
+          rgba[offset] = IDs[curr] != -1 ? c[IDs[curr]] : 0u;
+        }
+      }
+    }
+
+#endif
     const BVH2<RTTriangle> &bvh;
-    const RTCameraRayGen &gen;
+    const RTCamera &cam;
     const uint32 *c;
     uint32 *rgba;
-    uint32 w;
+    uint32 w, h;
   };
 
   static void rayTrace(const FlyCamera &flyCam, int w, int h)
   {
     const RTCamera cam(flyCam.pos, flyCam.lookAt, flyCam.up, flyCam.fov, flyCam.ratio);
-    RTCameraRayGen gen;
-    cam.createGenerator(gen, w, h);
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
     uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
     std::memset(rgba, 0, sizeof(uint32) * w * h);
     for (uint32 i = 0; i < bvh->primNum; ++i) {
-      ((uint8*)&c[i])[0] = (rand() >> 16) & 0xff;
-      ((uint8*)&c[i])[1] = 0xff;
-      ((uint8*)&c[i])[2] = (rand() >> 16) & 0xff;
-      ((uint8*)&c[i])[3] = (rand() >> 16) & 0xff;
+      c[i] = rand();
+      c[i] |= 0xff000000;
     }
     const double t = getSeconds();
-    Ref<Task> rayTask = PF_NEW(TaskRayTrace, *bvh, gen, c, rgba, w, h);
+    Ref<Task> rayTask = PF_NEW(TaskRayTrace, *bvh, cam, c, rgba, w, h/RayPacket::height);
     rayTask->scheduled();
     rayTask->waitForCompletion();
     const double dt = getSeconds() - t;
     PF_MSG_V("ray tracing time: " << dt);
-    stbi_write_bmp("hop.bmp", w, h, 4, rgba);
+    stbi_write_tga("hop.tga", w, h, 4, rgba);
     PF_DELETE_ARRAY(rgba);
     PF_DELETE_ARRAY(c);
   }

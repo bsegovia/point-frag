@@ -79,6 +79,9 @@ namespace pf
 
   //static const FileName objName("f000.obj");
   static const FileName objName("arabic_city_II.obj");
+  //static const FileName objName("conference.obj");
+  //static const FileName objName("sibenik.obj");
+  //static const FileName objName("sponza.obj");
 
   static RTTriangle *ObjComputeTriangle(const Obj &obj) {
     RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
@@ -102,20 +105,15 @@ namespace pf
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
 
-#if defined(__SSE__)
-    // flush to zero and no denormals
-    _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
-#endif /* __SSE__ */
-
     renderer = PF_NEW(Renderer);
     Obj obj;
     for (path = 0; path < defaultPathNum; ++path)
       if (obj.load(FileName(defaultPath[path]) + objName)) {
-        PF_MSG_V("Obj: " << objName << "loaded from " << defaultPath[path]);
+        PF_MSG_V("Obj: " << objName << " loaded from " << defaultPath[path]);
         break;
       }
     if (path == defaultPathNum)
-      PF_WARNING_V("Obj: " << objName << "not found");
+      PF_WARNING_V("Obj: " << objName << " not found");
 
     // Build the BVH
     RTTriangle *tris = ObjComputeTriangle(obj);

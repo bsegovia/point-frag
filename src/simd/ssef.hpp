@@ -70,11 +70,13 @@ namespace pf
     static INLINE ssef laneNumv(void)  { return LANE_NUM; }
     static INLINE ssef one(void)       { return ONE; }
     static INLINE ssef identity(void)  { return IDENTITY; }
+    static INLINE ssef epsilon(void)   { return EPSILON; }
 
   private:
     static const ssef ONE;      //!< Stores {1,1,1,1}
     static const ssef IDENTITY; //!< Stores {0,1,2,3}
     static const ssef LANE_NUM; //!< Stores {4,4,4,4}
+    static const ssef EPSILON;  //!< Stores {eps,eps,eps,eps}
   };
 
   INLINE const ssef operator +(const ssef& a) { return a; }
@@ -134,6 +136,8 @@ namespace pf
 
   INLINE ssef operator^ (const ssef& a, const ssei& b) { return _mm_castsi128_ps(_mm_xor_si128(_mm_castps_si128(a.m128),b.m128)); }
   INLINE ssef operator^ (const ssef& a, const ssef& b) { return _mm_xor_ps(a.m128,b.m128); }
+  INLINE ssef operator& (const ssef& a, const ssef& b) { return _mm_and_ps(a.m128,b.m128); }
+  INLINE ssef operator& (const ssef& a, const ssei& b) { return _mm_and_ps(a.m128,_mm_castsi128_ps(b.m128)); }
 
   INLINE sseb operator== (const ssef& a, const ssef& b) { return _mm_cmpeq_ps (a.m128, b.m128); }
   INLINE sseb operator!= (const ssef& a, const ssef& b) { return _mm_cmpneq_ps(a.m128, b.m128); }
@@ -168,6 +172,7 @@ namespace pf
   INLINE ssef floor(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_NEG_INF); }
   INLINE ssef ceil (const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_POS_INF); }
   INLINE size_t movemask(const ssef& a) { return _mm_movemask_ps(a); }
+  INLINE ssef fixup (const ssef& a) { return max(abs(a), ssef::epsilon()) ^ (a & ssei(0x80000000)); }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Movement/Shifting/Shuffling Functions

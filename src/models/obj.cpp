@@ -473,13 +473,26 @@ namespace pf
       const VertexKey src = it->first;
       const int dst = it->second;
       ObjVertex &v = verts[dst];
-      const ObjLoaderVec *p = loader.vertexList[src.p];
-      const ObjLoaderVec *n = loader.normalList[src.n];
-      const ObjLoaderVec *t = loader.textureList[src.t];
-      assert(p != NULL && n != NULL && t != NULL);
-      v.p[0] = float(p->e[0]); v.p[1] = float(p->e[1]); v.p[2] = float(p->e[2]);
-      v.n[0] = float(n->e[0]); v.n[1] = float(n->e[1]); v.n[2] = float(n->e[2]);
-      v.t[0] = float(t->e[0]); v.t[1] = float(t->e[1]);
+      if (src.p != -1) {
+        const ObjLoaderVec *p = loader.vertexList[src.p];
+        v.p[0] = float(p->e[0]);
+        v.p[1] = float(p->e[1]);
+        v.p[2] = float(p->e[2]);
+      } else
+        v.p[0] = v.p[1] = v.p[2] = 0.f;
+      if (src.n != -1) {
+        const ObjLoaderVec *n = loader.normalList[src.n];
+        v.n[0] = float(n->e[0]);
+        v.n[1] = float(n->e[1]);
+        v.n[2] = float(n->e[2]);
+      } else
+        v.n[0] = v.n[1] = v.n[2] = 1.f;
+      if (src.t != -1) {
+        const ObjLoaderVec *t = loader.textureList[src.t];
+        v.t[0] = float(t->e[0]);
+        v.t[1] = float(t->e[1]);
+      } else
+        v.t[0] = v.t[1] = 0.f;
     }
 
     // Allocate the ObjMaterial

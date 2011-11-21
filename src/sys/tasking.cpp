@@ -595,7 +595,7 @@ namespace pf
     int inactivityNum = 0;
 
     // flush to zero and no denormals
-    _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
+    _mm_setcsr(_mm_getcsr() | (1<<15) | (1<<6));
 
     // We try to pick up a task from our queue and then we try to steal a task
     // from other queues
@@ -824,6 +824,8 @@ namespace pf
 
   void TaskingSystemStart(int32 workerNum) {
     FATAL_IF (scheduler != NULL, "scheduler is already running");
+    // flush to zero and no denormals
+    _mm_setcsr(_mm_getcsr() | (1<<15) | (1<<6));
     scheduler = PF_NEW(TaskScheduler, workerNum);
     allocator = PF_NEW(TaskAllocator, scheduler->getWorkerNum()+1);
   }

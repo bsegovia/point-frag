@@ -20,4 +20,5 @@ namespace pf
   const ssef ssef::ONE(1.f,1.f,1.f,1.f);
   const ssef ssef::IDENTITY(0.f,1.f,2.f,3.f);
   const ssef ssef::LANE_NUM(4.f,4.f,4.f,4.f);
+  const ssef ssef::EPSILON(1e-10f,1e-10f,1e-10f,1e-10f);
 } /* namespace pf */

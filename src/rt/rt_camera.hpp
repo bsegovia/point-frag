@@ -69,8 +69,8 @@ namespace pf
     INLINE void generateRay(RayPacket &pckt, int x, int y) const;
     /*! Generate the corner rays */
     INLINE void generateCR(RayPacket &pckt, int x, int y) const;
-    /*! Generate the interval arithmetic vector */
-    INLINE void generateIA(RayPacket &pckt, int x, int y) const;
+    /*! Generate the interval arithmetic vector. Says if IA can be used */
+    INLINE bool generateIA(RayPacket &pckt, int x, int y) const;
     /*! Generate a ray at pixel (x,y) */
     INLINE void generate(RayPacket &pckt, int x, int y) const;
     sse3f org;            //!< Origin
@@ -102,16 +102,17 @@ namespace pf
     ssef left = ssef(ssei(x))+ ssef::identity();
     ssef line = ssef(ssei(y));
     uint32 id = 0;
-    pckt.iaMinOrg = pckt.iaMaxrDir = aOrg;
+
+    // avoid issues with unused w
+    pckt.iaMinOrg = pckt.iaMaxOrg = aOrg.xyzz();
     for(uint32 j = 0; j < pckt.height; ++j) {
       ssef row = left;
+      const sse3f org(aOrg.xxxx(), aOrg.yyyy(), aOrg.zzzz());
       for(uint32 i = 0; i < pckt.width; i += ssef::laneNum(), ++id) {
-        pckt.org[id].x = aOrg.xxxx();
-        pckt.org[id].y = aOrg.yyyy();
-        pckt.org[id].z = aOrg.zzzz();
-        pckt.dir[id].x = imagePlaneOrg.x + row*xAxis.x + line*zAxis.x;
-        pckt.dir[id].y = imagePlaneOrg.y + row*xAxis.y + line*zAxis.y;
-        pckt.dir[id].z = imagePlaneOrg.z + row*xAxis.z + line*zAxis.z;
+        pckt.org[id]   = org;
+        pckt.dir[id].x = fixup(imagePlaneOrg.x + row*xAxis.x + line*zAxis.x);
+        pckt.dir[id].y = fixup(imagePlaneOrg.y + row*xAxis.y + line*zAxis.y);
+        pckt.dir[id].z = fixup(imagePlaneOrg.z + row*xAxis.z + line*zAxis.z);
         pckt.dir[id] = normalize(pckt.dir[id]);
         pckt.rdir[id].x = rcp(pckt.dir[id].x);
         pckt.rdir[id].y = rcp(pckt.dir[id].y);
@@ -122,16 +123,19 @@ namespace pf
     }
   }
 
+  // Unused since we do not use back face culling right now
+#if 0
   INLINE void RTCameraPacketGen::generateCR(RayPacket &pckt, int x, int y) const
   {
     const ssef left = ssef(ssei(x)) + pckt.crx;
     const ssef top  = ssef(ssei(y)) + pckt.cry;
-    pckt.crdir.x = imagePlaneOrg.x + left * xAxis.x + top * zAxis.x;
-    pckt.crdir.y = imagePlaneOrg.y + left * xAxis.y + top * zAxis.y;
-    pckt.crdir.z = imagePlaneOrg.z + left * xAxis.z + top * zAxis.z;
+    pckt.crdir.x = imagePlaneOrg.x + left*xAxis.x + top*zAxis.x;
+    pckt.crdir.y = imagePlaneOrg.y + left*xAxis.y + top*zAxis.y;
+    pckt.crdir.z = imagePlaneOrg.z + left*xAxis.z + top*zAxis.z;
   }
+#endif
 
-  INLINE void RTCameraPacketGen::generateIA(RayPacket &pckt, int x, int y) const
+  INLINE bool RTCameraPacketGen::generateIA(RayPacket &pckt, int x, int y) const
   {
     const ssef fw = (float) pckt.width;
     const ssef fh = (float) pckt.height;
@@ -141,10 +145,10 @@ namespace pf
     const ssef bottomRight = bottomLeft + fw * axAxis;
     const ssef topRight = bottomRight + fh * azAxis;
     const ssef topLeft = bottomLeft + fh * azAxis;
-    const ssef dmin = min(min(bottomLeft, bottomRight), min(topLeft, topRight));
-    const ssef dmax = max(max(bottomLeft, bottomRight), max(topLeft, topRight));
-    const ssef rcpMin = rcp(dmax);
-    const ssef rcpMax = rcp(dmin);
+    const ssef dmin = fixup(min(min(bottomLeft, bottomRight), min(topLeft, topRight)));
+    const ssef dmax = fixup(max(max(bottomLeft, bottomRight), max(topLeft, topRight)));
+    const ssef rcpMin = rcp(dmax).xyzz(); // avoid issues with unused w
+    const ssef rcpMax = rcp(dmin).xyzz(); // avoid issues with unused w
     const ssef minusMin = -rcpMin;
     const ssef minusMax = -rcpMax;
     const size_t mask = movemask(rcpMin);
@@ -152,15 +156,16 @@ namespace pf
     pckt.iasign = maskv;
     pckt.iaMinrDir = select(maskv, minusMax, rcpMin);
     pckt.iaMaxrDir = select(maskv, minusMin, rcpMax);
-    pckt.signs = movemask(rcpMin ^ rcpMax) & 0x7;
+    return movemask(dmin ^ dmax) == 0;
   }
 
   INLINE void RTCameraPacketGen::generate(RayPacket &pckt, int x, int y) const
   {
     this->generateRay(pckt,x,y);
-    this->generateIA(pckt,x,y);
-    this->generateCR(pckt,x,y);
-    pckt.properties = RAY_PACKET_CO | RAY_PACKET_CR | RAY_PACKET_IA;
+    // this->generateCR(pckt,x,y);
+    pckt.properties = RAY_PACKET_CO | RAY_PACKET_CR;
+    if (this->generateIA(pckt,x,y))
+      pckt.properties |= RAY_PACKET_IA;
   }
 
 } /* namespace pf */

@@ -37,14 +37,14 @@ namespace pf
     INLINE sseb(const sseb& other) { m128 = other.m128; }
     INLINE sseb& operator= (const sseb& other) { m128 = other.m128; return *this; }
 
-    INLINE sseb(const __m128  input) : m128(input) {}
-    INLINE sseb(const __m128i input) : m128(_mm_castsi128_ps(input)) {}
-    INLINE sseb(const __m128d input) : m128(_mm_castpd_ps(input)) {}
+    INLINE sseb(__m128  x) : m128(x) {}
+    INLINE sseb(__m128i x) : m128(_mm_castsi128_ps(x)) {}
+    INLINE sseb(__m128d x) : m128(_mm_castpd_ps(x)) {}
 
-    INLINE sseb(bool input)
-      : m128(input ? _mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128())) : _mm_setzero_ps()) {}
-    INLINE sseb(bool input_0, bool input_1, bool input_2, bool input_3)
-      : m128(_mm_lookupmask_ps[(size_t(input_3) << 3) | (size_t(input_2) << 2) | (size_t(input_1) << 1) | size_t(input_0)]) {}
+    INLINE sseb(bool x)
+      : m128(x ? _mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128())) : _mm_setzero_ps()) {}
+    INLINE sseb(bool x0, bool x1, bool x2, bool x3)
+      : m128(_mm_lookupmask_ps[(size_t(x3) << 3) | (size_t(x2) << 2) | (size_t(x1) << 1) | size_t(x0)]) {}
 
     INLINE operator const __m128&(void) const { return m128; }
     INLINE operator const __m128i(void) const { return _mm_castps_si128(m128); }

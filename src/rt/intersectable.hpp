@@ -14,45 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_BVH2_HPP__
-#define __PF_BVH2_HPP__
+#ifndef __PF_INTERSECTABLE_HPP__
+#define __PF_INTERSECTABLE_HPP__
 
-#include "intersectable.hpp"
 #include "sys/ref.hpp"
-#include "sys/platform.hpp"
 
 namespace pf
 {
-  // Avoid unecessary dependencies
-  struct BVH2Node;
+  struct Ray;             // Single ray structure
+  struct RayPacket;       // Packet of rays
+  struct Hit;             // Store ray hit information
+  struct PacketHit;       // Store ray packet hit information
+  struct PacketOcclusion; // Store occlusion information of a packet
 
-  /*! Binary BVH tree */
-  template <typename T>
-  struct BVH2 : public Intersectable
+  /*! Represents any kind of intersectable geometry that we are going to
+   *  traverse with rays or packet of rays
+   */
+  class Intersectable : public RefCount
   {
-    /*! Empty tree */
-    BVH2(void);
-    /*! Release everything */
-    virtual ~BVH2(void);
-    /*! Implements Intersectable */
-    virtual void traverse(const Ray &ray, Hit &hit) const;
-    /*! Implements Intersectable */
-    virtual void traverse(const RayPacket &pckt, PacketHit &hit) const;
-    /*! Implements Intersectable */
-    virtual bool occluded(const Ray &ray) const;
-    /*! Implements Intersectable */
-    virtual void occluded(const RayPacket &pckt, PacketOcclusion &o) const;
-    BVH2Node *node; //!< All nodes. node[0] is the root
-    T *prim;        //!< Primitives the BVH sorts
-    uint32 *primID; //!< Indices of primitives per leaf
-    uint32 nodeNum; //!< Number of nodes in the tree
-    uint32 primNum; //!< The number of primitives
+    /*! Traverse routine for rays */
+    virtual void traverse(const Ray &ray, Hit &hit) const = 0;
+
+    /*! Traverse routine for ray packets. Return u,v,t and ID of primitive of
+     *  for each ray of the packet
+     */
+    virtual void traverse(const RayPacket &pckt, PacketHit &hit) const = 0;
+
+    /*! Shadow ray routine for rays. True if occluded */
+    virtual bool occluded(const Ray &ray) const = 0;
+
+    /*! Shadow ray routine for packet of rays. Fill the given occlusion
+     *  structure
+     */
+    virtual void occluded(const RayPacket &pckt, PacketOcclusion &o) const = 0;
   };
-
-  /*! Compile a BVH */
-  template <typename T> bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &bvh);
-
 } /* namespace pf */
 
-#endif /* __PF_BVH2_HPP__ */
+#endif /* __PF_INTERSECTABLE_HPP__ */
 

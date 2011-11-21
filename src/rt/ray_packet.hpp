@@ -46,8 +46,7 @@ namespace pf
     ssef iaMaxOrg;        //!< Maximum origin. MIN == MAX if common origin
     ssef iaMinrDir;       //!< Minimum rcp(direction) for IA
     ssef iaMaxrDir;       //!< Maximum rcp(direction) for IA
-    sseb iasign;          //!< Sign of the IA directions
-    uint32 signs;         //!< Says which directions have different signs
+    sseb iasign;          //!< Sign of the ray directions
     uint32 properties;    //!< CR / IA / CO (see above)
   };
 
@@ -55,14 +54,23 @@ namespace pf
   struct PacketHit
   {
     INLINE PacketHit(void) {
-      for (size_t i = 0; i < RayPacket::packetNum; ++i) t[i] = FLT_MAX;
-      for (size_t i = 0; i < RayPacket::packetNum; ++i) id0[i] = -1;
+      for (uint32 i = 0; i < RayPacket::packetNum; ++i) t[i] = FLT_MAX;
+      for (uint32 i = 0; i < RayPacket::packetNum; ++i) id0[i] = -1;
     }
     ssef t[RayPacket::packetNum];   //!< Distance intersection
     ssef u[RayPacket::packetNum];   //!< u barycentric coordinate
     ssef v[RayPacket::packetNum];   //!< v barycentric coordinate
     ssei id0[RayPacket::packetNum]; //!< First ID of intersection
     ssei id1[RayPacket::packetNum]; //!< Second ID of intersection
+  };
+
+  /*! Indicate which ray is occluded per chunk */
+  struct PacketOcclusion
+  {
+    INLINE PacketOcclusion(void) {
+      for (uint32 i = 0; i < RayPacket::packetNum; ++i) occluded[i] = 0;
+    }
+    uint32 occluded[RayPacket::packetNum];
   };
 
 } /* namespace pf */
