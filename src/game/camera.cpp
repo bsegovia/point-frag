@@ -11,24 +11,24 @@
 #include <cstring>
 namespace pf {
 
-  const float FlyCamera::defaultSpeed = 1.f;
-  const float FlyCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
-  const float FlyCamera::acosMinAngle = 0.95f;
+  const float FPSCamera::defaultSpeed = 1.f;
+  const float FPSCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
+  const float FPSCamera::acosMinAngle = 0.95f;
 
-  FlyCamera::FlyCamera(const vec3f &pos_,
+  FPSCamera::FPSCamera(const vec3f &org_,
                        const vec3f &up_,
                        const vec3f &view_,
                        float fov_,
                        float ratio_,
                        float near_,
                        float far_) :
-    pos(pos_), up(up_), view(view_), lookAt(pos_+view_),
+    org(org_), up(up_), view(view_), lookAt(org_+view_),
     fov(fov_), ratio(ratio_), near(near_), far(far_),
     speed(defaultSpeed), angularSpeed(defaultAngularSpeed)
   {}
 
-  FlyCamera::FlyCamera(const FlyCamera &other) {
-    this->pos = other.pos;
+  FPSCamera::FPSCamera(const FPSCamera &other) {
+    this->org = other.org;
     this->up = other.up;
     this->view = other.view;
     this->lookAt = other.lookAt;
@@ -40,7 +40,7 @@ namespace pf {
     this->angularSpeed = other.angularSpeed;
   }
 
-  void FlyCamera::updateOrientation(float dx, float dy)
+  void FPSCamera::updateOrientation(float dx, float dy)
   {
     // Rotation around the first axis
     vec3f strafevec = cross(up, view);
@@ -60,18 +60,18 @@ namespace pf {
     const vec3f nextView1 = normalize(s1 * up + c1 * view);
     const float acosAngle1 = abs(dot(nextView1, up));
     if (acosAngle1 < acosMinAngle) view = nextView1;
-    lookAt = pos + view;
+    lookAt = org + view;
   }
 
-  void FlyCamera::updatePosition(const vec3f &d)
+  void FPSCamera::updatePosition(const vec3f &d)
   {
     const vec3f strafe = cross(up, view);
-    pos += d.x * strafe;
-    pos += d.y * up;
-    pos += d.z * view;
+    org += d.x * strafe;
+    org += d.y * up;
+    org += d.z * view;
   }
 
-  TaskCamera::TaskCamera(FlyCamera &cam, InputEvent &event) :
+  TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
   /* XXX to test the ray tracing */
@@ -145,9 +145,9 @@ namespace pf {
     uint32 w, h;
   };
 
-  static void rayTrace(const FlyCamera &flyCam, int w, int h)
+  static void rayTrace(const FPSCamera &fpsCam, int w, int h)
   {
-    const RTCamera cam(flyCam.pos, flyCam.lookAt, flyCam.up, flyCam.fov, flyCam.ratio);
+    const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
     uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
     std::memset(rgba, 0, sizeof(uint32) * w * h);

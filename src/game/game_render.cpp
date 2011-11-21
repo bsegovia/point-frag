@@ -30,7 +30,7 @@ namespace pf
 
 #define OGL_NAME ((RendererDriver*)renderer->driver)
 
-  TaskGameRender::TaskGameRender(FlyCamera &cam, InputEvent &event) :
+  TaskGameRender::TaskGameRender(FPSCamera &cam, InputEvent &event) :
     TaskMain("TaskGameRender"), cam(&cam), event(&event)
   {}
 

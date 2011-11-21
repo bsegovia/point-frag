@@ -23,12 +23,12 @@
 namespace pf
 {
   GameFrame::GameFrame(GameFrame &previous) {
-    this->cam = PF_NEW(FlyCamera, *previous.cam);
+    this->cam = PF_NEW(FPSCamera, *previous.cam);
     this->event = PF_NEW(InputEvent, *previous.event);
   }
 
   GameFrame::GameFrame(int w, int h) {
-    this->cam = PF_NEW(FlyCamera);
+    this->cam = PF_NEW(FPSCamera);
     this->event = PF_NEW(InputEvent, w, h);
   }
 

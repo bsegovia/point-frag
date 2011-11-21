@@ -21,7 +21,7 @@
 
 namespace pf
 {
-  class FlyCamera;
+  class FPSCamera;
   class InputEvent;
 
   /*! Stores the data required for the frame */
@@ -31,7 +31,7 @@ namespace pf
     /*! Used to create the next frame */
     GameFrame(GameFrame &previous);
     GameFrame(int w, int h);
-    Ref<FlyCamera> cam;    //!< Camera for this frame
+    Ref<FPSCamera> cam;    //!< Camera for this frame
     Ref<InputEvent> event; //!< Input as captured for this frame
   };
 

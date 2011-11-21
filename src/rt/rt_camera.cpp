@@ -19,29 +19,29 @@
 namespace pf
 {
   RTCamera::RTCamera(const vec3f &org_,
-                     const vec3f &to_,
                      const vec3f &up_,
-                     float angle_,
-                     float aspect_)
+                     const vec3f &view_,
+                     float fov_,
+                     float ratio_)
   {
     this->org = org_;
-    this->dir = to_ - org_;
     this->up = up_;
-    this->angle = angle_;
-    this->aspect = aspect_;
-    this->dist = 0.5f / tan((float)(this->angle * (float) M_PI / 360.f));
-    this->dir = normalize(this->dir);
+    this->view = view_;
+    this->fov = fov_;
+    this->ratio = ratio_;
+    this->dist = 0.5f / tan((float)(this->fov * (float) M_PI / 360.f));
+    this->view = normalize(this->view);
     this->up = normalize(this->up);
 
-    const float left = -this->aspect * 0.5f;
+    const float left = -this->ratio * 0.5f;
     const float top = 0.5f;
-    const vec3f &yAxis = this->dir;
+    const vec3f &yAxis = this->view;
     this->xAxis = cross(yAxis, this->up);
     this->xAxis = normalize(this->xAxis);
     this->zAxis = cross(yAxis, this->xAxis);
     this->zAxis = normalize(this->zAxis);
     this->imagePlaneOrg = this->dist * yAxis + left * this->xAxis - top * this->zAxis;
-    this->xAxis *= this->aspect;
+    this->xAxis *= this->ratio;
   }
 
   void RTCamera::createGenerator(RTCameraRayGen &gen, int w, int h) const

@@ -7,17 +7,17 @@
 namespace pf
 {
   /*! Simple FPS like camera */
-  class FlyCamera : public RefCount
+  class FPSCamera : public RefCount
   {
   public:
-    FlyCamera(const vec3f &pos_ = vec3f(0.f,1.f,2.f),
-              const vec3f &up_ = vec3f(0.f,1.f,0.f),
-              const vec3f &view_ = vec3f(0.f,0.f,-1.f),
-              float fov_ = 45.f,
-              float ratio_ = 1.f,
-              float near_ = 0.1f,
-              float far_ = 10000.f);
-    FlyCamera(const FlyCamera &other);
+    FPSCamera(const vec3f &org = vec3f(0.f,1.f,2.f),
+              const vec3f &up = vec3f(0.f,1.f,0.f),
+              const vec3f &view = vec3f(0.f,0.f,-1.f),
+              float fov = 45.f,
+              float ratio = 1.f,
+              float near = 0.1f,
+              float far = 10000.f);
+    FPSCamera(const FPSCamera &other);
     /*! Update the orientation of the camera */
     void updateOrientation(float dx, float dy);
     /*! Update positions along x, y and z axis */
@@ -25,13 +25,13 @@ namespace pf
     /*! Return the GL view matrix for the given postion */
     INLINE mat4x4f getMatrix(void) {
       const mat4x4f P = pf::perspective(fov, ratio, near, far);
-      const mat4x4f V = pf::lookAt(pos, lookAt, up);
+      const mat4x4f V = pf::lookAt(org, lookAt, up);
       return P*V;
     }
-    vec3f pos, up, view, lookAt;
+    vec3f org, up, view, lookAt;
     float fov, ratio, near, far;
     float speed;           //!< "Translation" speed [m/s]
-    float angularSpeed;    //!< "Rotation" speed [radian/pixel/s]
+    float angularSpeed;    //!< "Rotation" speed [radian/pixel]
     static const float defaultSpeed;
     static const float defaultAngularSpeed;
     static const float acosMinAngle;
@@ -44,9 +44,9 @@ namespace pf
   class TaskCamera : public Task
   {
   public:
-    TaskCamera(FlyCamera &cam, InputEvent &event);
+    TaskCamera(FPSCamera &cam, InputEvent &event);
     virtual Task *run(void);
-    Ref<FlyCamera> cam;    //!< Camera to update
+    Ref<FPSCamera> cam;    //!< Camera to update
     Ref<InputEvent> event; //!< Current event state
   };
 }

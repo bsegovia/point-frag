@@ -33,22 +33,22 @@ namespace pf
   public:
     /*! Build a perspective camera */
     RTCamera(const vec3f &org,
-             const vec3f &to,
              const vec3f &up,
-             float angle,
-             float aspect);
+             const vec3f &view,
+             float fov,
+             float ratio);
     /*! Build the ray generator */
     void createGenerator(RTCameraRayGen &gen, int w, int h) const;
     /*! Build the ray packet generator */
     void createGenerator(RTCameraPacketGen &gen, int w, int h) const;
   private:
     ALIGNED(16) vec3f org;            //!< Origin of the camera
-    ALIGNED(16) vec3f dir;            //!< View direction
     ALIGNED(16) vec3f up;             //!< Up vector
+    ALIGNED(16) vec3f view;           //!< View direction
     ALIGNED(16) vec3f imagePlaneOrg;  //!< Origin of the image plane
     ALIGNED(16) vec3f xAxis;          //!< X axis of the image plane
     ALIGNED(16) vec3f zAxis;          //!< Z axis of the image plane
-    float angle, aspect, dist;
+    float fov, ratio, dist;
   };
 
   /*! Generate single rays from a pinhole camera */
@@ -126,7 +126,7 @@ namespace pf
         pckt.dir[id].x = (imagePlaneOrg.x + column*xAxis.x + row*zAxis.x);
         pckt.dir[id].y = (imagePlaneOrg.y + column*xAxis.y + row*zAxis.y);
         pckt.dir[id].z = (imagePlaneOrg.z + column*xAxis.z + row*zAxis.z);
-        //pckt.dir[id] = normalize(pckt.dir[id]);
+        pckt.dir[id] = normalize(pckt.dir[id]);
         pckt.rdir[id].x = rcp(pckt.dir[id].x);
         pckt.rdir[id].y = rcp(pckt.dir[id].y);
         pckt.rdir[id].z = rcp(pckt.dir[id].z);
