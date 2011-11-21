@@ -207,7 +207,7 @@ namespace pf
     if (pckt.properties & RAY_PACKET_CO) {
       const sse3f dmin(tmpMin.xxxx(), tmpMin.yyyy(), tmpMin.zzzz());
       const sse3f dmax(tmpMax.xxxx(), tmpMax.yyyy(), tmpMax.zzzz());
-      for (uint32 i = first; i < pckt.packetNum; ++i) {
+      for (uint32 i = first; i < pckt.chunkNum; ++i) {
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
         const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
@@ -219,7 +219,7 @@ namespace pf
     } else {
       const sse3f pmin(node.pmin.x, node.pmin.y, node.pmin.z);
       const sse3f pmax(node.pmax.x, node.pmax.y, node.pmax.z);
-      for (uint32 i = first; i < pckt.packetNum; ++i) {
+      for (uint32 i = first; i < pckt.chunkNum; ++i) {
         const sse3f dmin = pmin - pckt.org[i];
         const sse3f dmax = pmax - pckt.org[i];
         ssef near, far;
@@ -256,7 +256,7 @@ namespace pf
     if (pckt.properties & RAY_PACKET_CO) {
       const sse3f dmin(tmpMin.xxxx(), tmpMin.yyyy(), tmpMin.zzzz());
       const sse3f dmax(tmpMax.xxxx(), tmpMax.yyyy(), tmpMax.zzzz());
-      for(uint32 i = first; i < pckt.packetNum; ++i) {
+      for(uint32 i = first; i < pckt.chunkNum; ++i) {
         ssef near, far;
         slab(pckt.rdir[i], dmin, dmax, near, far);
         const sseb test = (far >= near) & (far > 0.f) & (near < hit.t[i]);
@@ -268,7 +268,7 @@ namespace pf
     } else {
       const sse3f pmin(node.pmin.x, node.pmin.y, node.pmin.z);
       const sse3f pmax(node.pmax.x, node.pmax.y, node.pmax.z);
-      for (uint32 i = first; i < pckt.packetNum; ++i) {
+      for (uint32 i = first; i < pckt.chunkNum; ++i) {
         const sse3f dmin = pmin - pckt.org[i];
         const sse3f dmax = pmax - pckt.org[i];
         ssef near, far;
@@ -288,7 +288,7 @@ namespace pf
   static INLINE void LeafIntersect
     (const BVH2<T> &bvh, const BVH2Node &node, const RayPacket &pckt, uint32 first, PacketHit &hit)
   {
-    uint32 active[RayPacket::packetNum];
+    uint32 active[RayPacket::chunkNum];
     uint32 activeNum;
     if (AABBIntersect(node, pckt, hit, first, active, activeNum)) {
       const uint32 firstPrim = node.getPrimID();
