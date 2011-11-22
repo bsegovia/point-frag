@@ -139,8 +139,7 @@ namespace pf
     this->refract_index = 1.;
   }
 
-  void ObjLoader::parseVertexIndex(ObjLoaderFace &face)
-  {
+  void ObjLoader::parseVertexIndex(ObjLoaderFace &face) {
     char **saved = &this->objSaved;
     char *temp_str = NULL, *token = NULL;
     int vertexNum = 0;
@@ -305,7 +304,7 @@ namespace pf
   bool ObjLoader::loadObj(const char *fileName)
   {
     FILE* objFile;
-    int current_material = -1; 
+    int currMaterial = -1; 
     char *tok = NULL;
     char currLine[LINE_SZ];
     int lineNumber = 0;
@@ -336,11 +335,11 @@ namespace pf
         textureList.push_back(this->parseVector());
       else if (strequal(tok, "f")) {  // face
         ObjLoaderFace *face = this->parseFace();
-        face->materialID = current_material;
+        face->materialID = currMaterial;
         faceList.push_back(face);
       }
       else if (strequal(tok, "usemtl"))   // usemtl
-        current_material = this->findMaterial(strtok_r(NULL, whiteSpace, saved));
+        currMaterial = this->findMaterial(strtok_r(NULL, whiteSpace, saved));
       else if (strequal(tok, "mtllib")) { //  mtllib
         const char *mtlFileName = strtok_r(NULL, whiteSpace, saved);
         if (this->loadMtl(mtlFileName, fileName) == 0) {
@@ -400,8 +399,7 @@ namespace pf
   /*! Store face connectivity */
   struct Poly { int v[4]; int mat; int n; };
 
-  bool
-  Obj::load(const FileName &fileName)
+  bool Obj::load(const FileName &fileName)
   {
     ObjLoader loader;
     std::map<VertexKey, int> map;
@@ -457,43 +455,83 @@ namespace pf
     std::vector<ObjMatGroup> matGrp;
     int curr = tris[0].m;
     matGrp.push_back(ObjMatGroup(0,0,curr));
-    for (size_t i = 0; i < tris.size(); ++i)
+    for (size_t i = 0; i < tris.size(); ++i) {
       if (tris[i].m != curr) {
         curr = tris[i].m;
         matGrp.back().last = (int) (i-1);
         matGrp.push_back(ObjMatGroup((int)i,0,curr));
       }
+    }
     matGrp.back().last = tris.size() - 1;
 
-    // Create all vertices and store them
+    // We replace the undefined material by the default one if needed
+    if (tris[0].m == -1) {
+      ObjLoaderMat *mat = new (loader) ObjLoaderMat;
+      mat->setDefault();
+      loader.materialList.push_back(mat);
+
+      // First path the triangle
+      const size_t matID = loader.materialList.size() - 1;
+      for (size_t i = 0; i < tris.size(); ++i)
+        if (tris[i].m != -1)
+          break;
+        else
+          tris[i].m = matID;
+
+      // Then, their group
+      assert(matGrp[0].m == -1);
+      matGrp[0].m = matID;
+    }
+
+    // Create all the vertices and store them
     const size_t vertNum = map.size();
     std::vector<ObjVertex> verts;
     verts.resize(vertNum);
+    bool allPositionSet = true, allNormalSet = true, allTexCoordSet = true;
     for (auto it = map.begin(); it != map.end(); ++it) {
       const VertexKey src = it->first;
       const int dst = it->second;
       ObjVertex &v = verts[dst];
+
+      // Get the position if specified
       if (src.p != -1) {
         const ObjLoaderVec *p = loader.vertexList[src.p];
         v.p[0] = float(p->e[0]);
         v.p[1] = float(p->e[1]);
         v.p[2] = float(p->e[2]);
-      } else
+      } else {
         v.p[0] = v.p[1] = v.p[2] = 0.f;
+        allPositionSet = false;
+      }
+
+      // Get the normal if specified
       if (src.n != -1) {
         const ObjLoaderVec *n = loader.normalList[src.n];
         v.n[0] = float(n->e[0]);
         v.n[1] = float(n->e[1]);
         v.n[2] = float(n->e[2]);
-      } else
+      } else {
         v.n[0] = v.n[1] = v.n[2] = 1.f;
+        allNormalSet = false;
+      }
+
+      // Get the texture coordinates if specified
       if (src.t != -1) {
         const ObjLoaderVec *t = loader.textureList[src.t];
         v.t[0] = float(t->e[0]);
         v.t[1] = float(t->e[1]);
-      } else
+      } else {
         v.t[0] = v.t[1] = 0.f;
+        allTexCoordSet = false;
+      }
     }
+
+    if (allPositionSet == false)
+      PF_WARNING_V("ObjLoader: some positions are unspecified for " << fileName.str());
+    if (allNormalSet == false)
+      PF_WARNING_V("ObjLoader: some normals are unspecified for " << fileName.str());
+    if (allTexCoordSet == false)
+      PF_WARNING_V("ObjLoader: some texture coordinates are unspecified for " << fileName.str());
 
     // Allocate the ObjMaterial
     ObjMaterial *mat = PF_NEW_ARRAY(ObjMaterial, loader.materialList.size());

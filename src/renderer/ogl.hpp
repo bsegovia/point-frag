@@ -100,8 +100,8 @@ namespace pf
     /*! We delete resources asynchronously. Indeed since resource can be freed
      *  from anywhere, we use MAIN tasks to forward the destruction on the
      *  main thread. This task is just the continuation of all destruction
-     *  tasks. This will allow us to wait for *all* destruction tasks just
-     *  using this continuation
+     *  tasks. This will allow us to wait for *all* destruction tasks by just
+     *  doing scheduled and then waitForCompletion on it
      */
     Ref<Task> waitForDestruction;
   };

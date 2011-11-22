@@ -33,6 +33,7 @@ namespace pf
   class TaskUpdateObjTexture : public Task
   {
   public:
+    /*! Update the renderer object textures */
     TaskUpdateObjTexture(TextureStreamer &streamer,
                          RendererObj &obj,
                          const std::string &name) :
@@ -43,21 +44,22 @@ namespace pf
       const TextureState state = streamer.getTextureState(name);
       assert(state.value == TextureState::COMPLETE);
       Lock<MutexSys> lock(obj.mutex);
-      for (size_t i = 0; i < obj.grpNum; ++i)
-        if (obj.texName[i] == name)
-          obj.tex[i] = state.tex;
+      for (size_t matID = 0; matID < obj.matNum; ++matID)
+        if (obj.mat[matID].name_Kd == name)
+          obj.mat[matID].map_Kd = state.tex;
       return NULL;
     }
   private:
-    TextureStreamer &streamer;
-    RendererObj &obj;
-    std::string name;
+    TextureStreamer &streamer;  //!< Where to get the handle
+    RendererObj &obj;           //!< The object to upate
+    std::string name;           //!< Name of the texture to get
   };
 
   /*! Load all textures for the given renderer obj */
   class TaskLoadObjTexture : public Task
   {
   public:
+    /*! The loads are triggered asynchronously */
     TaskLoadObjTexture(TextureStreamer &streamer,
                        RendererObj &rendererObj,
                        const Obj &obj) :
@@ -79,6 +81,7 @@ namespace pf
       }
     }
 
+    /*! Only release everything after the completion of all sub-tasks */
     ~TaskLoadObjTexture(void) { PF_SAFE_DELETE_ARRAY(this->texName); }
 
     /*! Spawn one loading task per group */
@@ -97,15 +100,16 @@ namespace pf
       }
       return NULL;
     }
-    TextureStreamer &streamer;
-    RendererObj &rendererObj;
-    std::string *texName;
-    size_t texNum;
+  private:
+    TextureStreamer &streamer; //!< The streamer that handles the loads
+    RendererObj &rendererObj;  //!< The renderer object to update
+    std::string *texName;      //!< All the textures to load
+    size_t texNum;             //!< The number of texture to load
   };
 
   RendererObj::RendererObj(Renderer &renderer, const Obj &obj) :
-    renderer(renderer), tex(NULL), texName(NULL), bbox(NULL), grp(NULL),
-    vertexArray(0), arrayBuffer(0), elementBuffer(0), grpNum(0)
+    renderer(renderer), mat(NULL), sgmt(NULL), matNum(0), sgmtNum(0),
+    vertexArray(0), arrayBuffer(0), elementBuffer(0)
   {
     TextureStreamer &streamer = *renderer.streamer;
 
@@ -113,35 +117,34 @@ namespace pf
       PF_MSG_V("RendererObj: asynchronously loading textures");
 
       // Map each material group to the texture name
-      this->tex = PF_NEW_ARRAY(Ref<Texture2D>, obj.grpNum);
-      this->texName = PF_NEW_ARRAY(std::string, obj.grpNum);
+      this->mat = PF_NEW_ARRAY(Material, obj.grpNum);
+      this->sgmt = PF_NEW_ARRAY(Segment, obj.grpNum);
+      this->sgmtNum = this->matNum = obj.grpNum;
       for (size_t i = 0; i < obj.grpNum; ++i) {
-        const int mat = obj.grp[i].m;
-        this->tex[i] = renderer.defaultTex;
-        if (mat >= 0)
-          this->texName[i] = obj.mat[mat].map_Kd;
-        else
-          this->texName[i] = "";
+        const int32 matID = obj.grp[i].m;
+        FATAL_IF(matID < 0, "Face with no material TODO support it in the loader");
+        Material &material = this->mat[i];
+        material.map_Kd = renderer.defaultTex;
+        material.name_Kd = obj.mat[matID].map_Kd;
       }
 
       // Start to load the textures
-      this->texLoading= PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
+      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
       this->texLoading->scheduled();
 
-      // Compute each object bounding box and group of triangles
-      PF_MSG_V("RendererObj: computing bounding boxes");
-      this->grpNum = obj.grpNum;
-      this->bbox = PF_NEW_ARRAY(BBox3f, obj.grpNum);
-      this->grp = PF_NEW_ARRAY(RendererObj::Group, this->grpNum);
-      for (size_t i = 0; i < obj.grpNum; ++i) {
-        const size_t first = obj.grp[i].first, last = obj.grp[i].last;
-        this->grp[i].first = first;
-        this->grp[i].last = last;
-        this->bbox[i] = BBox3f(empty);
+      // Right now we only create one segment per material
+      PF_MSG_V("RendererObj: creating geometry segments");
+      for (size_t grpID = 0; grpID < obj.grpNum; ++grpID) {
+        const size_t first = obj.grp[grpID].first, last = obj.grp[grpID].last;
+        Segment &segment = this->sgmt[grpID];
+        segment.first = first;
+        segment.last = last;
+        segment.bbox = BBox3f(empty);
+        segment.matID = grpID;
         for (size_t j = first; j < last; ++j) {
-          this->bbox[i].grow(obj.vert[obj.tri[j].v[0]].p);
-          this->bbox[i].grow(obj.vert[obj.tri[j].v[1]].p);
-          this->bbox[i].grow(obj.vert[obj.tri[j].v[2]].p);
+          segment.bbox.grow(obj.vert[obj.tri[j].v[0]].p);
+          segment.bbox.grow(obj.vert[obj.tri[j].v[1]].p);
+          segment.bbox.grow(obj.vert[obj.tri[j].v[2]].p);
         }
       }
 
@@ -181,25 +184,25 @@ namespace pf
   }
 
   RendererObj::~RendererObj(void) {
-    if (this->texLoading) this->texLoading->waitForCompletion();
-    if (this->vertexArray) R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
-    if (this->arrayBuffer) R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
+    if (this->texLoading)    this->texLoading->waitForCompletion();
+    if (this->vertexArray)   R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
+    if (this->arrayBuffer)   R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-    PF_SAFE_DELETE_ARRAY(this->tex);
-    PF_SAFE_DELETE_ARRAY(this->texName);
-    PF_SAFE_DELETE_ARRAY(this->bbox);
-    PF_SAFE_DELETE_ARRAY(this->grp);
+    PF_SAFE_DELETE_ARRAY(this->sgmt);
+    PF_SAFE_DELETE_ARRAY(this->mat);
   }
 
   void RendererObj::display(void) {
     Lock<MutexSys> lock(mutex);
-    R_CALL (BindVertexArray, this->vertexArray);
-    R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
+    R_CALL (BindVertexArray, vertexArray);
+    R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);
-    for (size_t grp = 0; grp < this->grpNum; ++grp) {
-      const uintptr_t offset = this->grp[grp].first * sizeof(int[3]);
-      const GLuint n = this->grp[grp].last - this->grp[grp].first + 1;
-      R_CALL (BindTexture, GL_TEXTURE_2D, this->tex[grp]->handle);
+    for (size_t sgmtID = 0; sgmtID < sgmtNum; ++sgmtID) {
+      const Segment &segment = sgmt[sgmtID];
+      const Material &material = mat[segment.matID];
+      const uintptr_t offset = segment.first * sizeof(int[3]);
+      const GLuint n = segment.last - segment.first + 1;
+      R_CALL (BindTexture, GL_TEXTURE_2D, material.map_Kd->handle);
       R_CALL (DrawElements, GL_TRIANGLES, 3*n, GL_UNSIGNED_INT, (void*) offset);
     }
     R_CALL (BindVertexArray, 0);

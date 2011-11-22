@@ -59,7 +59,11 @@ namespace pf
 
     // Display all the bounding boxes
     R_CALL (setMVP, MVP);
-    R_CALL (displayBBox, renderObj->bbox, renderObj->grpNum);
+    BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->sgmtNum);
+    for (size_t i = 0; i < renderObj->sgmtNum; ++i)
+      bbox[i] = renderObj->sgmt[i].bbox;
+    R_CALL (displayBBox, bbox, renderObj->sgmtNum);
+    PF_SAFE_DELETE_ARRAY(bbox);
     glutSwapBuffers();
 
     return NULL;
