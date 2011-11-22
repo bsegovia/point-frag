@@ -1,7 +1,24 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "ogl.hpp"
 #include "sys/platform.hpp"
 #include "sys/logging.hpp"
 #include "sys/string.hpp"
+#include "sys/tasking.hpp"
 #include "math/math.hpp"
 
 #include <GL/freeglut.h>
@@ -16,7 +33,15 @@ namespace pf
 
 #define OGL_NAME this
 
-  OGL::OGL() :
+  /*! Just a dummy task to wait for the destruction tasks */
+  class TaskWaitForOGLDestruction : public Task
+  {
+  public:
+    TaskWaitForOGLDestruction(void) : Task("TaskWaitForOGLDestruction") {}
+    virtual Task *run(void) { return NULL; }
+  };
+
+  OGL::OGL(void) :
     textureNum(0),
     vertexArrayNum(0),
     bufferNum(0),
@@ -62,7 +87,7 @@ namespace pf
     PF_MSG ("OGL: " << version);
     PF_MSG ("OGL: " << vendor);
     PF_MSG ("OGL: " << renderer);
-	R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
+    R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
 
     // Check extensions we need
     if (glutExtensionSupported("GL_EXT_texture_compression_s3tc"))
@@ -70,10 +95,10 @@ namespace pf
     else
       FATAL ("GL_EXT_texture_compression_s3tc unsupported");
 
-	// ATI Driver WORK AROUND error is emitted here
-	while (this->GetError() != GL_NO_ERROR);
-	
-	// Get driver dependent constants
+    // ATI Driver WORK AROUND error is emitted here
+    while (this->GetError() != GL_NO_ERROR);
+
+// Get driver dependent constants
 #define GET_CST(ENUM, FIELD)                        \
     this->GetIntegerv(ENUM, &this->FIELD);          \
     PF_MSG("OGL: " #ENUM << " == " << this->FIELD);
@@ -81,9 +106,15 @@ namespace pf
     GET_CST(GL_MAX_TEXTURE_SIZE, maxTextureSize);
     GET_CST(GL_MAX_TEXTURE_IMAGE_UNITS, maxTextureUnit);
 #undef GET_CST
+
+    // Use that to wait for task destruction
+    this->waitForDestruction = PF_NEW(TaskWaitForOGLDestruction);
   }
 
-  OGL::~OGL() {
+  OGL::~OGL(void)
+  {
+    this->waitForDestruction->scheduled();
+    this->waitForDestruction->waitForCompletion();
     assert(this->textureNum == 0 &&
            this->vertexArrayNum == 0 &&
            this->bufferNum == 0 &&
@@ -219,5 +250,84 @@ namespace pf
 
     return name;
   }
-}
+
+  /*! Since only the main thread can destroy OGL resource and since the engine
+   *  is completely multi-threaded and we may have reference counted objects
+   *  destroyed by any thread, we chose a simple solution to handle OGL
+   *  objects destructions: we forward it to the main thread with critical task.
+   *  Since "destroyed" implies "unused", we do not care that it is
+   *  asynchronous
+   */
+#define DECL_OGL_DESTROY_TASK(NAME, FUNC, COUNTER)                         \
+  class TaskDestroy##NAME : public Task                                    \
+  {                                                                        \
+  public:                                                                  \
+    /*! Store the data to destroy */                                       \
+    TaskDestroy##NAME(OGL &ogl, const GLuint *handle_, GLuint n)           \
+      : Task("TaskDestroy" #NAME),                                         \
+        ogl(ogl),                                                          \
+        handlePtr(NULL),                                                   \
+        n(n),                                                              \
+        deallocatePtr(false)                                               \
+    {                                                                      \
+      /* Fast path just uses the local storage of the task. Slow path */   \
+      /* allocate an array to contain the handles */                       \
+      if (UNLIKELY(n > OGL_MAX_HANDLE_NUM)) {                              \
+        this->handlePtr = PF_NEW_ARRAY(GLuint, n);                         \
+        deallocatePtr = true;                                              \
+      } else                                                               \
+        this->handlePtr = this->handle;                                    \
+      std::memcpy(this->handlePtr, handle_, sizeof(GLuint) * n);           \
+                                                                           \
+      /* Go to MAIN only and as fast as possible */                        \
+      this->setAffinity(PF_TASK_MAIN_THREAD);                              \
+      this->setPriority(TaskPriority::CRITICAL);                           \
+    }                                                                      \
+                                                                           \
+    /*! On the main thread, we really release the resource */              \
+    virtual Task* run(void)                                                \
+    {                                                                      \
+      ogl.COUNTER += -this->n;                                             \
+      ogl.FUNC(n, handlePtr);                                              \
+      if (deallocatePtr) PF_DELETE_ARRAY(this->handlePtr);                 \
+      return NULL;                                                         \
+    }                                                                      \
+                                                                           \
+  private:                                                                 \
+    static const uint32 OGL_MAX_HANDLE_NUM = 16;                           \
+    OGL &ogl;                                                              \
+    GLuint *handlePtr;                                                     \
+    GLuint handle[OGL_MAX_HANDLE_NUM];                                     \
+    GLuint n;                                                              \
+    bool deallocatePtr;                                                    \
+  };
+
+DECL_OGL_DESTROY_TASK(Texture, _DeleteTextures, textureNum);
+DECL_OGL_DESTROY_TASK(Buffer, _DeleteBuffers, bufferNum);
+DECL_OGL_DESTROY_TASK(Framebuffer, _DeleteFramebuffers, frameBufferNum);
+DECL_OGL_DESTROY_TASK(VertexArray, _DeleteVertexArrays, vertexArrayNum);
+
+#undef DECL_OGL_DESTROY_TASK
+
+  void OGL::DeleteTextures(GLsizei n, const GLuint *tex) {
+    Task *task = PF_NEW(TaskDestroyTexture, *this, tex, n);
+    task->starts(this->waitForDestruction.ptr);
+    task->scheduled();
+  }
+  void OGL::DeleteBuffers(GLsizei n, const GLuint *buffer) {
+    Task *task = PF_NEW(TaskDestroyBuffer, *this, buffer, n);
+    task->starts(this->waitForDestruction.ptr);
+    task->scheduled();
+  }
+  void OGL::DeleteFramebuffers(GLsizei n, const GLuint *buffer) {
+    Task *task = PF_NEW(TaskDestroyFramebuffer, *this, buffer, n);
+    task->starts(this->waitForDestruction.ptr);
+    task->scheduled();
+  }
+  void OGL::DeleteVertexArrays(GLsizei n, const GLuint *buffer) {
+    Task *task = PF_NEW(TaskDestroyVertexArray, *this, buffer, n);
+    task->starts(this->waitForDestruction.ptr);
+    task->scheduled();
+  }
+} /* namespace pf */
 

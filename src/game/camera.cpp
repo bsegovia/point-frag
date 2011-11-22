@@ -76,7 +76,7 @@ namespace pf {
 
   /* XXX to test the ray tracing */
   extern Ref<BVH2<RTTriangle>> bvh;
-  static const int CAMW = 1024, CAMH = 1024;
+  static const int CAMW = 256, CAMH = 256;
 
   class TaskRayTrace : public TaskSet
   {
@@ -160,7 +160,7 @@ namespace pf {
     rayTask->scheduled();
     rayTask->waitForCompletion();
     const double dt = getSeconds() - t;
-    PF_MSG_V("ray tracing time: " << dt);
+    PF_MSG_V("Ray tracing time: " << dt * 1000. << "msec - Ray per second " << CAMW * CAMH / dt);
     stbi_write_tga("hop.tga", w, h, 4, rgba);
     PF_DELETE_ARRAY(rgba);
     PF_DELETE_ARRAY(c);

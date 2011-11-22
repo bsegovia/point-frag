@@ -1,9 +1,26 @@
-#ifndef __OGL_HPP__
-#define __OGL_HPP__
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#ifndef __PF_OGL_HPP__
+#define __PF_OGL_HPP__
 
 #include "sys/platform.hpp"
 #include "sys/filename.hpp"
 #include "sys/atomic.hpp"
+#include "sys/ref.hpp"
 
 #include "GL/gl3.h"
 #include "GL/glext.h"
@@ -12,8 +29,12 @@
 
 namespace pf
 {
+  // We use a task to track resource deallocation (see below)
+  class Task;
+
   /*! We load all OGL functions explicitly */
-  struct OGL {
+  struct OGL
+  {
     OGL(void);
     virtual ~OGL(void);
 
@@ -41,34 +62,22 @@ namespace pf
       this->textureNum += n;
       this->_GenTextures(n, tex);
     }
-    INLINE void DeleteTextures(GLsizei n, const GLuint *tex) {
-      this->textureNum += -n;
-      this->_DeleteTextures(n, tex);
-    }
     INLINE void GenBuffers(GLsizei n, GLuint *buffer) {
       this->bufferNum += n;
       this->_GenBuffers(n, buffer);
-    }
-    INLINE void DeleteBuffers(GLsizei n, const GLuint *buffer) {
-      this->bufferNum += -n;
-      this->_DeleteBuffers(n, buffer);
     }
     INLINE void GenFramebuffers(GLsizei n, GLuint *buffer) {
       this->frameBufferNum += n;
       this->_GenFramebuffers(n, buffer);
     }
-    INLINE void DeleteFramebuffers(GLsizei n, const GLuint *buffer) {
-      this->frameBufferNum += -n;
-      this->_DeleteFramebuffers(n, buffer);
-    }
     INLINE void GenVertexArrays(GLsizei n, GLuint *buffer) {
       this->vertexArrayNum += n;
       this->_GenVertexArrays(n, buffer);
     }
-    INLINE void DeleteVertexArrays(GLsizei n, const GLuint *buffer) {
-      this->vertexArrayNum += -n;
-      this->_DeleteVertexArrays(n, buffer);
-    }
+    void DeleteTextures(GLsizei n, const GLuint *tex);
+    void DeleteBuffers(GLsizei n, const GLuint *buffer);
+    void DeleteFramebuffers(GLsizei n, const GLuint *buffer);
+    void DeleteVertexArrays(GLsizei n, const GLuint *buffer);
 
     /*! Driver dependent constants */
     int32_t maxColorAttachmentNum;
@@ -87,6 +96,14 @@ namespace pf
     GLuint createShader(GLenum type, const FileName &path) const;
     /*! Create a shader from the source */
     GLuint createShader(GLenum type, const std::string &source) const;
+
+    /*! We delete resources asynchronously. Indeed since resource can be freed
+     *  from anywhere, we use MAIN tasks to forward the destruction on the
+     *  main thread. This task is just the continuation of all destruction
+     *  tasks. This will allow us to wait for *all* destruction tasks just
+     *  using this continuation
+     */
+    Ref<Task> waitForDestruction;
   };
 
   /*! One instance is enough */
@@ -118,5 +135,5 @@ namespace pf
 #endif /* NDEBUG */
 }
 
-#endif /* __OGL_HPP__ */
+#endif /* __PF_OGL_HPP__ */
 

@@ -83,8 +83,6 @@ namespace pf
 
     /*! Spawn one loading task per group */
     virtual Task* run(void) {
-      //XXX
-      //return NULL;
       for (size_t i = 0; i < texNum; ++i) {
         if (texName[i].size() == 0) continue;
         const TextureRequest req(texName[i], PF_TEX_FORMAT_DXT1);

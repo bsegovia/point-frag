@@ -32,8 +32,8 @@ namespace pf
   struct RayPacket
   {
     static const uint32 laneNum = sizeof(ssef) / sizeof(int32);
-    static const uint32 width  = 16;
-    static const uint32 height = 16;
+    static const uint32 width  = 8;
+    static const uint32 height = 8;
     static const uint32 rayNum = width * height;
     static const uint32 chunkNum = rayNum / laneNum;
     static const ssef crx;//!< X coordinates of the 4 corner rays

@@ -34,7 +34,6 @@
 
 namespace pf
 {
-#if defined(__SSE__)
   typedef BBox<ssef> Box;
 
   /*! Computes half surface area of box. */
@@ -50,10 +49,6 @@ namespace pf
     for (size_t j = 0; j < 3; ++j) to.upper[j] = from.upper[j];
     return to;
   }
-#else
-  typedef BBox3f Box;
-  INLINE Box convertBox(const BBox3f &from) { return from; }
-#endif /* __SSE__*/
 
   /* Just the barycenter of a triangle */
   struct Centroid : public vec3f {
@@ -120,16 +115,21 @@ namespace pf
 
   /*! To perform the sorts in parallel */
   template <uint32 axis>
-  struct TaskCentroidSort : public Task {
+  class TaskCentroidSort : public Task
+  {
+  public:
+    /*! Save the data in the task fields */
     TaskCentroidSort(const std::vector<Centroid> &centroids,
                      std::vector<uint32> &IDs) :
       Task("TaskCentroidSort"), centroids(centroids), IDs(IDs) {}
+
     /*! Increasing order sort for the given axis */
     virtual Task *run(void) {
-      for(size_t j = 0; j < IDs.size(); ++j) IDs[j] = j;
+      for (size_t j = 0; j < IDs.size(); ++j) IDs[j] = j;
       std::sort(IDs.begin(), IDs.end(), Sorter<axis>(centroids));
       return NULL;
     }
+  private:
     const std::vector<Centroid> &centroids; //!< Centroids of the primitives
     std::vector<uint32> &IDs;               //!< Array to sort
   };
@@ -146,7 +146,7 @@ namespace pf
     if (root == 0) return -1;
 
     // Allocate the data for the compiler
-    for(int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
       IDs[i].resize(primNum);
     pos.resize(primNum);
     tmpIDs.resize(primNum);
@@ -157,7 +157,7 @@ namespace pf
 
     // Compute centroids and bounding boxes
     sceneAABB = Box(empty);
-    for(int j = 0; j < n; ++j) {
+    for (int j = 0; j < n; ++j) {
       const T &prim = soup[j];
       centroids[j] = Centroid(prim);
       aabbs[j] = convertBox(prim.getAABB());
@@ -229,13 +229,14 @@ namespace pf
 
   /*! Sweep left to right and find the best partition */
   template <uint32 axis>
-  static INLINE Partition doSweep(BVH2Builder &c, int first, int last) {
+  static INLINE Partition doSweep(BVH2Builder &c, int first, int last)
+  {
     // We return the best partition
     Partition part(first, last, axis);
 
     // Compute sequence (from right to left) of the bounding boxes
     c.rlAABBs[c.IDs[axis][last]] = c.aabbs[c.IDs[axis][last]];
-    for(int j  = last - 1; j >= first; --j) {
+    for (int j  = last - 1; j >= first; --j) {
       c.rlAABBs[c.IDs[axis][j]] = c.aabbs[c.IDs[axis][j]];
       c.rlAABBs[c.IDs[axis][j]].grow(c.rlAABBs[c.IDs[axis][j + 1]]);
     }
@@ -248,12 +249,12 @@ namespace pf
     const uint32 primNum = last - first + 1;
     uint32 n = 1;
     part.cost = FLT_MAX;
-    for(int j = first; j < last; ++j) {
+    for (int j = first; j < last; ++j) {
       aabb.grow(c.aabbs[c.IDs[axis][j]]);
       const float cost = halfArea(aabb) * float(n)
                        + halfArea(c.rlAABBs[c.IDs[axis][j + 1]]) * float(primNum - n);
       ++n;
-      if(cost > part.cost) continue;
+      if (cost > part.cost) continue;
       part.cost = cost;
       part.last[ON_LEFT] = j;
       part.first[ON_RIGHT] = j + 1;
@@ -262,7 +263,7 @@ namespace pf
     }
 
     // We want at most maxPrimNum
-    if(primNum > c.options.maxPrimNum) return part;
+    if (primNum > c.options.maxPrimNum) return part;
 
     // Test the last partition where all primitives are inside one node
     aabb.grow(c.aabbs[c.IDs[axis][last]]);
@@ -270,7 +271,7 @@ namespace pf
     const float cost = c.options.SAHIntersectionCost * harea * primNum;
     part.cost *= c.options.SAHIntersectionCost;
     part.cost += c.options.SAHTraversalCost * harea;
-    if(cost <= part.cost) {
+    if (cost <= part.cost) {
       part.cost = cost;
       part.last[ON_RIGHT]  = part.last[ON_LEFT]  = -1;
       part.first[ON_RIGHT] = part.first[ON_LEFT] = -1;
@@ -301,17 +302,17 @@ namespace pf
     c.root[data.id].setPrimNum(primNum);
     c.root[data.id].setPrimID(c.primID.size());
     c.root[data.id].setAsLeaf();
-    for(int j = data.first; j <= data.last; ++j)
+    for (int j = data.first; j <= data.last; ++j)
       c.primID.push_back(c.IDs[0][j]);
   }
 
   /*! Grow the bounding boxen with an epsilon */
   static INLINE void doGrowBoxs(BVH2Builder &c) {
-    const int aabb_n = 2 * c.n - 1;
-    for(int i = 0; i < aabb_n; ++i) {
+    const int aabbNum = 2 * c.n - 1;
+    for (int i = 0; i < aabbNum; ++i) {
       vec3f pmin = c.root[i].getMin();
       vec3f pmax = c.root[i].getMax();
-      for(int j = 0; j < 3; ++j) {
+      for (int j = 0; j < 3; ++j) {
         pmin[j] *= pmin[j] < 0.f ? 1.f + aabbEps : 1.f - aabbEps;
         pmax[j] *= pmax[j] > 0.f ? 1.f + aabbEps : 1.f - aabbEps;
       }
@@ -320,18 +321,19 @@ namespace pf
     }
   }
 
-  int BVH2Builder::compile(void) {
+  int BVH2Builder::compile(void)
+  {
     Stack stack;
     Stack::Elem node;
 
     stack.push(0, n - 1, 0, sceneAABB);
-    while(stack.isNotEmpty()) {
+    while (stack.isNotEmpty()) {
       node = stack.pop();
       for (;;) {
 
         // We are done and we make a leaf
         const uint32 primNum = node.last - node.first + 1;
-        if(primNum <= options.minPrimNum) {
+        if (primNum <= options.minPrimNum) {
           doMakeLeaf(*this, node);
           break;
         }
@@ -339,12 +341,12 @@ namespace pf
         // Find the best partition for this node
         Partition best = doSweep<0>(*this, node.first, node.last);
         Partition part = doSweep<1>(*this, node.first, node.last);
-        if(part.cost < best.cost) best = part;
+        if (part.cost < best.cost) best = part;
         part = doSweep<2>(*this, node.first, node.last);
-        if(part.cost < best.cost) best = part;
+        if (part.cost < best.cost) best = part;
 
         // The best partition is actually *no* partition: we make a leaf
-        if(part.first[ON_LEFT] == -1) {
+        if (best.first[ON_LEFT] == -1) {
           doMakeLeaf(*this, node);
           break;
         }
@@ -354,28 +356,28 @@ namespace pf
 
         // First, store the positions of the primitives
         const int d = best.axis;
-        for(int j = best.first[ON_LEFT]; j <= best.last[ON_LEFT]; ++j)
+        for (int j = best.first[ON_LEFT]; j <= best.last[ON_LEFT]; ++j)
           pos[IDs[d][j]] = ON_LEFT;
-        for(int j = best.first[ON_RIGHT]; j <= best.last[ON_RIGHT]; ++j)
+        for (int j = best.first[ON_RIGHT]; j <= best.last[ON_RIGHT]; ++j)
           pos[IDs[d][j]] = ON_RIGHT;
 
         // Then, for each axis, reorder the indices for the next step
-        int left_n, right_n;
-        for(int i = 0; i < otherAxisNum; ++i) {
+        int leftNum, rightNum;
+        for (int i = 0; i < otherAxisNum; ++i) {
           const int d0 = remapOtherAxis[best.axis + i];
-          left_n = 0, right_n = 0;
-          for(int j = node.first; j <= node.last; ++j)
-            if(pos[IDs[d0][j]] == ON_LEFT)
-              IDs[d0][node.first + left_n++] = IDs[d0][j];
+          leftNum = 0, rightNum = 0;
+          for (int j = node.first; j <= node.last; ++j)
+            if (pos[IDs[d0][j]] == ON_LEFT)
+              IDs[d0][node.first + leftNum++] = IDs[d0][j];
             else
-              tmpIDs[right_n++] = IDs[d0][j];
-          for(int j = node.first + left_n; j <= node.last; ++j)
-            IDs[d0][j] = tmpIDs[j - left_n - node.first];
+              tmpIDs[rightNum++] = IDs[d0][j];
+          for (int j = node.first + leftNum; j <= node.last; ++j)
+            IDs[d0][j] = tmpIDs[j - leftNum - node.first];
         }
 
         // Now, prepare the stack data for the next step
-        const int p0 = right_n > left_n ? ON_LEFT : ON_RIGHT;
-        const int p1 = right_n > left_n ? ON_RIGHT : ON_LEFT;
+        const int p0 = rightNum > leftNum ? ON_LEFT : ON_RIGHT;
+        const int p1 = rightNum > leftNum ? ON_RIGHT : ON_LEFT;
         stack.push(best.first[p1], best.last[p1], currID+p1+1, best.aabbs[p1]);
         node.first = best.first[p0];
         node.last = best.last[p0];

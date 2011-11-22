@@ -28,9 +28,40 @@ namespace pf
   // We build the renderer obj from a Wavefront OBJ
   class Obj;
 
+  /*! Renderer mapping of a OBJ material */
+  class RendererMaterial
+  {
+    std::string name;
+    std::string name_Ka;
+    std::string name_Kd;
+    std::string name_D;
+    std::string name_Bump;
+    Ref<Texture2D> map_Ka;
+    Ref<Texture2D> map_Kd;
+    Ref<Texture2D> map_D;
+    Ref<Texture2D> map_Bump;
+    vec3f amb;
+    vec3f diff;
+    vec3f spec;
+    float km;
+    float reflect;
+    float refract;
+    float trans;
+    float shiny;
+    float glossy;
+    float refract_index;
+  };
+
   /*! Entity used for rendering of OBJ models */
-  class RendererObj : public RefCount {
+  class RendererObj : public RefCount
+  {
   public:
+    /*! Store triangles with the same material */
+    struct Segment {
+      BBox3f bbox;        //!< Bounding box of the triangles
+      uint32 first, last; //!< First and last index in the index buffer
+      uint32 matID;       //!< Material ID
+    };
     /*! Note that this object actually belongs to a renderer */
     RendererObj(Renderer &renderer, const Obj &obj);
     /*! Release it (still from a renderer */
