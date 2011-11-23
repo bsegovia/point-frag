@@ -251,7 +251,7 @@ namespace pf
     segments.push_back(RendererObj::Segment());
     startSegment(segments[segmentID], obj, triID, first);
 
-    // When a new material is encountered, we finish the segmentIDent segment and
+    // When a new material is encountered, we finish the current segment and
     // start a new one
     for (size_t i = first+1; i < first+n; ++i) {
       triID = mergedID[i];
