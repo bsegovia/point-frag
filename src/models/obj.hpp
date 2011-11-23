@@ -23,60 +23,66 @@
 
 namespace pf
 {
-  /*! OBJ triangle - indexes vertices and material */
-  struct ObjTriangle {
-    INLINE ObjTriangle(void) {}
-    INLINE ObjTriangle(vec3i v_, int m_) : v(v_), m(m_) {}
-    vec3i v;
-    int m;
-  };
-
-  /*! OBJ vertex - stores position, normal and texture coordinates */
-  struct ObjVertex {
-    INLINE ObjVertex(void) {}
-    INLINE ObjVertex(vec3f p_, vec3f n_, vec2f t_) :
-      p(p_), n(n_), t(t_) {}
-    vec3f p, n;
-    vec2f t;
-  };
-
-  /*! OBJ material group - triangles are grouped by material */
-  struct ObjMatGroup {
-    ObjMatGroup(int first_, int last_, int m_) :
-      first(first_), last(last_), m(m_) {}
-    ObjMatGroup(void) {}
-    int first, last, m;
-  };
-
-  /*! OBJ Material - just a dump of mtl description */
-  struct ObjMaterial {
-    char *name;
-    char *map_Ka;
-    char *map_Kd;
-    char *map_D;
-    char *map_Bump;
-    double amb[3];
-    double diff[3];
-    double spec[3];
-    double km;
-    double reflect;
-    double refract;
-    double trans;
-    double shiny;
-    double glossy;
-    double refract_index;
-  };
 
   /*! OBJ - an obj file (vertices are processed and merged) */
-  struct Obj {
+  struct Obj
+  {
+    /*! OBJ triangle - indexes vertices and material */
+    struct Triangle
+    {
+      INLINE Triangle(void) {}
+      INLINE Triangle(vec3i v_, int m_) : v(v_), m(m_) {}
+      vec3i v;
+      int m;
+    };
+
+    /*! OBJ vertex - stores position, normal and texture coordinates */
+    struct Vertex
+    {
+      INLINE Vertex(void) {}
+      INLINE Vertex(vec3f p_, vec3f n_, vec2f t_) :
+        p(p_), n(n_), t(t_) {}
+      vec3f p, n;
+      vec2f t;
+    };
+
+    /*! OBJ material group - triangles are grouped by material */
+    struct MatGroup
+    {
+      MatGroup(int first_, int last_, int m_) :
+        first(first_), last(last_), m(m_) {}
+      MatGroup(void) {}
+      int first, last, m;
+    };
+
+    /*! OBJ Material - just a dump of mtl description */
+    struct Material
+    {
+      char *name;
+      char *map_Ka;
+      char *map_Kd;
+      char *map_D;
+      char *map_Bump;
+      double amb[3];
+      double diff[3];
+      double spec[3];
+      double km;
+      double reflect;
+      double refract;
+      double trans;
+      double shiny;
+      double glossy;
+      double refract_index;
+    };
+
     Obj(void);
     ~Obj(void);
     INLINE bool isValid(void) const {return this->triNum > 0;}
     bool load(const FileName &fileName);
-    ObjTriangle *tri;
-    ObjVertex *vert;
-    ObjMatGroup *grp;
-    ObjMaterial *mat;
+    Triangle *tri;
+    Vertex *vert;
+    MatGroup *grp;
+    Material *mat;
     size_t triNum;
     size_t vertNum;
     size_t grpNum;

@@ -106,9 +106,6 @@ namespace pf
     Ref<Task> waitForDestruction;
   };
 
-  /*! One instance is enough */
-  extern OGL *ogl;
-
 /*! Convenient way to catch all GL related errors. User defines the name of the
  *  structure which contains all OGL functions with name OGL_NAME
  */

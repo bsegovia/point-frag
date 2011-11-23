@@ -312,7 +312,7 @@ namespace pf
     // open scene
     objFile = fopen(fileName, "r");
     if (objFile == NULL) {
-      PF_MSG ("ObjLoader: error reading file: " << fileName);
+      PF_MSG("ObjLoader: error reading file: " << fileName);
       return false;
     }
 
@@ -363,7 +363,7 @@ namespace pf
     return true;
   }
 
-  static inline bool cmp(ObjTriangle t0, ObjTriangle t1) {return t0.m < t1.m;}
+  static inline bool cmp(Obj::Triangle t0, Obj::Triangle t1) {return t0.m < t1.m;}
 
   Obj::Obj(void) { std::memset(this, 0, sizeof(Obj)); }
 
@@ -410,11 +410,11 @@ namespace pf
     for (size_t i = 0; i < loader.faceList.size(); ++i) {
       const ObjLoaderFace *face = loader.faceList[i];
       if (face == NULL) {
-        PF_MSG_V ("ObjLoader: NULL face for " << fileName.str());
+        PF_MSG_V("ObjLoader: NULL face for " << fileName.str());
         return false;
       }
       if (face->vertexNum > 4) {
-        PF_MSG_V ("ObjLoader: Too many vertices for " << fileName.str());
+        PF_MSG_V("ObjLoader: Too many vertices for " << fileName.str());
         return false;
       }
       int v[] = {0,0,0,0};
@@ -437,14 +437,14 @@ namespace pf
     if (polys.size() == 0) return true;
 
     // Create triangles now
-    std::vector<ObjTriangle> tris;
+    std::vector<Triangle> tris;
     for (auto poly = polys.begin(); poly != polys.end(); ++poly) {
       if (poly->n == 3) {
-        const ObjTriangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+        const Triangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
         tris.push_back(tri);
       } else {
-        const ObjTriangle tri0(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
-        const ObjTriangle tri1(vec3i(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
+        const Triangle tri0(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
+        const Triangle tri1(vec3i(poly->v[0], poly->v[2], poly->v[3]), poly->mat);
         tris.push_back(tri0);
         tris.push_back(tri1);
       }
@@ -452,14 +452,14 @@ namespace pf
 
     // Sort them by material and save the material group
     std::sort(tris.begin(), tris.end(), cmp);
-    std::vector<ObjMatGroup> matGrp;
+    std::vector<MatGroup> matGrp;
     int curr = tris[0].m;
-    matGrp.push_back(ObjMatGroup(0,0,curr));
+    matGrp.push_back(MatGroup(0,0,curr));
     for (size_t i = 0; i < tris.size(); ++i) {
       if (tris[i].m != curr) {
         curr = tris[i].m;
         matGrp.back().last = (int) (i-1);
-        matGrp.push_back(ObjMatGroup((int)i,0,curr));
+        matGrp.push_back(MatGroup((int)i,0,curr));
       }
     }
     matGrp.back().last = tris.size() - 1;
@@ -485,13 +485,13 @@ namespace pf
 
     // Create all the vertices and store them
     const size_t vertNum = map.size();
-    std::vector<ObjVertex> verts;
+    std::vector<Vertex> verts;
     verts.resize(vertNum);
     bool allPositionSet = true, allNormalSet = true, allTexCoordSet = true;
     for (auto it = map.begin(); it != map.end(); ++it) {
       const VertexKey src = it->first;
       const int dst = it->second;
-      ObjVertex &v = verts[dst];
+      Vertex &v = verts[dst];
 
       // Get the position if specified
       if (src.p != -1) {
@@ -534,8 +534,8 @@ namespace pf
       PF_WARNING_V("ObjLoader: some texture coordinates are unspecified for " << fileName.str());
 
     // Allocate the ObjMaterial
-    ObjMaterial *mat = PF_NEW_ARRAY(ObjMaterial, loader.materialList.size());
-    std::memset(mat, 0, sizeof(ObjMaterial) * loader.materialList.size());
+    Material *mat = PF_NEW_ARRAY(Material, loader.materialList.size());
+    std::memset(mat, 0, sizeof(Material) * loader.materialList.size());
 
 #define COPY_FIELD(NAME)                           \
     if (from.NAME) {                               \
@@ -547,7 +547,7 @@ namespace pf
     for (size_t i = 0; i < loader.materialList.size(); ++i) {
       const ObjLoaderMat &from = *loader.materialList[i];
       assert(loader.materialList[i] != NULL);
-      ObjMaterial &to = mat[i];
+      Material &to = mat[i];
       COPY_FIELD(name);
       COPY_FIELD(map_Ka);
       COPY_FIELD(map_Kd);
@@ -563,22 +563,22 @@ namespace pf
     this->grpNum = matGrp.size();
     this->matNum = loader.materialList.size();
     if (this->triNum) {
-      this->tri = PF_NEW_ARRAY(ObjTriangle, this->triNum);
-      std::memcpy(this->tri, &tris[0],  sizeof(ObjTriangle) * this->triNum);
+      this->tri = PF_NEW_ARRAY(Triangle, this->triNum);
+      std::memcpy(this->tri, &tris[0],  sizeof(Triangle) * this->triNum);
     }
     if (this->vertNum) {
-      this->vert = PF_NEW_ARRAY(ObjVertex, this->vertNum);
-      std::memcpy(this->vert, &verts[0], sizeof(ObjVertex) * this->vertNum);
+      this->vert = PF_NEW_ARRAY(Vertex, this->vertNum);
+      std::memcpy(this->vert, &verts[0], sizeof(Vertex) * this->vertNum);
     }
     if (this->grpNum) {
-      this->grp = PF_NEW_ARRAY(ObjMatGroup, this->grpNum);
-      std::memcpy(this->grp,  &matGrp[0],  sizeof(ObjMatGroup) * this->grpNum);
+      this->grp = PF_NEW_ARRAY(MatGroup, this->grpNum);
+      std::memcpy(this->grp,  &matGrp[0],  sizeof(MatGroup) * this->grpNum);
     }
     this->mat = mat;
-    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << triNum << " triangles");
-    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << vertNum << " vertices");
-    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << grpNum << " groups");
-    PF_MSG_V ("ObjLoader: " << fileName.str() << ", " << matNum << " materials");
+    PF_MSG_V("ObjLoader: " << fileName.str() << ", " << triNum << " triangles");
+    PF_MSG_V("ObjLoader: " << fileName.str() << ", " << vertNum << " vertices");
+    PF_MSG_V("ObjLoader: " << fileName.str() << ", " << grpNum << " groups");
+    PF_MSG_V("ObjLoader: " << fileName.str() << ", " << matNum << " materials");
     return true;
   }
 
@@ -587,7 +587,7 @@ namespace pf
     PF_SAFE_DELETE_ARRAY(this->vert);
     PF_SAFE_DELETE_ARRAY(this->grp);
     for (size_t i = 0; i < this->matNum; ++i) {
-      ObjMaterial &mat = this->mat[i];
+      Material &mat = this->mat[i];
       PF_SAFE_DELETE_ARRAY(mat.name);
       PF_SAFE_DELETE_ARRAY(mat.map_Ka);
       PF_SAFE_DELETE_ARRAY(mat.map_Kd);

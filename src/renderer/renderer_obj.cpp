@@ -150,7 +150,7 @@ namespace pf
 
       // Create the vertex buffer
       PF_MSG_V("RendererObj: creating OGL objects");
-      const size_t vertexSize = obj.vertNum * sizeof(ObjVertex);
+      const size_t vertexSize = obj.vertNum * sizeof(Obj::Vertex);
       R_CALL (GenBuffers, 1, &this->arrayBuffer);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
       R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, obj.vert, GL_STATIC_DRAW);
@@ -174,8 +174,8 @@ namespace pf
       R_CALL (GenVertexArrays, 1, &this->vertexArray);
       R_CALL (BindVertexArray, this->vertexArray);
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
-      R_CALL (VertexAttribPointer, RendererDriver::ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), NULL);
-      R_CALL (VertexAttribPointer, RendererDriver::ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(ObjVertex), (void*)offsetof(ObjVertex, t));
+      R_CALL (VertexAttribPointer, RendererDriver::ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex), NULL);
+      R_CALL (VertexAttribPointer, RendererDriver::ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex), (void*)offsetof(Obj::Vertex, t));
       R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
       R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_POSITION);
       R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_TEXCOORD);
