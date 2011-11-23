@@ -19,6 +19,7 @@
 
 #include "renderer/texture.hpp"
 #include "math/bbox.hpp"
+#include "rt/bvh2.hpp"
 #include "GL/gl3.h"
 
 namespace pf
@@ -29,7 +30,7 @@ namespace pf
   class Obj;
   // We build the hierarchy of segment if a BVH of triangles is given
   struct RTTriangle;
-  template <typename T> class BVH;
+  template <typename T> class BVH2;
 
   /*! Entity used for rendering of OBJ models */
   class RendererObj : public RefCount
@@ -69,7 +70,7 @@ namespace pf
     };
 
     /*! Note that this object actually belongs to a renderer */
-    RendererObj(Renderer &renderer, const Obj &obj);
+    RendererObj(Renderer &renderer, const Obj &obj, const BVH2<RTTriangle> *bvh = NULL);
     /*! Release it (still from a renderer */
     ~RendererObj(void);
     /*! Valid means it is OGL uploaded */
@@ -83,6 +84,7 @@ namespace pf
     Segment *sgmt;        //!< All the sub-meshes to display
     uint32 matNum;        //!< Number of materials
     uint32 sgmtNum;       //!< Number of segments
+    BVH2<Segment> bvh;    //!< Sorts the geometry
     GLuint vertexArray;   //!< Vertex declaration
     GLuint arrayBuffer;   //!< Vertex data (positions, normals...)
     GLuint elementBuffer; //!< Indices

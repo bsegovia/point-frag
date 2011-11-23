@@ -105,10 +105,10 @@ namespace pf
 
   /*! Sort the centroids along the given axis */
   template<uint32 axis>
-  struct Sorter : public std::binary_function<int, int, bool> {
+  struct CentroidSorter : public std::binary_function<int, int, bool> {
     const std::vector<Centroid> &centroids;
-    Sorter(const std::vector<Centroid> &c) : centroids(c) {}
-    INLINE int operator() (const uint32 a, const uint32 b) const  {
+    CentroidSorter(const std::vector<Centroid> &c) : centroids(c) {}
+    INLINE int operator() (const uint32 a, const uint32 b) const {
       return centroids[a][axis] <  centroids[b][axis];
     }
   };
@@ -126,7 +126,7 @@ namespace pf
     /*! Increasing order sort for the given axis */
     virtual Task *run(void) {
       for (size_t j = 0; j < IDs.size(); ++j) IDs[j] = j;
-      std::sort(IDs.begin(), IDs.end(), Sorter<axis>(centroids));
+      std::sort(IDs.begin(), IDs.end(), CentroidSorter<axis>(centroids));
       return NULL;
     }
   private:
@@ -424,16 +424,6 @@ namespace pf
     std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32_t));
     PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
     return true;
-  }
-
-  template <typename T>
-  BVH2<T>::BVH2(void) : node(NULL), prim(NULL), primID(NULL), nodeNum(0), primNum(0) {}
-
-  template <typename T>
-  BVH2<T>::~BVH2(void) {
-    PF_SAFE_DELETE_ARRAY(this->node);
-    PF_SAFE_DELETE_ARRAY(this->primID);
-    PF_SAFE_DELETE_ARRAY(this->prim);
   }
 
   // Instantiation for RTTriangle

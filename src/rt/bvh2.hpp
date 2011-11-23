@@ -18,14 +18,12 @@
 #define __PF_BVH2_HPP__
 
 #include "intersectable.hpp"
+#include "bvh2_node.hpp"
 #include "sys/ref.hpp"
 #include "sys/platform.hpp"
 
 namespace pf
 {
-  // Avoid unecessary dependencies
-  struct BVH2Node;
-
   /*! Binary BVH tree */
   template <typename T>
   struct BVH2 : public Intersectable
@@ -48,6 +46,16 @@ namespace pf
     uint32 nodeNum; //!< Number of nodes in the tree
     uint32 primNum; //!< The number of primitives
   };
+
+  template <typename T>
+  BVH2<T>::BVH2(void) : node(NULL), prim(NULL), primID(NULL), nodeNum(0), primNum(0) {}
+
+  template <typename T>
+  BVH2<T>::~BVH2(void) {
+    PF_SAFE_DELETE_ARRAY(this->node);
+    PF_SAFE_DELETE_ARRAY(this->primID);
+    PF_SAFE_DELETE_ARRAY(this->prim);
+  }
 
   /*! Compile a BVH */
   template <typename T> bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &bvh);
