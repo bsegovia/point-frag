@@ -28,7 +28,7 @@
 
 namespace pf
 {
-  static const int defaultWidth = 800, defaultHeight = 600;
+  static const int defaultWidth = 1024, defaultHeight = 1024;
   Renderer *renderer = NULL;
   Ref<RendererObj> renderObj = NULL;
   static LoggerStream *coutStream = NULL;
@@ -74,8 +74,8 @@ namespace pf
     logger = NULL;
   }
 
-  static const FileName objName("f000.obj");
-  //static const FileName objName("arabic_city_II.obj");
+  //static const FileName objName("f000.obj");
+  static const FileName objName("arabic_city_II.obj");
   //static const FileName objName("conference.obj");
   //static const FileName objName("sibenik.obj");
   //static const FileName objName("sponza.obj");

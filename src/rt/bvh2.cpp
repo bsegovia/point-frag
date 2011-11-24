@@ -73,7 +73,7 @@ namespace pf
     ~BVH2Builder(void);
     /*! Compute primitives centroids and sort then for each axis */
     template <typename T>
-    int injection(const T * const RESTRICT soup, uint32 primNum);
+    void injection(const T * const RESTRICT soup, uint32 primNum);
     /*! Build the hierarchy itself */
     int compile(void);
 
@@ -123,7 +123,7 @@ namespace pf
   };
 
   template <typename T>
-  int BVH2Builder::injection(const T * const RESTRICT soup, uint32 primNum)
+  void BVH2Builder::injection(const T * const RESTRICT soup, uint32 primNum)
   {
     std::vector<Centroid> centroids;
     double t = getSeconds();
@@ -151,18 +151,15 @@ namespace pf
       sceneAABB.grow(aabbs[j]);
     }
 
-    Ref<Task> sortTask[3];
-    sortTask[0] = PF_NEW(TaskCentroidSort<0>, centroids, IDs[0]);
-    sortTask[1] = PF_NEW(TaskCentroidSort<1>, centroids, IDs[1]);
-    sortTask[2] = PF_NEW(TaskCentroidSort<2>, centroids, IDs[2]);
-    for (size_t i = 0; i < 3; ++i) sortTask[i]->scheduled();
-    for (size_t i = 0; i < 3; ++i) sortTask[i]->waitForCompletion();
-    PF_MSG_V("BVH2: Injection time, " << getSeconds() - t);
-    return n;
-  }
+    // Sort the bounding boxes along their axes
+    for (int j = 0; j < n; ++j) 
+      IDs[0][j] = IDs[1][j] = IDs[2][j] = j;
+    std::sort(IDs[0].begin(), IDs[0].end(), CentroidSorter<0>(centroids));
+    std::sort(IDs[1].begin(), IDs[1].end(), CentroidSorter<1>(centroids));
+    std::sort(IDs[2].begin(), IDs[2].end(), CentroidSorter<2>(centroids));
 
-  /*! Explicit instantiation for RTTriangle */
-  template int BVH2Builder::injection<RTTriangle> (const RTTriangle * const RESTRICT, uint32);
+    PF_MSG_V("BVH2: Injection time, " << getSeconds() - t);
+  }
 
   BVH2Builder::BVH2Builder(void) : currID(0) { }
   BVH2Builder::~BVH2Builder(void) { }
@@ -381,8 +378,7 @@ namespace pf
   const BVH2BuildOption defaultBVH2Options(2, 16, 1.f, 1.f);
 
   template <typename T>
-  bool buildBVH2
-    (const T *t, uint32 primNum, BVH2<T> &tree, const BVH2BuildOption &option)
+  void buildBVH2(const T *t, uint32 primNum, BVH2<T> &tree, const BVH2BuildOption &option)
   {
     PF_MSG_V("BVH2: compiling BVH2");
     PF_MSG_V("BVH2: " << primNum << " primitives");
@@ -393,7 +389,7 @@ namespace pf
     if (UNLIKELY(c->options.maxPrimNum < c->options.minPrimNum))
       FATAL("Bad BVH2 compilation parameters");
 
-    if (c->injection<T>(t, primNum) < 0) return false;
+    c->injection<T>(t, primNum);
     c->compile();
 
     PF_MSG_V("BVH2: Compacting node array");
@@ -421,11 +417,10 @@ namespace pf
     assert(tree.primID != NULL);
     std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32_t));
     PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
-    return true;
   }
 
   // Instantiation for RTTriangle
-  template bool buildBVH2<RTTriangle>
+  template void buildBVH2<RTTriangle>
     (const RTTriangle*, uint32, BVH2<RTTriangle>&, const BVH2BuildOption&);
   template BVH2<RTTriangle>::BVH2(void);
   template BVH2<RTTriangle>::~BVH2(void);

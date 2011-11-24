@@ -358,7 +358,7 @@ namespace pf
   }
   DECL M44 perspective (T fovy, T aspect, T zNear, T zFar) {
     M44 dst(zero);
-    T range = tan(deg2rad(fovy / T(2.f))) * zNear;	
+    T range = tan(deg2rad(fovy / T(2.f))) * zNear;
     T left = -range * aspect;
     T right = range * aspect;
     T bottom = -range;

@@ -143,7 +143,7 @@ namespace pf
       default: errString = "GL_UNKNOWN";
     }
 #undef MAKE_ERR_STRING
-    PF_ERROR_V("OGL: " << errString << "): " << (title ? title : ""));
+    PF_ERROR_V("OGL: " << errString << " " << (title ? title : ""));
     return err == GL_NO_ERROR;
   }
 
@@ -287,6 +287,7 @@ namespace pf
     /*! On the main thread, we really release the resource */              \
     virtual Task* run(void)                                                \
     {                                                                      \
+      printf("%i\n",n);                                                    \
       ogl.COUNTER += -this->n;                                             \
       ogl.FUNC(n, handlePtr);                                              \
       if (deallocatePtr) PF_DELETE_ARRAY(this->handlePtr);                 \
@@ -298,7 +299,7 @@ namespace pf
     OGL &ogl;                                                              \
     GLuint *handlePtr;                                                     \
     GLuint handle[OGL_MAX_HANDLE_NUM];                                     \
-    GLuint n;                                                              \
+    int32 n;                                                               \
     bool deallocatePtr;                                                    \
   };
 

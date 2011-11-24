@@ -25,6 +25,9 @@ namespace pf
   /*! Only way to to use GLUT is to use this global */
   static TaskEvent *taskEvent = NULL;
 
+  static double t = 0.f;
+  static uint64 frameNum = 0;
+
   InputEvent::InputEvent(int w_, int h_)
   {
     this->mouseXRel = this->mouseYRel = 0;
@@ -108,6 +111,14 @@ namespace pf
     }
     prevT0 = getSeconds();
 #endif
+    if (UNLIKELY(frameNum++ == 0)) {
+      t = getSeconds();
+    } else if (frameNum % 256 == 0) {
+      const double t0 = getSeconds();
+      printf("\rfps %lf frame/s", 256. / (t0 - t));
+      fflush(stdout);
+      t = t0;
+    }
 
     if (UNLIKELY(taskEvent == NULL)) TaskEvent::init();
     taskEvent = this;

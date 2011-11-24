@@ -58,7 +58,7 @@ namespace pf
       minPrimNum(minPrimNum),
       maxPrimNum(maxPrimNum),
       SAHIntersectionCost(SAHIntersectionCost),
-      SAHTraversalCost(SAHTraversalCost) {};
+      SAHTraversalCost(SAHTraversalCost) {}
     uint32 minPrimNum;          //!< Minimum number of primitives per leaf
     uint32 maxPrimNum;          //!< Maximum number of primitives per leaf
     float SAHIntersectionCost;  //!< Estimated cost to traverse the leaf
@@ -70,7 +70,7 @@ namespace pf
 
   /*! Compile a BVH */
   template <typename T>
-  bool buildBVH2(const T *t, uint32 primNum, BVH2<T> &bvh,
+  void buildBVH2(const T *t, uint32 primNum, BVH2<T> &bvh,
                  const BVH2BuildOption &option = defaultBVH2Options);
 
 } /* namespace pf */

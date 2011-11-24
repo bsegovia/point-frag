@@ -41,7 +41,6 @@ namespace pf
     void createGenerator(RTCameraRayGen &gen, int w, int h) const;
     /*! Build the ray packet generator */
     void createGenerator(RTCameraPacketGen &gen, int w, int h) const;
-  private:
     ALIGNED(16) vec3f org;            //!< Origin of the camera
     ALIGNED(16) vec3f up;             //!< Up vector
     ALIGNED(16) vec3f view;           //!< View direction

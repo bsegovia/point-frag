@@ -19,6 +19,7 @@
 #include "models/obj.hpp"
 #include "rt/bvh2.hpp"
 #include "rt/bvh2_node.hpp"
+#include "rt/rt_triangle.hpp"
 #include "sys/logging.hpp"
 
 #include <cstring>
@@ -145,69 +146,14 @@ namespace pf
     return indices;
   }
 
-  /*! Sort the triangle ID according to their material */
-  struct TriangeIDSorter {
-    TriangeIDSorter(const Obj::Triangle *tri) : tri(tri) {}
-    INLINE int operator() (const uint32 a, const uint32 b) const {
-      return tri[a].m < tri[b].m;
-    }
-    const Obj::Triangle *tri;
-  };
-
-  /*! Helper to build the BVH on the renderer obj */
-  class SegmentBVHBuilder
-  {
-  public:
-    SegmentBVHBuilder(const Obj &obj, const BVH2<RTTriangle> &bvh);
-    ~SegmentBVHBuilder(void);
-    /*! Compute each node cost and number of primitives below each of them */
-    void traverseBVH(uint32 nodeID = 0);
-    /*! We cut the source tree to get the destination one */
-    void cut(uint32 nodeID = 0, uint32 dstID = 0);
-    /*! "Merge" the tree ie output it primitives in the merged array */
-    void merge(uint32 nodeID);
-    /*! Create the segments for the node. Return first segment index */
-    uint32 makeSegments(uint32 dstID, uint32 first, uint32 n);
-  private:
-    BVH2<RendererObj::Segment> *dst;//!< This is what we want to build
-    const Obj &obj;                 //!< Contains the triangles (with material)
-    const BVH2<RTTriangle> &bvh;    //!< This guides the build of high level BVH
-    float *cost;                    //!< Per node cost
-    uint32 *primNum;                //!< Primitive number below each node
-    uint32 *mergedID;               //!< Merged primitive IDs
-    uint32 mergedNum;               //!< Number of primitives merged
-    std::vector<BVH2Node> dstNode;  //!< Contains the destination nodes
-    std::vector<RendererObj::Segment> segments; //!< The segments we are creating
-    static const float traversalCost;   //!< Cost to traverse a node
-    static const float intersectionCost;//!< Cost to "intersect" the triangles
-  };
-
-  const float SegmentBVHBuilder::traversalCost = 100.f;
-  const float SegmentBVHBuilder::intersectionCost = 1.f;
-
-  SegmentBVHBuilder::SegmentBVHBuilder(const Obj &obj, const BVH2<RTTriangle> &bvh) :
-    obj(obj), bvh(bvh)
-  {
-    this->cost = PF_NEW_ARRAY(float, bvh.nodeNum);
-    this->primNum = PF_NEW_ARRAY(uint32, bvh.nodeNum);
-    this->mergedID = PF_NEW_ARRAY(uint32, bvh.primNum);
-    this->dst = PF_NEW(BVH2<RendererObj::Segment>);
-    this->mergedNum = 0;
-  }
-
-  SegmentBVHBuilder::~SegmentBVHBuilder(void) {
-    PF_SAFE_DELETE_ARRAY(this->cost);
-    PF_SAFE_DELETE_ARRAY(this->primNum);
-    PF_SAFE_DELETE_ARRAY(this->mergedID);
-  }
-
-  static INLINE float halfArea(const BVH2Node &node) {
+  /*! Compute half of the node area */
+  INLINE float halfArea(const BVH2Node &node) {
     const vec3f d = node.pmax - node.pmin;
     return d.x*(d.y+d.z)+d.y*d.z;
   }
 
   /*! Make the bbox bigger with the given triangle */
-  static INLINE void growBBox(BBox3f &bbox, const Obj &obj, uint32 triID) {
+  INLINE void growBBox(BBox3f &bbox, const Obj &obj, uint32 triID) {
     for (int v = 0; v < 3; ++v) {
       const int vertID = obj.tri[triID].v[v];
       bbox.grow(obj.vert[vertID].p);
@@ -218,163 +164,118 @@ namespace pf
    *  structure and first is the ID of the same triangle in the sorted array of
    *  triangle indices
    */
-  static INLINE void startSegment(RendererObj::Segment &segment,
-                                  const Obj &obj,
-                                  uint32 triID,
-                                  uint32 first)
+  INLINE void startSegment(RendererObj::Segment &segment,
+                           const Obj &obj,
+                           uint32 triID,
+                           uint32 first)
   {
-    growBBox(segment.bbox, obj, triID);
     segment.first = first;
     segment.bbox = BBox3f(empty);
     segment.matID = obj.tri[triID].m; // Be aware, they must be remapped
   }
 
-  /*! Just for symetry maniacs. We finish the segment by giving the last
-   *  primitive index
-   */
-  static INLINE void endSegment(RendererObj::Segment &segment, uint32 last)
+  /*! Symetry maniacs. We finish the segment with the last primitive index */
+  INLINE void endSegment(RendererObj::Segment &segment, uint32 last)
   {
     segment.last = last;
   }
 
-  uint32 SegmentBVHBuilder::makeSegments(uint32 dstID, uint32 first, uint32 n)
+  /*! Sort the triangle ID according to their material */
+  struct TriangeIDSorter {
+    TriangeIDSorter(const Obj::Triangle *tri) : tri(tri) {}
+    INLINE int operator() (const uint32 a, const uint32 b) const {
+      return tri[a].m < tri[b].m;
+    }
+    const Obj::Triangle *tri;
+  };
+
+  static void doSegment(const Obj &obj,
+                        BVH2<RTTriangle> &bvh,
+                        std::vector<RendererObj::Segment> &segments,
+                        uint32 nodeID)
   {
+    BVH2Node &node = bvh.node[nodeID];
+    const uint32 first = node.getPrimID();
+    const uint32 n = node.getPrimNum();
     const uint32 last = first + n - 1;
     const uint32 firstSegment = segments.size();
-    std::sort(mergedID+first, mergedID+last+1, TriangeIDSorter(obj.tri));
+    uint32 *IDs = bvh.primID + first;
+    std::sort(IDs, IDs+n, TriangeIDSorter(obj.tri));
     assert(n > 0);
 
     // Allocate the segments and build them
     uint32 segmentID = firstSegment;
-    uint32 triID = mergedID[first];
+    uint32 triID = IDs[0];
     int32 matID = obj.tri[triID].m;
     segments.push_back(RendererObj::Segment());
     startSegment(segments[segmentID], obj, triID, first);
 
     // When a new material is encountered, we finish the current segment and
     // start a new one
-    for (size_t i = first+1; i < first+n; ++i) {
-      triID = mergedID[i];
+    for (size_t i = 1; i < n; ++i) {
+      triID = IDs[i];
       if (obj.tri[triID].m != matID) {
         // We are done with this segment
-        endSegment(segments[segmentID], i-1);
+        endSegment(segments[segmentID], first+i-1);
 
         // Start the new one
         matID = obj.tri[triID].m;
         segmentID = segments.size();
         segments.push_back(RendererObj::Segment());
-        startSegment(segments[segmentID], obj, triID, i);
+        startSegment(segments[segmentID], obj, triID, first+i);
       }
+      growBBox(segments[segmentID].bbox, obj, triID);
     }
     endSegment(segments[segmentID], last);
-
-    // This is the ID of the first segment for the node we are building
-    return firstSegment;
+    node.setPrimID(firstSegment);
   }
 
-  void SegmentBVHBuilder::traverseBVH(uint32 nodeID)
+#if 1
+  /*! Create segment from a SAH BVH of triangles */
+  static GLuint *RendererObjSegment2(RendererObj &renderObj, const Obj &obj)
   {
-    const BVH2Node &node = bvh.node[nodeID];
-    if (node.isLeaf()) {
-      const uint32 n = node.getPrimNum();
-      cost[nodeID] = float(n) * intersectionCost + traversalCost;
-      primNum[nodeID] = node.getPrimNum();
-    } else {
-      const uint32 left = node.getOffset(); // left child ID
-      const uint32 right = left + 1;        // right child ID
-      traverseBVH(left);
-      traverseBVH(right);
-      const BVH2Node &leftChild  = bvh.node[left];
-      const BVH2Node &rightChild = bvh.node[right];
-      const float nodeArea  = halfArea(node);
-      const float leftArea  = halfArea(leftChild);
-      const float rightArea = halfArea(rightChild);
-      const float leftCost  = cost[left];
-      const float rightCost = cost[right];
-      const float childCost = (leftArea*leftCost+rightArea*rightCost)/nodeArea;
-      cost[nodeID] = traversalCost + childCost;
-      primNum[nodeID] = primNum[left] + primNum[right];
+    // Compute the RT triangles first
+    PF_MSG_V("RendererObj: building BVH of segments");
+    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
+    for (size_t i = 0; i < obj.triNum; ++i) {
+      const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p;
+      const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p;
+      const vec3f &v2 = obj.vert[obj.tri[i].v[2]].p;
+      tris[i] = RTTriangle(v0,v1,v2);
     }
-  }
 
-  void SegmentBVHBuilder::merge(uint32 nodeID)
-  {
-    const BVH2Node &node = bvh.node[nodeID];
-    if (node.isLeaf()) {
-      const uint32 *IDs = bvh.primID + node.getPrimID();
-      const uint32 n = node.getPrimNum();
-      for (size_t prim = 0; prim < n; ++prim)
-        mergedID[mergedNum++] = IDs[prim];
-    } else {
-      merge(node.getOffset());
-      merge(node.getOffset()+1);
+    // Build the BVH with appropriate options (this is *not* for ray tracing
+    // but for GPU rasterization
+    BVH2<RTTriangle> bvh;
+    const BVH2BuildOption option(1024, 0xffffffff, 1.f, 2048.f);
+    buildBVH2(tris, obj.triNum, bvh, option);
+    PF_DELETE_ARRAY(tris);
+
+    // Traverse all leaves and create the segments
+    std::vector<RendererObj::Segment> segments;
+    for (size_t nodeID = 0; nodeID < bvh.nodeNum; ++nodeID) {
+      BVH2Node &node = bvh.node[nodeID];
+      if (node.isLeaf()) doSegment(obj, bvh, segments, nodeID);
     }
-  }
 
-  void SegmentBVHBuilder::cut(uint32 nodeID, uint32 dstID)
-  {
-    const BVH2Node &node = bvh.node[nodeID];
-    // Leaf means that we are done. We do not have any other choice that
-    // making a segment with that
-    if (node.isLeaf()) {
-      dstNode[dstID] = node;
-      const uint32 beforeMerge = mergedNum;
-      merge(node.getOffset());
-      const uint32 afterMerge = mergedNum;
-      const uint32 n = afterMerge - beforeMerge;
-      const uint32 primID = makeSegments(dstID, beforeMerge, n);
-      dstNode[dstID].setPrimID(primID);
+    // Now we allocate the segment in the OBJ
+    PF_MSG_V("RendererObj: " << segments.size() << " segments are created");
+    renderObj.sgmtNum = segments.size();
+    renderObj.sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
+    for (size_t segmentID = 0; segmentID < renderObj.sgmtNum; ++segmentID)
+      renderObj.sgmt[segmentID] = segments[segmentID];
+
+    // Build the new index buffer
+    GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
+    for (size_t from = 0, to = 0; from < obj.triNum; ++from, to += 3) {
+      const uint32 triID = bvh.primID[from];
+      assert(triID < obj.triNum);
+      indices[to+0] = obj.tri[triID].v[0];
+      indices[to+1] = obj.tri[triID].v[1];
+      indices[to+2] = obj.tri[triID].v[2];
     }
-    // Non-leaf gives two choices. Either we cut here and we merge the child
-    // nodes to create the segments or we recurse to create the segment in
-    // lower levels. We use the computed cost for that
-    else {
-      const float actualCost = cost[nodeID];
-      const float cutCost = traversalCost + intersectionCost * primNum[nodeID];
-      // Too expensive to cut here, we recurse
-      if (actualCost < cutCost) {
-        const uint32 leftID  = dstNode.size();
-        const uint32 rightID = dstNode.size() + 1;
-        dstNode.push_back(BVH2Node());
-        dstNode.push_back(BVH2Node());
-        dstNode[dstID] = node;
-        dstNode[dstID].setOffset(leftID);
-        cut(node.getOffset(),   leftID);
-        cut(node.getOffset()+1, rightID);
-      }
-      // OK, we create the segments here
-      else {
-        dstNode[dstID] = node;
-        dstNode[dstID].setAsLeaf();
-        const uint32 beforeMerge = mergedNum;
-        merge(node.getOffset());
-        merge(node.getOffset()+1);
-        const uint32 afterMerge = mergedNum;
-        const uint32 n = afterMerge - beforeMerge;
-        const uint32 primID = makeSegments(dstID, beforeMerge, n);
-        dstNode[dstID].setPrimID(primID);
-      }
-    }
-  }
 
-#if 0
-  /*! In the case the user provides a BVH for the OBJ, we use it to segment
-   *  the geometry in a useful way. This will allow us to cull the geometry
-   *  using the ray-traced z buffer
-   */
-  static GLuint *RendererObjSegmentFromBVH(RendererObj &renderObj,
-                                           const Obj &obj,
-                                           const BVH2<RTTriangle> &bvh)
-  {
-    SegmentBVHBuilder builder(obj, bvh);
-
-    // Compute node cost and primimite number per node
-    builder.traverseBVH();
-
-    // Cut the tree and compute the segments
-    builder.cut();
-
-    return NULL;
+    return indices;
   }
 #endif
 
@@ -407,7 +308,10 @@ namespace pf
 
       // Right now we only create one segment per material
       PF_MSG_V("RendererObj: creating geometry segments");
-      GLuint *indices = RendererObjSegment(*this, obj);
+      //GLuint *indices = RendererObjSegment(*this, obj);
+      GLuint *indices = RendererObjSegment2(*this, obj);
+      for (size_t segmentID = 0; segmentID < sgmtNum; ++segmentID)
+        sgmt[segmentID].matID = matRemap[sgmt[segmentID].matID];
 
       // Create the OGL index buffer
       PF_MSG_V("RendererObj: creating OGL objects");

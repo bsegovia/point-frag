@@ -48,18 +48,10 @@ namespace pf
   {
     const float rw = 1.f / (float) w;
     const float rh = 1.f / (float) h;
-    gen.org.x = this->org.x;
-    gen.org.y = this->org.y;
-    gen.org.z = this->org.z;
-    gen.imagePlaneOrg.x = this->imagePlaneOrg.x;
-    gen.imagePlaneOrg.y = this->imagePlaneOrg.y;
-    gen.imagePlaneOrg.z = this->imagePlaneOrg.z;
-    gen.xAxis.x = this->xAxis.x * rw;
-    gen.xAxis.y = this->xAxis.y * rw;
-    gen.xAxis.z = this->xAxis.z * rw;
-    gen.zAxis.x = this->zAxis.x * rh;
-    gen.zAxis.y = this->zAxis.y * rh;
-    gen.zAxis.z = this->zAxis.z * rh;
+    gen.org = this->org;
+    gen.imagePlaneOrg = this->imagePlaneOrg;
+    gen.xAxis = this->xAxis * rw;
+    gen.zAxis = this->zAxis * rh;
   }
 
   void RTCamera::createGenerator(RTCameraPacketGen &gen, int w, int h) const
