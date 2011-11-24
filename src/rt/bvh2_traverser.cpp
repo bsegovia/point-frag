@@ -16,6 +16,7 @@
 
 #include "bvh2.hpp"
 #include "bvh2_node.hpp"
+#include "bvh2_traverser.hpp"
 #include "ray.hpp"
 #include "ray_packet.hpp"
 #include "rt_triangle.hpp"
@@ -130,7 +131,7 @@ namespace pf
   };
 
   template <typename T>
-  void BVH2<T>::traverse(const Ray &ray, Hit &hit) const
+  void BVH2Traverser<T>::traverse(const Ray &ray, Hit &hit) const
   {
     RayStack stack;
     const ssef org = ssef(&ray.org.x).xyzz();
@@ -138,7 +139,7 @@ namespace pf
     const sse3f dir(ray.dir.x, ray.dir.y, ray.dir.z);
     const int s = movemask(rdir);
     const uint32 signArray[] = { s&1, (s>>1)&1, (s>>2)&1 };
-    stack.push(this->node);
+    stack.push(bvh->node);
 
   popNode:
     // Recurse until we find a leaf
@@ -149,10 +150,10 @@ namespace pf
           const uint32 offset = node->getOffset();
           const uint32 first = signArray[node->getAxis()];
           const uint32 second = first ^ 1;
-          stack.push(this->node + offset + second);
-          node = this->node + offset + first;
+          stack.push(bvh->node + offset + second);
+          node = bvh->node + offset + first;
         } else {
-          LeafIntersect(*this, *node, org, dir, hit);
+          LeafIntersect(*bvh, *node, org, dir, hit);
           goto popNode;
         }
       }
@@ -160,14 +161,14 @@ namespace pf
   }
 
   template <typename T>
-  bool BVH2<T>::occluded(const Ray &ray) const {
+  bool BVH2Traverser<T>::occluded(const Ray &ray) const {
     NOT_IMPLEMENTED;
     return false;
   }
 
   /*! Explicit instantiation for BVH2s of RTTriangle */
-  template void BVH2<RTTriangle>::traverse(const Ray&, Hit&) const;
-  template bool BVH2<RTTriangle>::occluded(const Ray&) const;
+  template void BVH2Traverser<RTTriangle>::traverse(const Ray&, Hit&) const;
+  template bool BVH2Traverser<RTTriangle>::occluded(const Ray&) const;
 
   ///////////////////////////////////////////////////////////////////////////
   /// Ray Packet Routines
@@ -437,7 +438,7 @@ namespace pf
   };
 
   template <typename T>
-  void BVH2<T>::traverse(const RayPacket &pckt, PacketHit &hit) const
+  void BVH2Traverser<T>::traverse(const RayPacket &pckt, PacketHit &hit) const
   {
     PacketStack stack;
     const uint32 s = movemask(pckt.iasign);
@@ -448,29 +449,23 @@ namespace pf
     while (LIKELY(stack.pop())) {
       const uint32 nodeID = stack.elem[stack.top].nodeID;
       uint32 firstActive = stack.elem[stack.top].first;
-      const BVH2Node * RESTRICT node = &this->node[nodeID];
+      const BVH2Node * RESTRICT node = &bvh->node[nodeID];
       while (LIKELY(!node->isLeaf())) {
         if(!AABBIntersect(*node, pckt, hit, firstActive)) goto popNode;
         const uint32 offset = node->getOffset();
         const uint32 first = signArray[node->getAxis()];
         const uint32 second = first ^ 1;
         stack.push(offset + second, firstActive);
-        node = &this->node[offset + first];
+        node = &bvh->node[offset + first];
       }
 
       // Intersect BVH leaf and its primitives
-      LeafIntersect(*this, *node, pckt, firstActive, hit);
+      LeafIntersect(*bvh, *node, pckt, firstActive, hit);
     }
   }
 
-  template <typename T>
-  void BVH2<T>::occluded(const RayPacket &pckt, PacketOcclusion &o) const {
-    NOT_IMPLEMENTED;
-  }
-
   /*! Explicit instantiation for BVH2s of RTTriangle */
-  template void BVH2<RTTriangle>::traverse(const RayPacket&, PacketHit&) const;
-  template void BVH2<RTTriangle>::occluded(const RayPacket&, PacketOcclusion&) const;
+  template void BVH2Traverser<RTTriangle>::traverse(const RayPacket&, PacketHit&) const;
 
 } /* namespace BKY */
 

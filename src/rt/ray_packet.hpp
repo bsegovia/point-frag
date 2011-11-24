@@ -64,15 +64,6 @@ namespace pf
     ssei id1[RayPacket::chunkNum]; //!< Second ID of intersection
   };
 
-  /*! Indicate which ray is occluded per chunk */
-  struct PacketOcclusion
-  {
-    INLINE PacketOcclusion(void) {
-      for (uint32 i = 0; i < RayPacket::chunkNum; ++i) occluded[i] = 0;
-    }
-    uint32 occluded[RayPacket::chunkNum];
-  };
-
 } /* namespace pf */
 
 #endif /* __PF_RAY_PACKET_HPP__ */

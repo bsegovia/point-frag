@@ -357,12 +357,6 @@ namespace pf
     }
   }
 
-  // XXX remove this dependency by distinguishing between BVH and intersectabe
-  template <> void BVH2<RendererObj::Segment>::traverse(const Ray &ray, Hit &hit) const {}
-  template <> void BVH2<RendererObj::Segment>::traverse(const RayPacket &pckt, PacketHit &hit) const {}
-  template <> bool BVH2<RendererObj::Segment>::occluded(const Ray &ray) const { return false; }
-  template <> void BVH2<RendererObj::Segment>::occluded(const RayPacket &pckt, PacketOcclusion &o) const {}
-
 #if 0
   /*! In the case the user provides a BVH for the OBJ, we use it to segment
    *  the geometry in a useful way. This will allow us to cull the geometry

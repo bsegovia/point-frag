@@ -14,24 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_INTERSECTABLE_HPP__
-#define __PF_INTERSECTABLE_HPP__
+#ifndef __PF_INTERSECTOR_HPP__
+#define __PF_INTERSECTOR_HPP__
 
 #include "sys/ref.hpp"
 
 namespace pf
 {
   struct Ray;             // Single ray structure
-  struct RayPacket;       // Packet of rays
   struct Hit;             // Store ray hit information
+  struct RayPacket;       // Packet of rays
   struct PacketHit;       // Store ray packet hit information
-  struct PacketOcclusion; // Store occlusion information of a packet
 
   /*! Represents any kind of intersectable geometry that we are going to
    *  traverse with rays or packet of rays
    */
-  class Intersectable : public RefCount
+  class Intersector : public RefCount
   {
+  public:
     /*! Traverse routine for rays */
     virtual void traverse(const Ray &ray, Hit &hit) const = 0;
 
@@ -42,13 +42,8 @@ namespace pf
 
     /*! Shadow ray routine for rays. True if occluded */
     virtual bool occluded(const Ray &ray) const = 0;
-
-    /*! Shadow ray routine for packet of rays. Fill the given occlusion
-     *  structure
-     */
-    virtual void occluded(const RayPacket &pckt, PacketOcclusion &o) const = 0;
   };
 } /* namespace pf */
 
-#endif /* __PF_INTERSECTABLE_HPP__ */
+#endif /* __PF_INTERSECTOR_HPP__ */
 

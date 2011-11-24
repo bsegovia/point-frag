@@ -62,21 +62,9 @@ namespace pf
   /*! To sort primitives */
   enum { ON_LEFT = 0, ON_RIGHT = 1 };
 
-  /*! SAH cost for traversal and intersection */
-  static const float SAHIntersectionCost = 1.f;
-  static const float SAHTraversalCost = 1.f;
-
   /*! Used when sorting along each axis */
   static const int remapOtherAxis[4] = {1, 2, 0, 1};
   enum {otherAxisNum = 2};
-
-  /*! Options to compile the BVH2 */
-  struct BVH2BuilderOption {
-    uint32 minPrimNum;
-    uint32 maxPrimNum;
-    float SAHIntersectionCost;
-    float SAHTraversalCost;
-  };
 
   /*! n.log(n) compiler with bounding box sweeping and SAH */
   struct BVH2Builder : public RefCount
@@ -100,7 +88,7 @@ namespace pf
     uint32 currID;
     Box sceneAABB;
     BVH2Node * RESTRICT root;
-    BVH2BuilderOption options;
+    BVH2BuildOption options;
   };
 
   /*! Sort the centroids along the given axis */
@@ -390,17 +378,17 @@ namespace pf
     return 0;
   }
 
+  const BVH2BuildOption defaultBVH2Options(2, 16, 1.f, 1.f);
+
   template <typename T>
-  bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &tree)
+  bool buildBVH2
+    (const T *t, uint32 primNum, BVH2<T> &tree, const BVH2BuildOption &option)
   {
     PF_MSG_V("BVH2: compiling BVH2");
     PF_MSG_V("BVH2: " << primNum << " primitives");
     Ref<BVH2Builder> c = PF_NEW(BVH2Builder);
     const double start = getSeconds();
-    c->options.minPrimNum = BVH2_MIN_PRIM_NUM_PER_LEAF;
-    c->options.maxPrimNum = BVH2_MAX_PRIM_NUM_PER_LEAF;
-    c->options.SAHIntersectionCost = SAHIntersectionCost;
-    c->options.SAHTraversalCost = SAHTraversalCost;
+    c->options = option;
 
     if (UNLIKELY(c->options.maxPrimNum < c->options.minPrimNum))
       FATAL("Bad BVH2 compilation parameters");
@@ -408,12 +396,20 @@ namespace pf
     if (c->injection<T>(t, primNum) < 0) return false;
     c->compile();
 
+    PF_MSG_V("BVH2: Compacting node array");
     tree.nodeNum = c->currID + 1;
     const size_t nodeSize = sizeof(BVH2Node) * tree.nodeNum;
     tree.node = (BVH2Node*) PF_ALIGNED_MALLOC(nodeSize, CACHE_LINE);
     std::memcpy(tree.node, c->root, nodeSize);
     PF_ALIGNED_FREE(c->root);
     PF_MSG_V("BVH2: " << tree.nodeNum << " nodes");
+    uint32 leafNum = 0;
+    for (size_t nodeID = 0; nodeID < tree.nodeNum; ++nodeID)
+      if (tree.node[nodeID].isLeaf()) leafNum++;
+    PF_MSG_V("BVH2: " << leafNum << " leaf nodes");
+    PF_MSG_V("BVH2: " << tree.nodeNum - leafNum << " non-leaf nodes");
+    PF_MSG_V("BVH2: " << double(primNum) / double(leafNum) << " primitives per leaf");
+
     PF_MSG_V("BVH2: Copying primitive soup");
     tree.primNum = primNum;
     tree.prim = PF_NEW_ARRAY(T, primNum);
@@ -429,7 +425,8 @@ namespace pf
   }
 
   // Instantiation for RTTriangle
-  template bool BVH2Build<RTTriangle> (const RTTriangle*, uint32, BVH2<RTTriangle>&);
+  template bool buildBVH2<RTTriangle>
+    (const RTTriangle*, uint32, BVH2<RTTriangle>&, const BVH2BuildOption&);
   template BVH2<RTTriangle>::BVH2(void);
   template BVH2<RTTriangle>::~BVH2(void);
 

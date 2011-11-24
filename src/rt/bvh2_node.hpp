@@ -84,7 +84,6 @@ namespace pf
 
   /*! Maximum and minimum number of primitives in a leaf */
   enum { BVH2_MIN_PRIM_NUM_PER_LEAF = 4 };
-  enum { BVH2_MAX_PRIM_NUM_PER_LEAF = 16 };
 
 } /* namespace pf */
 

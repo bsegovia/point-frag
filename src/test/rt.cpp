@@ -19,11 +19,10 @@
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
-#include "rt/bvh2.hpp"
+#include "rt/bvh2_traverser.hpp"
 #include "rt/rt_triangle.hpp"
-#include "models/obj.hpp"
-
 #include "rt/rt_camera.hpp"
+#include "models/obj.hpp"
 #include "game/camera.hpp"
 #include "image/stb_image.hpp"
 
@@ -34,7 +33,7 @@
 
 namespace pf
 {
-  Ref<BVH2<RTTriangle>> bvh = NULL;
+  Ref<Intersector> intersector  = NULL;
   static LoggerStream *coutStream = NULL;
   static const int CAMW = 1024, CAMH = 1024;
 
@@ -76,17 +75,19 @@ namespace pf
     return tris;
   }
 
+  /*! Task set that computes a frame buffer with ray tracing */
   template <bool singleRay>
   class TaskRayTrace : public TaskSet
   {
   public:
-    INLINE TaskRayTrace(const BVH2<RTTriangle> &bvh,
+    INLINE TaskRayTrace(const Intersector &intersector,
                         const RTCamera &cam,
                         const uint32 *c,
                         uint32 *rgba,
                         uint32 w, uint32 jobNum) :
       TaskSet(jobNum, "TaskRayTrace"),
-      bvh(bvh), cam(cam), c(c), rgba(rgba), w(w), h(jobNum * RayPacket::height) {}
+      intersector(intersector), cam(cam), c(c), rgba(rgba),
+      w(w), h(jobNum * RayPacket::height) {}
 
     virtual void run(size_t jobID)
     {
@@ -99,7 +100,7 @@ namespace pf
             Ray ray;
             Hit hit;
             gen.generate(ray, x, y);
-            bvh.traverse(ray, hit);
+            intersector.traverse(ray, hit);
             rgba[x + y*w] = hit ? c[hit.id0] : 0u;
           }
         }
@@ -111,40 +112,36 @@ namespace pf
           RayPacket pckt;
           PacketHit hit;
           gen.generate(pckt, x, y);
-          bvh.traverse(pckt, hit);
+          intersector.traverse(pckt, hit);
           const int32 *IDs = (const int32 *) hit.id0;
           uint32 curr = 0;
-          for (uint32 j = 0; j < pckt.height; ++j)
+          for (uint32 j = 0; j < pckt.height; ++j) {
             for (uint32 i = 0; i < pckt.width; ++i, ++curr) {
-              const uint32 i0 = i;
-              const uint32 j0 = j;
-              const uint32 offset = x + i0 + (y + j0) * w;
+              const uint32 offset = x + i + (y + j) * w;
               rgba[offset] = IDs[curr] != -1 ? c[IDs[curr]] : 0u;
             }
+          }
         }
       }
     }
 
-    const BVH2<RTTriangle> &bvh;
-    const RTCamera &cam;
-    const uint32 *c;
-    uint32 *rgba;
-    uint32 w, h;
+    const Intersector &intersector; //!< To traverse the scene
+    const RTCamera &cam;            //!< Parameterize the view
+    const uint32 *c;                //!< One color per triangle
+    uint32 *rgba;                   //!< Frame buffer
+    uint32 w, h;                    //!< Frame buffer dimensions
   };
 
+  /*! Ray trace the loaded scene */
   template <bool singleRay>
-  static void rayTrace(int w, int h) {
+  static void rayTrace(int w, int h, const uint32 *c) {
     FPSCamera fpsCam;
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
-    uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
     std::memset(rgba, 0, sizeof(uint32) * w * h);
-    for (uint32 i = 0; i < bvh->primNum; ++i) {
-      c[i] = rand();
-      c[i] |= 0xff000000;
-    }
     const double t = getSeconds();
-    Ref<Task> rayTask = PF_NEW(TaskRayTrace<singleRay>, *bvh, cam, c, rgba, w, h/RayPacket::height);
+    Ref<Task> rayTask = PF_NEW(TaskRayTrace<singleRay>, *intersector,
+      cam, c, rgba, w, h/RayPacket::height);
     rayTask->scheduled();
     rayTask->waitForCompletion();
     const double dt = getSeconds() - t;
@@ -154,10 +151,10 @@ namespace pf
     else
       stbi_write_tga("packet.tga", w, h, 4, rgba);
     PF_DELETE_ARRAY(rgba);
-    PF_DELETE_ARRAY(c);
   }
 
-  static void GameStart(int argc, char **argv) {
+  static void GameStart(int argc, char **argv)
+  {
     Obj obj;
     size_t path = 0;
     for (path = 0; path < defaultPathNum; ++path)
@@ -170,16 +167,29 @@ namespace pf
 
     // Build the BVH
     RTTriangle *tris = ObjComputeTriangle(obj);
-    bvh = PF_NEW(BVH2<RTTriangle>);
-    BVH2Build(tris, obj.triNum, *bvh);
+    Ref<BVH2<RTTriangle>> bvh = PF_NEW(BVH2<RTTriangle>);
+    buildBVH2(tris, obj.triNum, *bvh);
     PF_DELETE_ARRAY(tris);
+
+    // Now we have an intersector on the triangle soup
+    intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
+
+    // Compute some triangle color
+    uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
+    for (uint32 i = 0; i < bvh->primNum; ++i) {
+      c[i] = rand();
+      c[i] |= 0xff000000;
+    }
+
+    // Ray trace now
     PF_MSG_V("Single ray tracing");
-    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH);
+    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
     PF_MSG_V("Packet ray tracing");
-    for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH);
+    for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH, c);
+    PF_DELETE_ARRAY(c);
   }
 
-  static void GameEnd(void) { bvh = NULL; }
+  static void GameEnd(void) { intersector = NULL; }
 }
 
 int main(int argc, char **argv)

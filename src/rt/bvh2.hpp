@@ -17,7 +17,6 @@
 #ifndef __PF_BVH2_HPP__
 #define __PF_BVH2_HPP__
 
-#include "intersectable.hpp"
 #include "bvh2_node.hpp"
 #include "sys/ref.hpp"
 #include "sys/platform.hpp"
@@ -26,20 +25,12 @@ namespace pf
 {
   /*! Binary BVH tree */
   template <typename T>
-  struct BVH2 : public Intersectable
+  struct BVH2 : public RefCount
   {
     /*! Empty tree */
     BVH2(void);
     /*! Release everything */
     virtual ~BVH2(void);
-    /*! Implements Intersectable */
-    virtual void traverse(const Ray &ray, Hit &hit) const;
-    /*! Implements Intersectable */
-    virtual void traverse(const RayPacket &pckt, PacketHit &hit) const;
-    /*! Implements Intersectable */
-    virtual bool occluded(const Ray &ray) const;
-    /*! Implements Intersectable */
-    virtual void occluded(const RayPacket &pckt, PacketOcclusion &o) const;
     BVH2Node *node; //!< All nodes. node[0] is the root
     T *prim;        //!< Primitives the BVH sorts
     uint32 *primID; //!< Indices of primitives per leaf
@@ -57,8 +48,30 @@ namespace pf
     PF_SAFE_DELETE_ARRAY(this->prim);
   }
 
+  /*! Options to compile the BVH2 */
+  struct BVH2BuildOption {
+    INLINE BVH2BuildOption(void) {}
+    INLINE BVH2BuildOption(uint32 minPrimNum,
+                           uint32 maxPrimNum,
+                           uint32 SAHIntersectionCost,
+                           uint32 SAHTraversalCost) :
+      minPrimNum(minPrimNum),
+      maxPrimNum(maxPrimNum),
+      SAHIntersectionCost(SAHIntersectionCost),
+      SAHTraversalCost(SAHTraversalCost) {};
+    uint32 minPrimNum;          //!< Minimum number of primitives per leaf
+    uint32 maxPrimNum;          //!< Maximum number of primitives per leaf
+    float SAHIntersectionCost;  //!< Estimated cost to traverse the leaf
+    float SAHTraversalCost;     //!< Estimated cost to intersect a primitive
+  };
+
+  /*! Default options (mostly suitable for ray tracing) */
+  extern const BVH2BuildOption defaultBVH2Options;
+
   /*! Compile a BVH */
-  template <typename T> bool BVH2Build(const T *t, uint32 primNum, BVH2<T> &bvh);
+  template <typename T>
+  bool buildBVH2(const T *t, uint32 primNum, BVH2<T> &bvh,
+                 const BVH2BuildOption &option = defaultBVH2Options);
 
 } /* namespace pf */
 
