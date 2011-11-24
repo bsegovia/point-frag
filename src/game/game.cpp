@@ -20,8 +20,6 @@
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
-#include "rt/bvh2.hpp"
-#include "rt/rt_triangle.hpp"
 #include "models/obj.hpp"
 
 #include <GL/freeglut.h>
@@ -33,9 +31,8 @@ namespace pf
   static const int defaultWidth = 800, defaultHeight = 600;
   Renderer *renderer = NULL;
   Ref<RendererObj> renderObj = NULL;
-  Ref<BVH2<RTTriangle>> bvh = NULL;
-  LoggerStream *coutStream = NULL;
-  LoggerStream *fileStream = NULL;
+  static LoggerStream *coutStream = NULL;
+  static LoggerStream *fileStream = NULL;
 
   class CoutStream : public LoggerStream {
   public:
@@ -83,16 +80,7 @@ namespace pf
   //static const FileName objName("sibenik.obj");
   //static const FileName objName("sponza.obj");
 
-  static RTTriangle *ObjComputeTriangle(const Obj &obj) {
-    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
-    for (size_t i = 0; i < obj.triNum; ++i)
-      for (size_t j = 0; j < 3; ++j)
-        tris[i].v[j] = obj.vert[obj.tri[i].v[j]].p;
-    return tris;
-  }
-
   static void GameStart(int argc, char **argv) {
-    size_t path = 0;
     PF_MSG_V("GLUT: initialization");
     glutInitWindowSize(defaultWidth, defaultHeight);
     glutInitWindowPosition(64, 64);
@@ -106,6 +94,8 @@ namespace pf
     glutCreateWindow(argv[0]);
 
     renderer = PF_NEW(Renderer);
+
+    size_t path = 0;
     Obj obj;
     for (path = 0; path < defaultPathNum; ++path)
       if (obj.load(FileName(defaultPath[path]) + objName)) {
@@ -115,23 +105,16 @@ namespace pf
     if (path == defaultPathNum)
       PF_WARNING_V("Obj: " << objName << " not found");
 
-    // Build the BVH
-    RTTriangle *tris = ObjComputeTriangle(obj);
-    bvh = PF_NEW(BVH2<RTTriangle>);
-    BVH2Build(tris, obj.triNum, *bvh);
-
     // Build the renderer OBJ
     renderObj = PF_NEW(RendererObj, *renderer, obj);
-    PF_DELETE_ARRAY(tris);
   }
 
   static void GameEnd(void) {
-    bvh = NULL;       // This properly releases it
     renderObj = NULL; // idem
     PF_DELETE(renderer);
     renderer = NULL;
   }
-}
+} /* namespace pf */
 
 int main(int argc, char **argv)
 {

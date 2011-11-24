@@ -62,7 +62,7 @@ namespace pf
      */
     NOINLINE int getActiveMask(void) const {
 #if defined(__WIN32__)
-      // Unfortunately, VS does not support volatile __m128 variables     
+      // Unfortunately, VS does not support volatile __m128 variables
       PF_COMPILER_READ_WRITE_BARRIER;
       __m128i t, h;
       t.m128i_i64[0] = tail.v.m128i_i64[0];
@@ -804,7 +804,12 @@ namespace pf
         this->toEnd--;
         this->refDec();
       }
-      while ((curr = --this->elemNum) >= 0) this->run(curr);
+      while ((curr = --this->elemNum) >= 0) {
+        this->run(curr);
+        TaskThread &myself = scheduler->taskThread[scheduler->threadID];
+        scheduler->taskThread[myself.toWakeUp].tryWakeUp();
+        myself.toWakeUp = (myself.toWakeUp + 1) % scheduler->queueNum;
+      }
     } else if (this->elemNum > 1) {
       this->toEnd++;
       this->refInc(); // One more reference in the scheduler

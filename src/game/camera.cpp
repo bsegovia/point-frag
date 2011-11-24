@@ -2,13 +2,6 @@
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
-#include "rt/ray.hpp"           // XXX to test the ray tracer
-#include "rt/bvh2.hpp"          // XXX to test the ray tracer
-#include "rt/rt_camera.hpp"     // XXX to test the ray tracer
-#include "rt/rt_triangle.hpp"   // XXX to test the ray tracer
-#include "image/stb_image.hpp"  // XXX to test the ray tracer
-
-#include <cstring>
 namespace pf {
 
   const float FPSCamera::defaultSpeed = 1.f;
@@ -74,98 +67,6 @@ namespace pf {
   TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
-  /* XXX to test the ray tracing */
-  extern Ref<BVH2<RTTriangle>> bvh;
-  static const int CAMW = 256, CAMH = 256;
-
-  class TaskRayTrace : public TaskSet
-  {
-  public:
-    INLINE TaskRayTrace(const BVH2<RTTriangle> &bvh,
-                        const RTCamera &cam,
-                        const uint32 *c,
-                        uint32 *rgba,
-                        uint32 w, uint32 jobNum) :
-      TaskSet(jobNum, "TaskRayTrace"),
-      bvh(bvh), cam(cam), c(c), rgba(rgba), w(w), h(jobNum * RayPacket::height) {}
-#if 0
-    virtual void run(size_t jobID)
-    {
-      RTCameraRayGen gen;
-      cam.createGenerator(gen, w, h);
-      for (uint32 row = 0; row < RayPacket::height; ++row) {
-        const uint32 y = row + jobID * RayPacket::height;
-        for (uint32 x = 0; x < w; ++x) {
-          Ray ray;
-          Hit hit;
-          gen.generate(ray, x, y);
-          bvh.traverse(ray, hit);
-          rgba[x + y*w] = hit ? c[hit.id0] : 0u;
-        }
-      }
-    }
-#else
-#define USE_MORTON 0
-    virtual void run(size_t jobID)
-    {
-      RTCameraPacketGen gen;
-      cam.createGenerator(gen, w, h);
-      const uint32 y = jobID * RayPacket::height;
-      for (uint32 x = 0; x < w; x += RayPacket::width) {
-        RayPacket pckt;
-        PacketHit hit;
-#if USE_MORTON
-        gen.generateMorton(pckt, x, y);
-#else
-        gen.generate(pckt, x, y);
-#endif
-        bvh.traverse(pckt, hit);
-        const int32 *IDs = (const int32 *) hit.id0;
-        uint32 curr = 0;
-        for (uint32 j = 0; j < pckt.height; ++j)
-        for (uint32 i = 0; i < pckt.width; ++i, ++curr) {
-#if USE_MORTON
-          const uint32 i0 = RTCameraPacketGen::mortonX[curr];
-          const uint32 j0 = RTCameraPacketGen::mortonY[curr];
-#else
-          const uint32 i0 = i;
-          const uint32 j0 = j;
-#endif
-          const uint32 offset = x + i0 + (y + j0) * w;
-          rgba[offset] = IDs[curr] != -1 ? c[IDs[curr]] : 0u;
-        }
-      }
-    }
-
-#endif
-    const BVH2<RTTriangle> &bvh;
-    const RTCamera &cam;
-    const uint32 *c;
-    uint32 *rgba;
-    uint32 w, h;
-  };
-
-  static void rayTrace(const FPSCamera &fpsCam, int w, int h)
-  {
-    const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
-    uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
-    uint32 *c = PF_NEW_ARRAY(uint32, bvh->primNum);
-    std::memset(rgba, 0, sizeof(uint32) * w * h);
-    for (uint32 i = 0; i < bvh->primNum; ++i) {
-      c[i] = rand();
-      c[i] |= 0xff000000;
-    }
-    const double t = getSeconds();
-    Ref<Task> rayTask = PF_NEW(TaskRayTrace, *bvh, cam, c, rgba, w, h/RayPacket::height);
-    rayTask->scheduled();
-    rayTask->waitForCompletion();
-    const double dt = getSeconds() - t;
-    PF_MSG_V("Ray tracing time: " << dt * 1000. << "msec - Ray per second " << CAMW * CAMH / dt);
-    stbi_write_tga("hop.tga", w, h, 4, rgba);
-    PF_DELETE_ARRAY(rgba);
-    PF_DELETE_ARRAY(c);
-  }
-
   Task *TaskCamera::run(void)
   {
     // Change mouse position
@@ -177,7 +78,6 @@ namespace pf {
     if (event->getKey('r')) d.y += float(event->dt) * cam->speed;
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
 
-    if (event->getKey('p')) rayTrace(*cam, CAMW, CAMH); // XXX
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
 

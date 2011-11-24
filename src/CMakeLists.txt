@@ -2,7 +2,6 @@ include (FindGLUT)
 include_directories (${GLUT_INCLUDE_PATH})
 set (SRC
   game/camera.cpp
-  game/game.cpp
   game/game_event.cpp
   game/game_frame.cpp
   game/game_render.cpp
@@ -41,10 +40,15 @@ set (SRC
   rt/ray_packet.cpp
   rt/rt_camera.cpp)
 include_directories (.)
-add_executable (app ${SRC})
+add_library (pf ${SRC})
 if (UNIX)
-  target_link_libraries(app ${GLUT_LIBRARY} pthread)
+  target_link_libraries(pf ${GLUT_LIBRARY} pthread)
 else (UNIX)
-  target_link_libraries(app ${GLUT_LIBRARY})
+  target_link_libraries(pf ${GLUT_LIBRARY})
 endif (UNIX)
 
+add_executable (game game/game.cpp)
+target_link_libraries (game pf)
+
+add_executable (rt test/rt.cpp)
+target_link_libraries (rt pf)

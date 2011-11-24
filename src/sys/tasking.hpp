@@ -142,7 +142,6 @@
 /*! No affinity means that the task can rn anywhere */
 #define PF_TASK_NO_AFFINITY 0xffffu
 
-/*! Maximum time the thread is yielded */
 namespace pf
 {
   /*! A task with a higher priority will be preferred to a task with a lower

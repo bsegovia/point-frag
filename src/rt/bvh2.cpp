@@ -141,9 +141,8 @@ namespace pf
     double t = getSeconds();
 
     // Allocate nodes and leaves for the BVH2
-    root = (BVH2Node *) PF_NEW_ARRAY(BVH2Node, 2*primNum + 1);
     nodeNum = 2 * primNum + 1;
-    if (root == 0) return -1;
+    root = (BVH2Node *) PF_ALIGNED_MALLOC(nodeNum * sizeof(BVH2Node), 16);
 
     // Allocate the data for the compiler
     for (int i = 0; i < 3; ++i)
@@ -409,8 +408,11 @@ namespace pf
     if (c->injection<T>(t, primNum) < 0) return false;
     c->compile();
 
-    tree.node = c->root;
     tree.nodeNum = c->currID + 1;
+    const size_t nodeSize = sizeof(BVH2Node) * tree.nodeNum;
+    tree.node = (BVH2Node*) PF_ALIGNED_MALLOC(nodeSize, CACHE_LINE);
+    std::memcpy(tree.node, c->root, nodeSize);
+    PF_ALIGNED_FREE(c->root);
     PF_MSG_V("BVH2: " << tree.nodeNum << " nodes");
     PF_MSG_V("BVH2: Copying primitive soup");
     tree.primNum = primNum;

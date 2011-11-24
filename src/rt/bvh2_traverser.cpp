@@ -28,32 +28,56 @@ namespace pf
 
   /*! Generic ray / primitive intersection */
   template <typename T>
-  static INLINE void PrimIntersect(const T&, uint32_t, const Ray&, Hit&);
+  INLINE void PrimIntersect(const T&, uint32_t, ssef, sse3f, Hit&);
+
+  INLINE ssef crossZXY(const ssef &a, const ssef &b) {
+    return a*b.yzxx() - a.yzxx()*b;
+  }
+  INLINE ssef dotZXY(const ssef &a, const ssef &b) {
+    return a.xxxx()*b.zzzz() + a.yyyy()*b.xxxx() + a.zzzz()*b.yyyy();
+  }
+  INLINE ssef dotZXY(const sse3f &a, const sse3f &b) {
+    return a.x*b.z + a.y*b.x + a.z * b.y;
+  }
+  INLINE ssef cross(const ssef &a, const ssef &b) {
+    return a.yzxx()*b.zxyy() - a.zxyy()*b.yzxx();
+  }
+
+  INLINE void transpose4x3(ssef r0, ssef r1, ssef r2, ssef r3, ssef& c0, ssef& c1, ssef& c2)
+  {
+    const ssef l02 = unpacklo(r0,r2);
+    const ssef h02 = unpackhi(r0,r2);
+    const ssef l13 = unpacklo(r1,r3);
+    const ssef h13 = unpackhi(r1,r3);
+    c0 = unpacklo(l02,l13);
+    c1 = unpackhi(l02,l13);
+    c2 = unpacklo(h02,h13);
+  }
 
   /*! Node AABB / ray intersection */
-  static INLINE bool AABBIntersect(const BVH2Node &node, const Ray &ray, float t)
+  INLINE bool AABBIntersect(const BVH2Node &node, const ssef &org, const ssef &rdir, float t)
   {
-    const vec3f l1 = (node.pmin - ray.org) * ray.rdir;
-    const vec3f l2 = (node.pmax - ray.org) * ray.rdir;
-    const vec3f nearVec = min(l1,l2);
-    const vec3f farVec = max(l1,l2);
-    const float near = max(max(nearVec[0], nearVec[1]), nearVec[2]);
-    const float far = min(min(farVec[0], farVec[1]), farVec[2]);
-    return (far >= near) & (far >= 0.f) & (near < t);
+    const ssef lower = ssef::load(&node.pmin.x).xyzz();
+    const ssef upper = ssef::load(&node.pmax.x).xyzz();
+    const ssef l1 = (lower - org) * rdir;
+    const ssef l2 = (upper - org) * rdir;
+    const ssef near_v = min(l1,l2);
+    const ssef far = max(l1,l2);
+    const ssef near = reduce_max(near_v);
+    const sseb test = (far >= near) & (far >= 0.f) & (near < t);
+    return movemask(test) == 0xf;
   }
 
   /*! Generic ray / leaf intersection */
   template <typename T>
-  static INLINE void LeafIntersect
-    (const BVH2<T> &bvh, const BVH2Node &node, const Ray &ray, Hit &hit)
+  INLINE void LeafIntersect
+    (const BVH2<T> &bvh, const BVH2Node &node, ssef org, sse3f dir, Hit &hit)
   {
-    if (AABBIntersect(node, ray, hit.t)) {
-      const uint32 firstPrim = node.getPrimID();
-      const uint32 primNum = node.getPrimNum();
-      for(uint32 i = 0; i < primNum; ++i) {
-        const uint32 primID = bvh.primID[firstPrim + i];
-        PrimIntersect(bvh.prim[primID], primID, ray, hit);
-      }
+    const uint32 firstPrim = node.getPrimID();
+    const uint32 primNum = node.getPrimNum();
+    for(uint32 i = 0; i < primNum; ++i) {
+      const uint32 primID = bvh.primID[firstPrim + i];
+      PrimIntersect(bvh.prim[primID], primID, org, dir, hit);
     }
   }
 
@@ -63,31 +87,32 @@ namespace pf
    */
   template <>
   INLINE void PrimIntersect<RTTriangle>
-    (const RTTriangle &tri, uint32_t id, const Ray &ray, Hit &hit)
+    (const RTTriangle &tri, uint32_t id, ssef org, sse3f dir, Hit &hit)
   {
-    const vec3f a = tri.v[0];
-    const vec3f b = tri.v[1];
-    const vec3f c = tri.v[2];
-    const vec3f d0 = a - ray.org;
-    const vec3f n = cross(c - a, b - a);
-    const float num = dot(n, d0);
-    const vec3f d1 = b - ray.org;
-    const vec3f d2 = c - ray.org;
-    const vec3f v0 = cross(d1, d2);
-    const vec3f v1 = cross(d0, d1);
-    const vec3f v2 = cross(d2, d0);
-    const float u = dot(v0, ray.dir);
-    const float v = dot(v1, ray.dir);
-    const float w = dot(v2, ray.dir);
-    const bool aperture = ((u>0)&(v>0)&(w>0)) | ((u<0)&(v<0)&(w<0));
-    if (!aperture) return;
-    const float n0 = dot(n, ray.dir);
-    const float t = num / n0;
-    if ((t > hit.t) || (t < 0.f)) return;
-    hit.t = t;
-    hit.u = u;
-    hit.v = v;
-    hit.id0 = id;
+    const ssef a(&tri.v[0].x);
+    const ssef b(&tri.v[1].x);
+    const ssef c(&tri.v[2].x);
+    const ssef n(&tri.n.x);
+    const ssef d0 = a - org;
+    const ssef d1 = b - org;
+    const ssef d2 = c - org;
+    const ssef num = reduce_add(n * d0);
+    const ssef v0 = cross(d1, d2);
+    const ssef v1 = cross(d0, d1);
+    const ssef v2 = cross(d2, d0);
+    sse3f v012n;
+    transpose4x3(n, v0, v1, v2, v012n.x, v012n.y, v012n.z);
+    ssef tuvw = dot(v012n, dir);
+    const int m0 = movemask(sseb(tuvw)) & 0xe;
+    if ((m0 != 0xe) & (m0 != 0)) return;
+
+    const ssef t = divss(num, tuvw.m128);
+    const ssef t0 = subss(ssef(hit.t), t);
+    const ssef m = t | t0;
+    if ((movemask(m) & 0x1) == 0) {
+      ssef::store(t, &hit.t);
+      hit.id0 = id;
+    }
   }
 
   /*! To store call stack while traversing the BVH */
@@ -108,28 +133,29 @@ namespace pf
   void BVH2<T>::traverse(const Ray &ray, Hit &hit) const
   {
     RayStack stack;
-    const uint32 signArray[3] = {
-      ray.dir.x<0.f ? 1u : 0u,
-      ray.dir.y<0.f ? 1u : 0u,
-      ray.dir.z<0.f ? 1u : 0u
-    };
+    const ssef org = ssef(&ray.org.x).xyzz();
+    const ssef rdir = ssef(&ray.rdir.x).xyzz();
+    const sse3f dir(ray.dir.x, ray.dir.y, ray.dir.z);
+    const int s = movemask(rdir);
+    const uint32 signArray[] = { s&1, (s>>1)&1, (s>>2)&1 };
     stack.push(this->node);
 
   popNode:
     // Recurse until we find a leaf
     while (LIKELY(stack.pop())) {
       const BVH2Node * RESTRICT node = stack.elem[stack.top];
-      while (LIKELY(!node->isLeaf())) {
-        if (!AABBIntersect(*node, ray, hit.t)) goto popNode;
-        const uint32 offset = node->getOffset();
-        const uint32 first = signArray[node->getAxis()];
-        const uint32 second = first ^ 1;
-        stack.push(this->node + offset + second);
-        node = &this->node[offset + first];
+      while (AABBIntersect(*node, org, rdir, hit.t)) {
+        if (LIKELY(!node->isLeaf())) {
+          const uint32 offset = node->getOffset();
+          const uint32 first = signArray[node->getAxis()];
+          const uint32 second = first ^ 1;
+          stack.push(this->node + offset + second);
+          node = this->node + offset + first;
+        } else {
+          LeafIntersect(*this, *node, org, dir, hit);
+          goto popNode;
+        }
       }
-
-      // Intersect BVH leaf and its primitives
-      LeafIntersect(*this, *node, ray, hit);
     }
   }
 
@@ -149,11 +175,11 @@ namespace pf
 
   /*! Generic ray / primitive intersection */
   template <typename T>
-  static INLINE void PrimIntersect
+  INLINE void PrimIntersect
     (const T &, uint32_t, const RayPacket&, const uint32*, uint32, PacketHit&);
 
   /*! Kay-Kajiya AABB intersection */
-  static INLINE void slab
+  INLINE void slab
     (const sse3f &rdir, const sse3f &minOrg, const sse3f &maxOrg, ssef &near, ssef &far)
   {
     ssef l1 = minOrg.x * rdir.x;
@@ -171,7 +197,7 @@ namespace pf
   }
 
   /*! Kay-Kajiya AABB with interval arithmetic */
-  static INLINE bool slabIA(ssef minOrg, ssef maxOrg, sseb sign, ssef rcpMin, ssef rcpMax)
+  INLINE bool slabIA(ssef minOrg, ssef maxOrg, sseb sign, ssef rcpMin, ssef rcpMax)
   {
     const ssef minusMin = -minOrg;
     const ssef minusMax = -maxOrg;
@@ -188,13 +214,12 @@ namespace pf
   }
 
   /*! AABB (non leaf node) / packet intersection */
-  static INLINE bool AABBIntersect
+  INLINE bool AABBIntersect
     (const BVH2Node &node, const RayPacket &pckt, const PacketHit &hit, uint32 &first)
   {
-//    return true;
     // Avoid issues with w unused channel
-    const ssef lower = ssef(&node.pmin.x).xyzz();
-    const ssef upper = ssef(&node.pmax.x).xyzz();
+    const ssef lower = ssef::load(&node.pmin.x).xyzz();
+    const ssef upper = ssef::load(&node.pmax.x).xyzz();
     const ssef tmpMin = lower - pckt.iaMaxOrg;
     const ssef tmpMax = upper - pckt.iaMinOrg;
 
@@ -235,13 +260,13 @@ namespace pf
   }
 
   /*! AABB (leaf node) / packet intersection. Track all active rays */
-  static INLINE bool AABBIntersect
+  INLINE bool AABBIntersect
     (const BVH2Node &node, const RayPacket &pckt, const PacketHit &hit,
      uint32 first, uint32 *active, uint32 &activeNum)
   {
     // Avoid issues with w unused channel
-    const ssef lower = ssef(&node.pmin.x).xyzz();
-    const ssef upper = ssef(&node.pmax.x).xyzz();
+    const ssef lower = ssef::load(&node.pmin.x).xyzz();
+    const ssef upper = ssef::load(&node.pmax.x).xyzz();
     const ssef tmpMin = lower - pckt.iaMaxOrg;
     const ssef tmpMax = upper - pckt.iaMinOrg;
 
@@ -285,7 +310,7 @@ namespace pf
 
   /*! Generic Packet / Leaf intersection */
   template <typename T>
-  static INLINE void LeafIntersect
+  INLINE void LeafIntersect
     (const BVH2<T> &bvh, const BVH2Node &node, const RayPacket &pckt, uint32 first, PacketHit &hit)
   {
     uint32 active[RayPacket::chunkNum];
@@ -298,16 +323,6 @@ namespace pf
         PrimIntersect(bvh.prim[primID], primID, pckt, active, activeNum, hit);
       }
     }
-  }
-
-  static INLINE ssef crossZXY(const ssef &a, const ssef &b) {
-    return a*b.yzxx() - a.yzxx()*b;
-  }
-  static INLINE ssef dotZXY(const ssef &a, const ssef &b) {
-    return a.xxxx()*b.zzzz() + a.yyyy()*b.xxxx() + a.zzzz()*b.yyyy();
-  }
-  static INLINE ssef dotZXY(const sse3f &a, const sse3f &b) {
-    return a.x * b.z + a.y * b.x + a.z * b.y;
   }
 
   /*! Pluecker intersection
@@ -326,7 +341,7 @@ namespace pf
     (const RTTriangle &tri, uint32_t id, const RayPacket &pckt,
      const uint32 *active, uint32 activeNum, PacketHit &hit)
   {
-    if (pckt.properties | RAY_PACKET_CO) {
+    if (pckt.properties & RAY_PACKET_CO) {
       const ssef a(&tri.v[0].x);
       const ssef b(&tri.v[1].x);
       const ssef c(&tri.v[2].x);

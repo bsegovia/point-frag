@@ -29,10 +29,10 @@ namespace pf
     /*! Ray from origin, direction, and ray segment. near < far */
     INLINE Ray(const vec3f& org, const vec3f& dir, float near = zero, float far = inf)
       : org(org), dir(dir), rdir(1.0f/dir), near(near), far(far) {}
-    vec3f org;       //!< Origin of the ray
-    vec3f dir;       //!< Direction of it
-    vec3f rdir;      //!< Per-compoment inverse of the direction
-    float near, far; //!< Valid segment along the direction
+    ALIGNED(16) vec3f org;  //!< Origin of the ray
+    ALIGNED(16) vec3f dir;  //!< Direction of it
+    ALIGNED(16) vec3f rdir; //!< Per-compoment inverse of the direction
+    float near, far;        //!< Valid segment along the direction
   };
 
   /*! Hit point */
@@ -42,8 +42,8 @@ namespace pf
     INLINE Hit(void) : t(FLT_MAX), id0(-1), id1(-1) {}
     /*! Tests if we hit something. */
     INLINE operator bool(void) { return id0 != -1; }
-    float t, u, v; //!< Intersection coordinates (in the triangle)
-    int id0, id1;  //!< Two IDs hit
+    ALIGNED(16) float t, u, v, w; //!< Intersection coordinates (in the triangle)
+    int id0, id1;                 //!< Two IDs hit
   };
 
 } /* namespace pf */

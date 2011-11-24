@@ -65,6 +65,10 @@ namespace pf
     }
     GEN_VEC4_SWZ_FUNCS(ssef);
 
+    /*! Aligned load and store */
+    static INLINE ssef load(const float *a) { return _mm_load_ps(a); }
+    static INLINE void store(ssef x, float *a) { return _mm_store_ps(a, x.m128); }
+
     /*! Convenient constants */
     static INLINE uint32 laneNum(void) { return sizeof(ssef) / sizeof(float); }
     static INLINE ssef laneNumv(void)  { return LANE_NUM; }
@@ -92,7 +96,6 @@ namespace pf
 
   INLINE const ssef sign (const ssef& a) { return _mm_blendv_ps(ssef(one), -ssef(one), _mm_cmplt_ps (a,ssef(zero))); }
   INLINE const ssef rcp  (const ssef& a) { return _mm_div_ps(ssef::one(), a.m128); }
-
   INLINE const ssef sqrt (const ssef& a) { return _mm_sqrt_ps(a.m128); }
   INLINE const ssef sqr  (const ssef& a) { return _mm_mul_ps(a,a); }
   INLINE const ssef rsqrt(const ssef& a) {
@@ -130,11 +133,25 @@ namespace pf
   INLINE ssef min(const ssef& a, float b) { return _mm_min_ps(a.m128,ssef(b)); }
   INLINE ssef max(float a, const ssef& b) { return _mm_max_ps(ssef(a),b.m128); }
   INLINE ssef min(float a, const ssef& b) { return _mm_min_ps(ssef(a),b.m128); }
+  INLINE ssef mulss(const ssef &a, const ssef &b) { return _mm_mul_ss(a,b); }
+  INLINE ssef divss(const ssef &a, const ssef &b) { return _mm_div_ss(a,b); }
+  INLINE ssef subss(const ssef &a, const ssef &b) { return _mm_sub_ss(a,b); }
+  INLINE ssef addss(const ssef &a, const ssef &b) { return _mm_add_ss(a,b); }
+  INLINE ssef mulss(const ssef &a, float b) { return _mm_mul_ss(a,ssef(b)); }
+  INLINE ssef divss(const ssef &a, float b) { return _mm_div_ss(a,ssef(b)); }
+  INLINE ssef subss(const ssef &a, float b) { return _mm_sub_ss(a,ssef(b)); }
+  INLINE ssef addss(const ssef &a, float b) { return _mm_add_ss(a,ssef(b)); }
+  INLINE ssef mulss(float a, const ssef &b) { return _mm_mul_ss(ssef(a),b); }
+  INLINE ssef divss(float a, const ssef &b) { return _mm_div_ss(ssef(a),b); }
+  INLINE ssef subss(float a, const ssef &b) { return _mm_sub_ss(ssef(a),b); }
+  INLINE ssef addss(float a, const ssef &b) { return _mm_add_ss(ssef(a),b); }
 
   INLINE ssef operator^ (const ssef& a, const ssei& b) { return _mm_castsi128_ps(_mm_xor_si128(_mm_castps_si128(a.m128),b.m128)); }
   INLINE ssef operator^ (const ssef& a, const ssef& b) { return _mm_xor_ps(a.m128,b.m128); }
   INLINE ssef operator& (const ssef& a, const ssef& b) { return _mm_and_ps(a.m128,b.m128); }
   INLINE ssef operator& (const ssef& a, const ssei& b) { return _mm_and_ps(a.m128,_mm_castsi128_ps(b.m128)); }
+  INLINE ssef operator| (const ssef& a, const ssef& b) { return _mm_or_ps(a.m128,b.m128); }
+  INLINE ssef operator| (const ssef& a, const ssei& b) { return _mm_or_ps(a.m128,_mm_castsi128_ps(b.m128)); }
 
   INLINE sseb operator== (const ssef& a, const ssef& b) { return _mm_cmpeq_ps (a.m128, b.m128); }
   INLINE sseb operator!= (const ssef& a, const ssef& b) { return _mm_cmpneq_ps(a.m128, b.m128); }

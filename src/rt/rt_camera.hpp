@@ -199,7 +199,6 @@ namespace pf
 
   INLINE void RTCameraPacketGen::generate(RayPacket &pckt, int x, int y) const
   {
-    pckt.properties = 0;
     this->generateRay(pckt,x,y);
     // Unused since we do not use back face culling right now
     // this->generateCR(pckt,x,y);
@@ -210,7 +209,6 @@ namespace pf
 
   INLINE void RTCameraPacketGen::generateMorton(RayPacket &pckt, int x, int y) const
   {
-    pckt.properties = 0;
     this->generateRayMorton(pckt,x,y);
     // Unused since we do not use back face culling right now
     // this->generateCR(pckt,x,y);

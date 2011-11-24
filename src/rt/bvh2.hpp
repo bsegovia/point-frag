@@ -52,7 +52,7 @@ namespace pf
 
   template <typename T>
   BVH2<T>::~BVH2(void) {
-    PF_SAFE_DELETE_ARRAY(this->node);
+    PF_ALIGNED_FREE(this->node);
     PF_SAFE_DELETE_ARRAY(this->primID);
     PF_SAFE_DELETE_ARRAY(this->prim);
   }

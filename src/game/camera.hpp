@@ -26,10 +26,10 @@ namespace pf
   class FPSCamera : public RefCount
   {
   public:
-    FPSCamera(const vec3f &org = vec3f(0.f,1.f,2.f),
+    FPSCamera(const vec3f &org = vec3f(0.f,0.4f,1.2f),
               const vec3f &up = vec3f(0.f,1.f,0.f),
               const vec3f &view = vec3f(0.f,0.f,-1.f),
-              float fov = 45.f,
+              float fov = 64.f,
               float ratio = 1.f,
               float near = 0.1f,
               float far = 10000.f);

@@ -28,11 +28,17 @@ namespace pf
     RTTriangle(const vec3f &a, const vec3f &b, const vec3f &c);
     BBox3f getAABB(void) const;
     vec3f v[3];
+    vec3f n;
+    float pad; // == 0 (for faster intersection)
   };
 
   INLINE RTTriangle::RTTriangle(void) {}
   INLINE RTTriangle::RTTriangle(const vec3f &a, const vec3f &b, const vec3f &c)
-  { v[0] = a; v[1] = b; v[2] = c; }
+  {
+    v[0] = a; v[1] = b; v[2] = c;
+    n = cross(c - a, b - a);
+    pad = 0.f;
+  }
 
   INLINE BBox3f RTTriangle::getAABB(void) const {
     return BBox3f(vec3f(min(min(v[0].x, v[1].x), v[2].x),
