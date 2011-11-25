@@ -31,6 +31,7 @@ set (SRC
   image/squish/squish.cpp
   models/obj.cpp
   renderer/ogl.cpp
+  renderer/hiz.cpp
   renderer/texture.cpp
   renderer/renderer.cpp
   renderer/renderer_obj.cpp

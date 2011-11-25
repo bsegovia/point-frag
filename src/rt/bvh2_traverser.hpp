@@ -17,7 +17,7 @@
 #ifndef __PF_BVH2_TRAVERSER_HPP__
 #define __PF_BVH2_TRAVERSER_HPP__
 
-#include "intersecter.hpp"
+#include "intersector.hpp"
 
 namespace pf
 {

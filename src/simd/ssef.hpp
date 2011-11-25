@@ -200,9 +200,9 @@ namespace pf
   //template<> INLINE const ssef shuffle<1, 1, 3, 3>(const ssef& b) { return _mm_movehdup_ps(b); }
   //template<> INLINE const ssef shuffle<0, 1, 0, 1>(const ssef& b) { return _mm_castpd_ps(_mm_movedup_pd(_mm_castps_pd(b))); }
   template<size_t index> INLINE const ssef expand(const ssef& b) { return shuffle<index, index, index, index>(b); }
-  template<size_t index0, size_t index1, size_t index2, size_t index3>
+  template<size_t i0, size_t i1, size_t i2, size_t i3>
   INLINE ssef shuffle(const ssef& a, const ssef& b) {
-    return _mm_shuffle_ps(a, b, _MM_SHUFFLE(index3, index2, index1, index0));
+    return _mm_shuffle_ps(a, b, _MM_SHUFFLE(i3, i2, i1, i0));
   }
   template<size_t dst, size_t src, size_t clr>
   INLINE ssef insert(const ssef& a, const ssef& b) {

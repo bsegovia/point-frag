@@ -45,7 +45,7 @@ namespace pf
     return vec3f(x,y,z);
   }
 
-  // Quick and dirty test
+  // XXX Quick and dirty test
   static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam)
   {
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);

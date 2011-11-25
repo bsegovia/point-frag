@@ -196,8 +196,11 @@ do {                                                 \
 #define PF_SAFE_DELETE_ARRAY(x) do { if (x != NULL) PF_DELETE_ARRAY(x); } while (0)
 #define PF_SAFE_DELETE(x) do { if (x != NULL) PF_DELETE(x); } while (0)
 
-/* Various helper macros */
+/* Number of elements in an array */
 #define ARRAY_ELEM_NUM(x) (sizeof(x) / sizeof(x[0]))
+
+/* Align X on A */
+#define ALIGN(X,A) (((X) % (A)) ? ((X) + (A) - ((X) % (A))) : (X))
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
