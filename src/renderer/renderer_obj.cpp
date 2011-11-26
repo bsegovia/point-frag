@@ -247,7 +247,7 @@ namespace pf
     // Build the BVH with appropriate options (this is *not* for ray tracing
     // but for GPU rasterization
     BVH2<RTTriangle> bvh;
-    const BVH2BuildOption option(1024, 0xffffffff, 1.f, 2048.f);
+    const BVH2BuildOption option(1024, 0xffffffff, 1.f, 4096.f);
     buildBVH2(tris, obj.triNum, bvh, option);
     PF_DELETE_ARRAY(tris);
 

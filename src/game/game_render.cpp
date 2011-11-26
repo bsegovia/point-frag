@@ -65,7 +65,9 @@ namespace pf
   static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam, const InputEvent &event)
   {
     // Boiler plate for the HiZ
-    Ref<HiZ> hiz = PF_NEW(HiZ, 256, 256);
+    //Ref<HiZ> hiz = PF_NEW(HiZ, 1024, 1024);
+    //Ref<HiZ> hiz = PF_NEW(HiZ, 256, 256);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     Ref<Task> task = hiz->rayTrace(cam, intersector);
@@ -78,8 +80,8 @@ namespace pf
       vec3f pmin = renderObj.sgmt[i].bbox.lower;
       vec3f pmax = renderObj.sgmt[i].bbox.upper;
       for (int j = 0; j < 3; ++j) {
-        pmin[j] -= 1.f;
-        pmax[j] += 1.f;
+        pmin[j] -= 2.f;
+        pmax[j] += 2.f;
       }
 
       const vec3f m = pmin;
@@ -126,10 +128,10 @@ namespace pf
       vmax.y = vmax.y * 0.5f + 0.5f;
       vmin.x = vmin.x * 0.5f + 0.5f;
       vmin.y = vmin.y * 0.5f + 0.5f;
-      const vec2i dim(hiz->width-1, hiz->height-1);
-      const vec2f dimf(hiz->width-1, hiz->height-1);
-      const vec2i vmini = min(dim, max(vec2i(zero), vec2i(dimf.x * vmin.x, dimf.y * vmin.y)));
-      const vec2i vmaxi = min(dim, max(vec2i(zero), vec2i(one) + vec2i(dimf.x * vmax.x, dimf.y * vmax.y)));
+      const vec2i dim(hiz->width, hiz->height);
+      const vec2f dimf(hiz->width, hiz->height);
+      const vec2i vmini = min(dim-vec2i(one), max(vec2i(zero), vec2i(dimf.x * vmin.x, dimf.y * vmin.y)));
+      const vec2i vmaxi = min(dim-vec2i(one), max(vec2i(zero), vec2i(one) + vec2i(dimf.x * vmax.x, dimf.y * vmax.y)));
 
       // traverse all touched tiles
       bool visible = false;
@@ -140,7 +142,7 @@ namespace pf
           const int32 tileID = tileX + tileY * hiz->tileXNum;
           assert(tileID < int32(hiz->tileNum));
           const HiZ::Tile &tile = hiz->tiles[tileID];
-          if (z > tile.zmax) {
+          if (z > tile.zmax && z /  tile.zmax > 1.05f) {
             continue;
           }
           visible = true;
