@@ -26,6 +26,10 @@
 #include <cstdio>
 #include <iostream>
 
+#include "renderer/hiz.hpp" // XXX to test the HiZ
+#include "rt/bvh2.hpp"      // XXX to test the HiZ
+#include "rt/rt_triangle.hpp"// XXX to test the HiZ
+
 namespace pf
 {
   static const int defaultWidth = 1024, defaultHeight = 1024;
@@ -74,11 +78,13 @@ namespace pf
     logger = NULL;
   }
 
-  //static const FileName objName("f000.obj");
-  static const FileName objName("arabic_city_II.obj");
+  static const FileName objName("f000.obj");
+  //static const FileName objName("arabic_city_II.obj");
   //static const FileName objName("conference.obj");
   //static const FileName objName("sibenik.obj");
   //static const FileName objName("sponza.obj");
+
+  extern Ref<BVH2<RTTriangle>> bvh; // XXX -> HiZ
 
   static void GameStart(int argc, char **argv) {
     PF_MSG_V("GLUT: initialization");
@@ -104,6 +110,18 @@ namespace pf
       }
     if (path == defaultPathNum)
       PF_WARNING_V("Obj: " << objName << " not found");
+
+    PF_MSG_V("RendererObj: building BVH of segments");
+    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
+    for (size_t i = 0; i < obj.triNum; ++i) {
+      const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p;
+      const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p;
+      const vec3f &v2 = obj.vert[obj.tri[i].v[2]].p;
+      tris[i] = RTTriangle(v0,v1,v2);
+    }
+    bvh = PF_NEW(BVH2<RTTriangle>);
+    buildBVH2(tris, obj.triNum, *bvh);
+    PF_DELETE_ARRAY(tris);
 
     // Build the renderer OBJ
     renderObj = PF_NEW(RendererObj, *renderer, obj);

@@ -1,9 +1,32 @@
+// ======================================================================== //
+// Copyright (C) 2011 Benjamin Segovia                                      //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
-namespace pf {
+#include "renderer/hiz.hpp" // XXX to test the HiZ
+#include "rt/bvh2.hpp"      // XXX to test the HiZ
+#include "rt/bvh2_traverser.hpp"      // XXX to test the HiZ
+#include "rt/rt_triangle.hpp"      // XXX to test the HiZ
+#include "rt/rt_camera.hpp"      // XXX to test the HiZ
+#include "image/stb_image.hpp"
 
+namespace pf
+{
   const float FPSCamera::defaultSpeed = 1.f;
   const float FPSCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FPSCamera::acosMinAngle = 0.95f;
@@ -67,6 +90,8 @@ namespace pf {
   TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
+  Ref<BVH2<RTTriangle>> bvh = NULL; // XXX -> HiZ
+
   Task *TaskCamera::run(void)
   {
     // Change mouse position
@@ -77,6 +102,24 @@ namespace pf {
     if (event->getKey('d')) d.x -= float(event->dt) * cam->speed;
     if (event->getKey('r')) d.y += float(event->dt) * cam->speed;
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
+
+    // XXX for HiZ
+    if (event->getKey('p')) {
+      //Ref<HiZ> zbuffer = PF_NEW(HiZ, 1024, 1024);
+      Ref<HiZ> zbuffer = PF_NEW(HiZ, 256, 128);
+      //Ref<HiZ> zbuffer = PF_NEW(HiZ);
+      Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
+      const RTCamera rt_cam(cam->org, cam->up, cam->view, cam->fov, cam->ratio);
+      double t = getSeconds();
+      Ref<Task> task = zbuffer->rayTrace(rt_cam, intersector);
+      task->waitForCompletion();
+      PF_MSG("HiZ ray tracing time " << getSeconds() - t);
+      uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * zbuffer->width * zbuffer->height);
+      zbuffer->greyRGBA(&rgba);
+      stbi_write_tga("hop.tga", zbuffer->width, zbuffer->height, 4, rgba);
+      PF_DELETE_ARRAY(rgba);
+    }
+    if (event->getKey(27)) bvh = NULL;
 
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
@@ -90,5 +133,6 @@ namespace pf {
 
     return NULL;
   }
-}
+
+} /* namespace pf */
 

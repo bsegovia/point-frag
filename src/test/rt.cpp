@@ -194,12 +194,7 @@ namespace pf
 
 int main(int argc, char **argv)
 {
-
   using namespace pf;
-  const ssef p(0,1,2,3);
-  const ssef q(4,5,6,7);
-  const ssef r = shuffle<0,2,2,2>(p,q);
-  std::cout << r;
   MemDebuggerStart();
   TaskingSystemStart();
   LoggerStart();

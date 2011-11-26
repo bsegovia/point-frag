@@ -111,7 +111,7 @@ namespace pf
     std::string *texName;      //!< All the textures to load
     size_t texNum;             //!< The number of texture to load
   };
-
+#if 0
   /*! In the case the user does not provide any BVH to segment the triangles,
    *  we simply take the groups as given by the OBJ loader. It retuns the
    *  indices to upload
@@ -145,7 +145,7 @@ namespace pf
 
     return indices;
   }
-
+#endif
   /*! Compute half of the node area */
   INLINE float halfArea(const BVH2Node &node) {
     const vec3f d = node.pmax - node.pmin;
@@ -232,7 +232,7 @@ namespace pf
 
 #if 1
   /*! Create segment from a SAH BVH of triangles */
-  static GLuint *RendererObjSegment2(RendererObj &renderObj, const Obj &obj)
+  static GLuint *RendererObjSegment(RendererObj &renderObj, const Obj &obj)
   {
     // Compute the RT triangles first
     PF_MSG_V("RendererObj: building BVH of segments");
@@ -309,7 +309,7 @@ namespace pf
       // Right now we only create one segment per material
       PF_MSG_V("RendererObj: creating geometry segments");
       //GLuint *indices = RendererObjSegment(*this, obj);
-      GLuint *indices = RendererObjSegment2(*this, obj);
+      GLuint *indices = RendererObjSegment(*this, obj);
       for (size_t segmentID = 0; segmentID < sgmtNum; ++segmentID)
         sgmt[segmentID].matID = matRemap[sgmt[segmentID].matID];
 

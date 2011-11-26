@@ -24,9 +24,9 @@
 
 namespace pf
 {
-  class RTCamera;     // To generate the rays
-  class Task;         // A task is generated for the ray tracing part
-  class Intersector;  // We use an intersector to compute the depth buffer
+  class RTCamera;    // To generate the rays
+  class Task;        // A task is generated for the ray tracing part
+  class Intersector; // We use an intersector to compute the depth buffer
 
   /*! This structure will allow us to perform software culling of the objects.
    *  We build a small z buffer for the current point of view and we use it to
@@ -52,7 +52,7 @@ namespace pf
       static const uint32 width = RayPacket::width;
       static const uint32 height = RayPacket::height;
       static const uint32 pixelNum = width * height;
-      static const uint32 chunkNum = pixelNum / sizeof(ssef);
+      static const uint32 chunkNum = pixelNum / ssef::CHANNEL_NUM;
       ssef z[chunkNum]; //!< Depths per pixel (layout in struct-of-array)
       float zmin;       //!< Minimum depth in the tile
       float zmax;       //!< Maximum depth in the tile
@@ -62,7 +62,12 @@ namespace pf
      *  reference on the camera but we need to keep the intersector alive
      *  after the function call. Returns the ray tracing task reference
      */
-    Ref<Task> rayTrace(const RTCamera &cam, Intersector &intersector);
+    Ref<Task> rayTrace(const RTCamera &cam, Ref<Intersector> intersector);
+
+    /*! Output a RGBA image into *pixels that shows the final result in grey
+     *  colors. No sync is done, so the user is responsible for it
+     */
+    void greyRGBA(uint8 **pixels) const;
 
     const uint32 width;   //!< Width of the depth buffer  (multiple of Tile::width)
     const uint32 height;  //!< Height of the depth buffer (multiple of Tile::height)
@@ -70,9 +75,7 @@ namespace pf
     const uint32 tileXNum;//!< Number of tiles per row
     const uint32 tileYNum;//!< Number of tiles per column
     const uint32 tileNum; //!< pixelNum / Tile::pixelNum
-
-  private:
-    Tile *tiles;    //!< The depth buffer data
+    Tile *tiles;          //!< The depth buffer data
   };
 
 } /* namespace pf */

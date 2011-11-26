@@ -287,7 +287,6 @@ namespace pf
     /*! On the main thread, we really release the resource */              \
     virtual Task* run(void)                                                \
     {                                                                      \
-      printf("%i\n",n);                                                    \
       ogl.COUNTER += -this->n;                                             \
       ogl.FUNC(n, handlePtr);                                              \
       if (deallocatePtr) PF_DELETE_ARRAY(this->handlePtr);                 \

@@ -165,6 +165,10 @@
 #define _DO_JOIN(X, Y) _DO_JOIN2(X, Y)
 #define _DO_JOIN2(X, Y) X##Y
 
+/*! Compile-time assertion */
+#define STATIC_ASSERT(value)                                     \
+  struct JOIN(__,JOIN(__,__LINE__)) { int x[(value) ? 1 : -1]; }
+
 /*! Fatal error macros */
 #if defined(__WIN32__)
 namespace pf

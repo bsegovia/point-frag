@@ -82,14 +82,14 @@ namespace pf
     INLINE void generateCR(RayPacket &pckt, int x, int y) const;
     /*! Generate the interval arithmetic vector. Says if IA can be used */
     INLINE bool generateIA(RayPacket &pckt, int x, int y) const;
-    sse3f org;            //!< Origin
-    sse3f imagePlaneOrg;  //!< Image plane origin
-    sse3f xAxis;          //!< X axis of the image plane
-    sse3f zAxis;          //!< Z axis of the image plane
-    ssef aOrg;            //!< Origin (AoS format)
-    ssef aImagePlaneOrg;  //!< Image plane origin (AoS format)
-    ssef axAxis;          //!< X axis of the image plane (AoS format)
-    ssef azAxis;          //!< Z axis of the image plane (AoS format)
+    sse3f org;           //!< Origin
+    sse3f imagePlaneOrg; //!< Image plane origin
+    sse3f xAxis;         //!< X axis of the image plane
+    sse3f zAxis;         //!< Z axis of the image plane
+    ssef aOrg;           //!< Origin (AoS format)
+    ssef aImagePlaneOrg; //!< Image plane origin (AoS format)
+    ssef axAxis;         //!< X axis of the image plane (AoS format)
+    ssef azAxis;         //!< Z axis of the image plane (AoS format)
   };
 
   ///////////////////////////////////////////////////////////////////////////

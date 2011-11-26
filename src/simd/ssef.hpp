@@ -46,15 +46,14 @@ namespace pf
     INLINE ssef(NegInfTy) : m128(_mm_set1_ps(neg_inf)) {}
     INLINE ssef(StepTy)   : m128(_mm_set_ps(3.0f, 2.0f, 1.0f, 0.0f)) {}
 
-    INLINE float operator[] (size_t index) const {
-      union { __m128 m128; float v[4]; } u;
+    INLINE const float& operator[] (size_t index) const {
       assert(index < 4);
-      u.m128 = this->m128;
-      return u.v[index];
+      return ((float*)&this->m128)[index];
     }
-    INLINE float& operator[] (size_t index){
+    INLINE float& operator[] (size_t index) {
       assert(index < 4);
-      return ((float*)&this->m128)[index]; }
+      return ((float*)&this->m128)[index];
+    }
 
     /*! All swizzle functions */
     template<size_t i0, size_t i1, size_t i2, size_t i3>
@@ -75,6 +74,7 @@ namespace pf
     static INLINE ssef one(void)       { return ONE; }
     static INLINE ssef identity(void)  { return IDENTITY; }
     static INLINE ssef epsilon(void)   { return EPSILON; }
+    static const uint32 CHANNEL_NUM = 4;
 
   private:
     static const ssef ONE;      //!< Stores {1,1,1,1}
@@ -83,8 +83,8 @@ namespace pf
     static const ssef EPSILON;  //!< Stores {eps,eps,eps,eps}
   };
 
-  INLINE const ssef operator +(const ssef& a) { return a; }
-  INLINE const ssef operator -(const ssef& a) {
+  INLINE const ssef operator+ (const ssef& a) { return a; }
+  INLINE const ssef operator- (const ssef& a) {
     const __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x80000000));
     return _mm_xor_ps(a.m128, mask);
   }
