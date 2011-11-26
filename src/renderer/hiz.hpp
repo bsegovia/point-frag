@@ -65,9 +65,16 @@ namespace pf
     Ref<Task> rayTrace(const RTCamera &cam, Ref<Intersector> intersector);
 
     /*! Output a RGBA image into *pixels that shows the final result in grey
-     *  colors. No sync is done, so the user is responsible for it
+     *  colors. No sync is done, so the user is responsible for it. Dimension of
+     *  the image is width x height
      */
-    void greyRGBA(uint8 **pixels) const;
+    void greyRGBA(uint8 **rgba) const;
+
+    /*! Idem but output the min buffer. Dimension is tileXNum x tileYNum */
+    void greyMinRGBA(uint8 **rgba) const;
+
+    /*! Idem but output the max buffer. Dimension is tileXNum x tileYNum */
+    void greyMaxRGBA(uint8 **rgba) const;
 
     const uint32 width;   //!< Width of the depth buffer  (multiple of Tile::width)
     const uint32 height;  //!< Height of the depth buffer (multiple of Tile::height)

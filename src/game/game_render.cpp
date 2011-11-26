@@ -24,13 +24,18 @@
 #include <GL/freeglut.h>
 
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
+#include "rt/bvh2.hpp" // XXX to do frustum culling
+#include "rt/bvh2_traverser.hpp" // XXX to do frustum culling
+#include "rt/rt_triangle.hpp" // XXX to do frustum culling
+#include "rt/rt_camera.hpp" // XXX to do frustum culling
+#include "renderer/hiz.hpp" // XXX HiZ
 
 namespace pf
 {
-  extern Renderer *renderer;
-  extern Ref<RendererObj> renderObj;
+  extern Ref<RendererObj> renderObj; //!< Real world should come later
+  extern Ref<BVH2<RTTriangle>> bvh;
 
-#define OGL_NAME ((RendererDriver*)renderer->driver)
+#define OGL_NAME ((RendererDriver*)renderObj->renderer.driver)
 
   TaskGameRender::TaskGameRender(FPSCamera &cam, InputEvent &event) :
     TaskMain("TaskGameRender"), cam(&cam), event(&event)
@@ -48,8 +53,16 @@ namespace pf
   // XXX Quick and dirty test
   static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam)
   {
+    // Boiler plate for the HiZ
+    Ref<HiZ> hiz = PF_NEW(HiZ);
+    Ref<HiZ> zbuffer = PF_NEW(HiZ, 256, 128);
+    Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
+//    Ref<Task> task = zbuffer->rayTrace(cam, intersector);
+//    task->waitForCompletion();
+
     RendererObj::Segment *sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
+
     uint32 curr = 0;
     for (uint32 i = 0; i < renderObj.sgmtNum; ++i) {
       const vec3f m = renderObj.sgmt[i].bbox.lower;
@@ -62,24 +75,26 @@ namespace pf
       const vec3f v5 = rtCameraXfm(cam, vec3f(M[0],m[1],M[2]));
       const vec3f v6 = rtCameraXfm(cam, vec3f(m[0],M[1],M[2]));
       const vec3f v7 = rtCameraXfm(cam, vec3f(M[0],M[1],M[2]));
-      const vec3f vmin = min(min(min(min(min(min(min(v0,v1),v2),v3),v4),v5),v6),v7);
-      const vec3f vmax = max(max(max(max(max(max(max(v0,v1),v2),v3),v4),v5),v6),v7);
+      vec3f vmin = min(min(min(min(min(min(min(v0,v1),v2),v3),v4),v5),v6),v7);
+      vec3f vmax = max(max(max(max(max(max(max(v0,v1),v2),v3),v4),v5),v6),v7);
 
-      //if (i == 100) 
-      {
 #if 0
       printf("\r%f %f %f %f %f %f %f %f %f",
           vmin.x, vmin.y, vmin.z, vmax.x, vmax.y, vmax.z, cam.ratio, cam.fov, cam.dist);
 #endif
+      // frustum culling first
       const float c = cos(cam.fov * (float) M_PI / 360.f);
-      if ((vmax.x < -cam.ratio * c) ||
-          (vmax.y < -c) ||
+      vmax.x /= cam.ratio * c;
+      vmax.y /= c;
+      if ((vmax.x < -1.f) ||
+          (vmax.y < -1.f) ||
           (vmax.z < 0.f) ||
-          (vmin.x > cam.ratio * c) ||
-          (vmin.y > c)) continue;
+          (vmin.x > 1.f) ||
+          (vmin.y > 1.f)) continue;
 
-        sgmt[curr++] = renderObj.sgmt[i];
-      }
+      // Now the z test with HiZ
+
+      sgmt[curr++] = renderObj.sgmt[i];
     }
     renderObj.sgmt = sgmt;
     renderObj.sgmtNum = curr;
@@ -89,6 +104,7 @@ namespace pf
   {
     // Transform matrix for the current point of view
     const mat4x4f MVP = cam->getMatrix();
+    Renderer *renderer = &renderObj->renderer;
 
     // Set the display viewport
     R_CALL (Viewport, 0, 0, event->w, event->h);

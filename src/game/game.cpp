@@ -128,6 +128,7 @@ namespace pf
   }
 
   static void GameEnd(void) {
+    bvh = NULL; // release the BVH
     renderObj = NULL; // idem
     PF_DELETE(renderer);
     renderer = NULL;

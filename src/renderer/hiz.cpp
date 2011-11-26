@@ -127,13 +127,38 @@ namespace pf
       const uint32 offsetY = y % Tile::height;
       const uint32 offset = offsetX + Tile::width * offsetY;
       const uint32 imageOffset = (x + y * this->width) * 4;
-      const float z = min(zptr[offset] * 32, 255.f);
+      const float z = min(zptr[offset] * 32.f, 255.f);
+      assert(imageOffset < 4*this->pixelNum);
       rgba[imageOffset + 0] = uint8(z);
       rgba[imageOffset + 1] = uint8(z);
       rgba[imageOffset + 2] = uint8(z);
       rgba[imageOffset + 3] = 0xff;
     }
   }
+
+  template <bool outputMin>
+  INLINE void HiZGreyMinMax(const HiZ &hiz, uint8 **pixels)
+  {
+    if (UNLIKELY(pixels == NULL)) return;
+    if (UNLIKELY(*pixels == NULL)) return;
+
+    // Iterate over all pixels, find the tile, find the pixel in the tile and
+    // output a grey scaled pixel
+    uint8 *rgba = *pixels;
+    for (uint32 y = 0; y < hiz.tileYNum; ++y)
+    for (uint32 x = 0; x < hiz.tileXNum; ++x) {
+      const uint32 tileID = x + y * hiz.tileXNum;
+      const HiZ::Tile &tile = hiz.tiles[tileID];
+      const float z = min((outputMin ? tile.zmin : tile.zmax) * 32.f, 255.f);
+      rgba[4*tileID + 0] = uint8(z);
+      rgba[4*tileID + 1] = uint8(z);
+      rgba[4*tileID + 2] = uint8(z);
+      rgba[4*tileID + 3] = 0xff;
+    }
+  }
+
+  void HiZ::greyMinRGBA(uint8 **pixels) const { HiZGreyMinMax<true>(*this, pixels); }
+  void HiZ::greyMaxRGBA(uint8 **pixels) const { HiZGreyMinMax<false>(*this, pixels); }
 
 } /* namespace pf */
 

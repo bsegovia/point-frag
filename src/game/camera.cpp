@@ -105,21 +105,31 @@ namespace pf
 
     // XXX for HiZ
     if (event->getKey('p')) {
-      //Ref<HiZ> zbuffer = PF_NEW(HiZ, 1024, 1024);
       Ref<HiZ> zbuffer = PF_NEW(HiZ, 256, 128);
-      //Ref<HiZ> zbuffer = PF_NEW(HiZ);
       Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
       const RTCamera rt_cam(cam->org, cam->up, cam->view, cam->fov, cam->ratio);
       double t = getSeconds();
       Ref<Task> task = zbuffer->rayTrace(rt_cam, intersector);
       task->waitForCompletion();
       PF_MSG("HiZ ray tracing time " << getSeconds() - t);
+
+      // Output the complete HiZ
       uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * zbuffer->width * zbuffer->height);
       zbuffer->greyRGBA(&rgba);
-      stbi_write_tga("hop.tga", zbuffer->width, zbuffer->height, 4, rgba);
+      stbi_write_tga("hiz.tga", zbuffer->width, zbuffer->height, 4, rgba);
+      PF_DELETE_ARRAY(rgba);
+
+      // Output the minimum z values
+      rgba = PF_NEW_ARRAY(uint8, 4 * zbuffer->tileXNum * zbuffer->tileYNum);
+      zbuffer->greyMinRGBA(&rgba);
+      PF_MSG(zbuffer->tileXNum << " x " << zbuffer->tileYNum);
+      stbi_write_tga("hiz_min.tga",  zbuffer->tileXNum, zbuffer->tileYNum, 4, rgba);
+
+      // Output the maximum z values
+      zbuffer->greyMaxRGBA(&rgba);
+      stbi_write_tga("hiz_max.tga",  zbuffer->tileXNum, zbuffer->tileYNum, 4, rgba);
       PF_DELETE_ARRAY(rgba);
     }
-    if (event->getKey(27)) bvh = NULL;
 
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
