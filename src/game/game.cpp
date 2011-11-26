@@ -78,7 +78,7 @@ namespace pf
     logger = NULL;
   }
 
-  //static const FileName objName("f000.obj");
+ // static const FileName objName("f000.obj");
   static const FileName objName("arabic_city_II.obj");
   //static const FileName objName("conference.obj");
   //static const FileName objName("sibenik.obj");

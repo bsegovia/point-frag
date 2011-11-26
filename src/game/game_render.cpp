@@ -23,6 +23,7 @@
 #include "renderer/renderer.hpp"
 #include <GL/freeglut.h>
 
+#include "sys/logging.hpp"
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "rt/bvh2.hpp" // XXX to do frustum culling
 #include "rt/bvh2_traverser.hpp" // XXX to do frustum culling
@@ -35,7 +36,7 @@
 namespace pf
 {
   extern Ref<RendererObj> renderObj; //!< Real world should come later
-  extern Ref<BVH2<RTTriangle>> bvh;
+  Ref<BVH2<RTTriangle>> bvh = NULL; // XXX -> HiZ
 
 #define OGL_NAME ((RendererDriver*)renderObj->renderer.driver)
 
@@ -65,23 +66,24 @@ namespace pf
   static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam, const InputEvent &event)
   {
     // Boiler plate for the HiZ
-    //Ref<HiZ> hiz = PF_NEW(HiZ, 1024, 1024);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 1024, 1024);
+    //Ref<HiZ> hiz = PF_NEW(HiZ, 128, 128);
     //Ref<HiZ> hiz = PF_NEW(HiZ, 256, 256);
-    Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
+    //Ref<HiZ> hiz = PF_NEW(HiZ, 512, 512);
+    //Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     Ref<Task> task = hiz->rayTrace(cam, intersector);
     task->waitForCompletion();
 
     RendererObj::Segment *sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
-
     uint32 curr = 0;
     for (uint32 i = 0; i < renderObj.sgmtNum; ++i) {
       vec3f pmin = renderObj.sgmt[i].bbox.lower;
       vec3f pmax = renderObj.sgmt[i].bbox.upper;
       for (int j = 0; j < 3; ++j) {
-        pmin[j] -= 2.f;
-        pmax[j] += 2.f;
+        pmin[j] -= 1.f;
+        pmax[j] += 1.f;
       }
 
       const vec3f m = pmin;
@@ -105,7 +107,7 @@ namespace pf
           vmin.x, vmin.y, vmin.z, vmax.x, vmax.y, vmax.z, cam.ratio, cam.fov, cam.dist);
 #endif
       // frustum culling first
-      const float c = cos(cam.fov * (float) M_PI / 360.f);
+      const float c = sin(cam.fov * (float) M_PI / 360.f);
       vmax.x /= cam.ratio * c;
       vmax.y /= c;
       vmin.x /= cam.ratio * c;
@@ -148,29 +150,7 @@ namespace pf
           visible = true;
         }
       }
-      if (event.getKey('o')) {
-        printf("%i\n", i);
-        for (int32 tileX = minTile.x; tileX <= maxTile.x; ++tileX) {
-          for (int32 tileY = minTile.y; tileY <= maxTile.y; ++tileY) {
-            const int32 tileID = tileX + tileY * hiz->tileXNum;
-            assert(tileID < int32(hiz->tileNum));
-            HiZ::Tile &tile = hiz->tiles[tileID];
-            tile.zmin = 255.f;
-          }
-        }
-        uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * hiz->width * hiz->height);
-        hiz->greyRGBA(&rgba);
-        stbi_write_tga("hiz.tga", hiz->width, hiz->height, 4, rgba);
-        PF_DELETE_ARRAY(rgba);
 
-        rgba = PF_NEW_ARRAY(uint8, 4 * hiz->tileXNum * hiz->tileYNum);
-        hiz->greyMinRGBA(&rgba);
-        stbi_write_tga("hiz_min.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
-
-        hiz->greyMaxRGBA(&rgba);
-        stbi_write_tga("hiz_max.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
-        PF_DELETE_ARRAY(rgba);
-      }
       //if (!visible) printf("%i ", i);
       if (visible)
       sgmt[curr++] = renderObj.sgmt[i];
@@ -187,6 +167,25 @@ namespace pf
       sgmt = PF_NEW_ARRAY(RendererObj::Segment, cullNum);
       std::memcpy(sgmt, cullSegment, cullNum * sizeof(RendererObj::Segment));
       curr = cullNum;
+    }
+    // XXX for HiZ
+    if (event.getKey('p'))
+    {
+      // Output the complete HiZ
+      uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * hiz->width * hiz->height);
+      hiz->greyRGBA(&rgba);
+      stbi_write_tga("hiz.tga", hiz->width, hiz->height, 4, rgba);
+      PF_DELETE_ARRAY(rgba);
+
+      // Output the minimum z values
+      rgba = PF_NEW_ARRAY(uint8, 4 * hiz->tileXNum * hiz->tileYNum);
+      hiz->greyMinRGBA(&rgba);
+      stbi_write_tga("hiz_min.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+
+      // Output the maximum z values
+      hiz->greyMaxRGBA(&rgba);
+      stbi_write_tga("hiz_max.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+      PF_DELETE_ARRAY(rgba);
     }
 
     renderObj.sgmt = sgmt;

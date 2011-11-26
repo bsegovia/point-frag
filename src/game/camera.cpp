@@ -18,16 +18,9 @@
 #include "game_event.hpp"
 #include "sys/logging.hpp"
 
-#include "renderer/hiz.hpp" // XXX to test the HiZ
-#include "rt/bvh2.hpp"      // XXX to test the HiZ
-#include "rt/bvh2_traverser.hpp"      // XXX to test the HiZ
-#include "rt/rt_triangle.hpp"      // XXX to test the HiZ
-#include "rt/rt_camera.hpp"      // XXX to test the HiZ
-#include "image/stb_image.hpp"
-
 namespace pf
 {
-  const float FPSCamera::defaultSpeed = 4.f;
+  const float FPSCamera::defaultSpeed = 5.f;
   const float FPSCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FPSCamera::acosMinAngle = 0.95f;
 
@@ -90,8 +83,6 @@ namespace pf
   TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
-  Ref<BVH2<RTTriangle>> bvh = NULL; // XXX -> HiZ
-
   Task *TaskCamera::run(void)
   {
     // Change mouse position
@@ -102,34 +93,6 @@ namespace pf
     if (event->getKey('d')) d.x -= float(event->dt) * cam->speed;
     if (event->getKey('r')) d.y += float(event->dt) * cam->speed;
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
-
-    // XXX for HiZ
-    if (event->getKey('p')) {
-      Ref<HiZ> zbuffer = PF_NEW(HiZ, 1024, 1024);
-      Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
-      const RTCamera rt_cam(cam->org, cam->up, cam->view, cam->fov, cam->ratio);
-      double t = getSeconds();
-      Ref<Task> task = zbuffer->rayTrace(rt_cam, intersector);
-      task->waitForCompletion();
-      PF_MSG("HiZ ray tracing time " << getSeconds() - t);
-
-      // Output the complete HiZ
-      uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * zbuffer->width * zbuffer->height);
-      zbuffer->greyRGBA(&rgba);
-      stbi_write_tga("hiz.tga", zbuffer->width, zbuffer->height, 4, rgba);
-      PF_DELETE_ARRAY(rgba);
-
-      // Output the minimum z values
-      rgba = PF_NEW_ARRAY(uint8, 4 * zbuffer->tileXNum * zbuffer->tileYNum);
-      zbuffer->greyMinRGBA(&rgba);
-      PF_MSG(zbuffer->tileXNum << " x " << zbuffer->tileYNum);
-      stbi_write_tga("hiz_min.tga",  zbuffer->tileXNum, zbuffer->tileYNum, 4, rgba);
-
-      // Output the maximum z values
-      zbuffer->greyMaxRGBA(&rgba);
-      stbi_write_tga("hiz_max.tga",  zbuffer->tileXNum, zbuffer->tileYNum, 4, rgba);
-      PF_DELETE_ARRAY(rgba);
-    }
 
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);
