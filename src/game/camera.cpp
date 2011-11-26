@@ -27,7 +27,7 @@
 
 namespace pf
 {
-  const float FPSCamera::defaultSpeed = 1.f;
+  const float FPSCamera::defaultSpeed = 4.f;
   const float FPSCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FPSCamera::acosMinAngle = 0.95f;
 
@@ -105,7 +105,7 @@ namespace pf
 
     // XXX for HiZ
     if (event->getKey('p')) {
-      Ref<HiZ> zbuffer = PF_NEW(HiZ, 256, 128);
+      Ref<HiZ> zbuffer = PF_NEW(HiZ, 1024, 1024);
       Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
       const RTCamera rt_cam(cam->org, cam->up, cam->view, cam->fov, cam->ratio);
       double t = getSeconds();

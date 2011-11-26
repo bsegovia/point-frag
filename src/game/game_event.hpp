@@ -27,7 +27,7 @@ namespace pf
   public:
     InputEvent(const InputEvent &previous);
     InputEvent(int w, int h);
-    INLINE bool getKey(int32 key) {
+    INLINE bool getKey(int32 key) const {
       const int entry = key / 32; // which bitfield? (int32 == 32 bits)
       const int bit = key % 32;   // which bit in the bitfield?
       return (this->keys[entry] & (1u << bit)) != 0;

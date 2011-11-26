@@ -29,6 +29,8 @@
 #include "rt/rt_triangle.hpp" // XXX to do frustum culling
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "renderer/hiz.hpp" // XXX HiZ
+#include <cstring>
+#include "image/stb_image.hpp"
 
 namespace pf
 {
@@ -46,27 +48,42 @@ namespace pf
     const vec3f dir = normalize(p - cam.org);
     const float x = dot(dir, normalize(cam.xAxis));
     const float y = dot(dir, cam.zAxis);
-    const float z = dot(dir, cam.view);
+    //const float z = dot(p - cam.org, cam.view);
+    float z;
+    if (dot(p - cam.org, cam.view) < 0.f)
+      z = -distance(p, cam.org);
+    else 
+      z = distance(p, cam.org);
+
     return vec3f(x,y,z);
   }
 
+  static RendererObj::Segment *cullSegment = NULL;
+  static uint32 cullNum = 0;
+
   // XXX Quick and dirty test
-  static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam)
+  static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam, const InputEvent &event)
   {
     // Boiler plate for the HiZ
-    Ref<HiZ> hiz = PF_NEW(HiZ);
-    Ref<HiZ> zbuffer = PF_NEW(HiZ, 256, 128);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 256, 256);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
-//    Ref<Task> task = zbuffer->rayTrace(cam, intersector);
-//    task->waitForCompletion();
+    Ref<Task> task = hiz->rayTrace(cam, intersector);
+    task->waitForCompletion();
 
     RendererObj::Segment *sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
 
     uint32 curr = 0;
     for (uint32 i = 0; i < renderObj.sgmtNum; ++i) {
-      const vec3f m = renderObj.sgmt[i].bbox.lower;
-      const vec3f M = renderObj.sgmt[i].bbox.upper;
+      vec3f pmin = renderObj.sgmt[i].bbox.lower;
+      vec3f pmax = renderObj.sgmt[i].bbox.upper;
+      for (int j = 0; j < 3; ++j) {
+        pmin[j] -= 1.f;
+        pmax[j] += 1.f;
+      }
+
+      const vec3f m = pmin;
+      const vec3f M = pmax;
       const vec3f v0 = rtCameraXfm(cam, vec3f(m[0],m[1],m[2]));
       const vec3f v1 = rtCameraXfm(cam, vec3f(M[0],m[1],m[2]));
       const vec3f v2 = rtCameraXfm(cam, vec3f(m[0],M[1],m[2]));
@@ -78,6 +95,9 @@ namespace pf
       vec3f vmin = min(min(min(min(min(min(min(v0,v1),v2),v3),v4),v5),v6),v7);
       vec3f vmax = max(max(max(max(max(max(max(v0,v1),v2),v3),v4),v5),v6),v7);
 
+      //if (i == 160)
+      if (1)
+      {
 #if 0
       printf("\r%f %f %f %f %f %f %f %f %f",
           vmin.x, vmin.y, vmin.z, vmax.x, vmax.y, vmax.z, cam.ratio, cam.fov, cam.dist);
@@ -86,16 +106,87 @@ namespace pf
       const float c = cos(cam.fov * (float) M_PI / 360.f);
       vmax.x /= cam.ratio * c;
       vmax.y /= c;
+      vmin.x /= cam.ratio * c;
+      vmin.y /= c;
       if ((vmax.x < -1.f) ||
           (vmax.y < -1.f) ||
           (vmax.z < 0.f) ||
           (vmin.x > 1.f) ||
           (vmin.y > 1.f)) continue;
 
-      // Now the z test with HiZ
+      // compute the location of the closest point
+      vec3f closest;
+      closest.x = (cam.org.x < pmin.x) ? pmin.x : (cam.org.x > pmax.x) ? pmax.x : cam.org.x;
+      closest.y = (cam.org.y < pmin.y) ? pmin.y : (cam.org.y > pmax.y) ? pmax.y : cam.org.y;
+      closest.z = (cam.org.z < pmin.z) ? pmin.z : (cam.org.z > pmax.z) ? pmax.z : cam.org.z;
+      const float z = dot(-cam.org+  closest, cam.view);
 
+      // Now the z test with HiZ
+      vmax.x = vmax.x * 0.5f + 0.5f;
+      vmax.y = vmax.y * 0.5f + 0.5f;
+      vmin.x = vmin.x * 0.5f + 0.5f;
+      vmin.y = vmin.y * 0.5f + 0.5f;
+      const vec2i dim(hiz->width-1, hiz->height-1);
+      const vec2f dimf(hiz->width-1, hiz->height-1);
+      const vec2i vmini = min(dim, max(vec2i(zero), vec2i(dimf.x * vmin.x, dimf.y * vmin.y)));
+      const vec2i vmaxi = min(dim, max(vec2i(zero), vec2i(one) + vec2i(dimf.x * vmax.x, dimf.y * vmax.y)));
+
+      // traverse all touched tiles
+      bool visible = false;
+      const vec2i minTile = vmini / vec2i(HiZ::Tile::width, HiZ::Tile::height);
+      const vec2i maxTile = vmaxi / vec2i(HiZ::Tile::width, HiZ::Tile::height);
+      for (int32 tileX = minTile.x; tileX <= maxTile.x; ++tileX) {
+        for (int32 tileY = minTile.y; tileY <= maxTile.y; ++tileY) {
+          const int32 tileID = tileX + tileY * hiz->tileXNum;
+          assert(tileID < int32(hiz->tileNum));
+          const HiZ::Tile &tile = hiz->tiles[tileID];
+          if (z > tile.zmax) {
+            continue;
+          }
+          visible = true;
+        }
+      }
+      if (event.getKey('o')) {
+        printf("%i\n", i);
+        for (int32 tileX = minTile.x; tileX <= maxTile.x; ++tileX) {
+          for (int32 tileY = minTile.y; tileY <= maxTile.y; ++tileY) {
+            const int32 tileID = tileX + tileY * hiz->tileXNum;
+            assert(tileID < int32(hiz->tileNum));
+            HiZ::Tile &tile = hiz->tiles[tileID];
+            tile.zmin = 255.f;
+          }
+        }
+        uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * hiz->width * hiz->height);
+        hiz->greyRGBA(&rgba);
+        stbi_write_tga("hiz.tga", hiz->width, hiz->height, 4, rgba);
+        PF_DELETE_ARRAY(rgba);
+
+        rgba = PF_NEW_ARRAY(uint8, 4 * hiz->tileXNum * hiz->tileYNum);
+        hiz->greyMinRGBA(&rgba);
+        stbi_write_tga("hiz_min.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+
+        hiz->greyMaxRGBA(&rgba);
+        stbi_write_tga("hiz_max.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+        PF_DELETE_ARRAY(rgba);
+      }
+      //if (!visible) printf("%i ", i);
+      if (visible)
       sgmt[curr++] = renderObj.sgmt[i];
+      }
     }
+    if (event.getKey('l')) {
+      if (cullSegment) PF_DELETE_ARRAY(cullSegment);
+      cullSegment = PF_NEW_ARRAY(RendererObj::Segment, curr);
+      std::memcpy(cullSegment, sgmt, curr * sizeof(RendererObj::Segment));
+      cullNum = curr;
+    }
+    if (event.getKey('k') && cullSegment) {
+      PF_DELETE_ARRAY(sgmt);
+      sgmt = PF_NEW_ARRAY(RendererObj::Segment, cullNum);
+      std::memcpy(sgmt, cullSegment, cullNum * sizeof(RendererObj::Segment));
+      curr = cullNum;
+    }
+
     renderObj.sgmt = sgmt;
     renderObj.sgmtNum = curr;
   }
@@ -125,7 +216,7 @@ namespace pf
     // XXX
     RendererObj::Segment *saved  = renderObj->sgmt;
     const uint32 savedNum = renderObj->sgmtNum;
-    cullObj(*renderObj, *cam);
+    cullObj(*renderObj, *cam, *event);
     renderObj->display();
     R_CALL (UseProgram, 0);
 
@@ -134,7 +225,7 @@ namespace pf
     BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->sgmtNum);
     for (size_t i = 0; i < renderObj->sgmtNum; ++i)
       bbox[i] = renderObj->sgmt[i].bbox;
-    R_CALL (displayBBox, bbox, renderObj->sgmtNum);
+    //R_CALL (displayBBox, bbox, renderObj->sgmtNum);
     PF_SAFE_DELETE_ARRAY(bbox);
     glutSwapBuffers();
 

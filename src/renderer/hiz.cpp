@@ -33,7 +33,7 @@ namespace pf
     Ref<HiZ> zBuffer;                 //!< Keep the z buffer alive
     Ref<Intersector> intersector;     //!< Properly keep a reference on it
     RTCameraPacketGen gen;            //!< Generates the ray
-    vec3f view;                       //!< Get z value from t value
+    vec3f view;
     uint32 taskXNum;                  //!< Number of tasks along X axis
     uint32 taskYNum;                  //!< Number of tasks along Y axis
     static const uint32 width  = 16u; //!< Tile width processed per job ...
@@ -58,8 +58,7 @@ namespace pf
   HiZ::~HiZ(void) { PF_ALIGNED_FREE(this->tiles); }
 
   // We create packets and directly fill each zBuffer tile. Note that we
-  // really store z values and not t values. So, we take the dot product with
-  // the camera view vector
+  // really store t values
   void TaskRayTraceHiZ::run(size_t taskID)
   {
     const uint32 taskX = taskID % this->taskXNum;
@@ -70,7 +69,6 @@ namespace pf
     const uint32 endY = startY + this->height;
     uint32 tileY = startY / HiZ::Tile::height;
 
-    const sse3f dir(view.x, view.y, view.z);
     for (uint32 y = startY; y < endY; y += RayPacket::height, ++tileY) {
       uint32 tileX = startX / HiZ::Tile::width;
       for (uint32 x = startX; x < endX; x += RayPacket::width, ++tileX) {
@@ -83,10 +81,11 @@ namespace pf
         assert(tileID < zBuffer->tileNum);
         HiZ::Tile &tile = zBuffer->tiles[tileID];
         for (uint32 chunkID = 0; chunkID < HiZ::Tile::chunkNum; ++chunkID) {
-          const ssef z = dot(pckt.dir[chunkID], dir) * hit.t[chunkID];
-          tile.z[chunkID] = z;
-          zmin = min(zmin, z);
-          zmax = max(zmax, z);
+          //const ssef t = hit.t[chunkID];
+          const ssef t = hit.t[chunkID] *dot(sse3f(view.x,view.y,view.z), pckt.dir[chunkID]);
+          tile.z[chunkID] = t;
+          zmin = min(zmin, t);
+          zmax = max(zmax, t);
         }
         tile.zmin = reduce_min(zmin)[0];
         tile.zmax = reduce_max(zmax)[0];
@@ -100,8 +99,8 @@ namespace pf
     Ref<TaskRayTraceHiZ> task = PF_NEW(TaskRayTraceHiZ, taskNum);
     cam.createGenerator(task->gen, this->width, this->height);
     task->zBuffer = this;
-    task->intersector = intersector;
     task->view = cam.view;
+    task->intersector = intersector;
     task->taskXNum = this->width  / TaskRayTraceHiZ::width;
     task->taskYNum = this->height / TaskRayTraceHiZ::height;
     task->scheduled();
@@ -149,7 +148,7 @@ namespace pf
     for (uint32 x = 0; x < hiz.tileXNum; ++x) {
       const uint32 tileID = x + y * hiz.tileXNum;
       const HiZ::Tile &tile = hiz.tiles[tileID];
-      const float z = min((outputMin ? tile.zmin : tile.zmax) * 32.f, 255.f);
+      const float z = min((outputMin ? tile.zmin : tile.zmax) * 64.f, 255.f);
       rgba[4*tileID + 0] = uint8(z);
       rgba[4*tileID + 1] = uint8(z);
       rgba[4*tileID + 2] = uint8(z);

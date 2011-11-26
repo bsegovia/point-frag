@@ -291,14 +291,15 @@ namespace pf
   }
 
   /*! Grow the bounding boxen with an epsilon */
-  static INLINE void doGrowBoxs(BVH2Builder &c) {
+  static INLINE void doGrowBoxes(BVH2Builder &c) {
     const int aabbNum = 2 * c.n - 1;
     for (int i = 0; i < aabbNum; ++i) {
       vec3f pmin = c.root[i].getMin();
       vec3f pmax = c.root[i].getMax();
       for (int j = 0; j < 3; ++j) {
-        pmin[j] *= pmin[j] < 0.f ? 1.f + aabbEps : 1.f - aabbEps;
-        pmax[j] *= pmax[j] > 0.f ? 1.f + aabbEps : 1.f - aabbEps;
+        const float d = abs(pmax[j] - pmin[j]);
+        pmin[j] -= aabbEps * d;
+        pmax[j] += aabbEps * d;
       }
       c.root[i].setMin(pmin);
       c.root[i].setMax(pmax);
@@ -371,7 +372,7 @@ namespace pf
       }
     }
 
-    doGrowBoxs(*this);
+    doGrowBoxes(*this);
     return 0;
   }
 

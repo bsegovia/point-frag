@@ -22,3 +22,4 @@ namespace pf
   const ssef ssef::LANE_NUM(4.f,4.f,4.f,4.f);
   const ssef ssef::EPSILON(1e-10f,1e-10f,1e-10f,1e-10f);
 } /* namespace pf */
+
