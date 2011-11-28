@@ -55,9 +55,9 @@ const __m128 _mm_lookupmask_ps[16] = {
 };
 
 #if defined (__SSE4_1__) || defined (__SSE4_2__)
-#include <smmintrin.h>
+// #include <smmintrin.h>
 #else
-#include "smmintrin_emu.hpp"
+// #include "smmintrin_emu.hpp"
 #endif
 
 #if defined (__AES__) || defined (__PCLMUL__)

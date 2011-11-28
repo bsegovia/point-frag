@@ -78,7 +78,8 @@ namespace pf
 
   INLINE const ssei operator  +(const ssei& a, const ssei& b) { return _mm_add_epi32(a.m128, b.m128); }
   INLINE const ssei operator  -(const ssei& a, const ssei& b) { return _mm_sub_epi32(a.m128, b.m128); }
-  INLINE const ssei operator  *(const ssei& a, const ssei& b) { return _mm_mullo_epi32(a.m128, b.m128); }
+  // INLINE const ssei operator  *(const ssei& a, const ssei& b) { return _mm_mullo_epi32(a.m128, b.m128); }
+  INLINE const ssei operator  *(const ssei& a, const ssei& b) { NOT_IMPLEMENTED; return ssei(zero); }
   INLINE const ssei operator  &(const ssei& a, const ssei& b) { return _mm_and_si128(a.m128, b.m128); }
   INLINE const ssei operator  |(const ssei& a, const ssei& b) { return _mm_or_si128(a.m128, b.m128); }
   INLINE const ssei operator  ^(const ssei& a, const ssei& b) { return _mm_xor_si128(a.m128, b.m128); }
@@ -100,8 +101,8 @@ namespace pf
   INLINE ssei& operator <<=(ssei& a, const int32 b) { return a = a << b; }
   INLINE ssei& operator >>=(ssei& a, const int32 b) { return a = a >> b; }
 
-  INLINE const ssei min(const ssei& a, const ssei& b) { return _mm_min_epi32(a.m128, b.m128); }
-  INLINE const ssei max(const ssei& a, const ssei& b) { return _mm_max_epi32(a.m128, b.m128); }
+  INLINE const ssei min(const ssei& a, const ssei& b) { NOT_IMPLEMENTED; return ssei(zero); }
+  INLINE const ssei max(const ssei& a, const ssei& b) { NOT_IMPLEMENTED; return ssei(zero); }
 
   INLINE const ssei sra (const ssei& a, const int32 b) { return _mm_srai_epi32(a.m128, b); }
   INLINE const ssei srl (const ssei& a, const int32 b) { return _mm_srli_epi32(a.m128, b); }

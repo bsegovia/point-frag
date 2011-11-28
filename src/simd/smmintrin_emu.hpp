@@ -51,6 +51,7 @@ INLINE int _mm_extract_epi32( __m128i input, const int index ) {
   default: assert(false); return 0;
   }
 }
+asas
 INLINE __m128i _mm_insert_epi32( __m128i value, int input, const int index ) { assert(index >= 0 && index < 4); ((int*)&value)[index] = input; return value; }
 
 INLINE int _mm_extract_ps( __m128 input, const int index ) {

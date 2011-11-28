@@ -96,7 +96,6 @@ namespace pf
     return _mm_and_ps(a.m128, mask);
   }
 
-  INLINE const ssef sign (const ssef& a) { return _mm_blendv_ps(ssef(one), -ssef(one), _mm_cmplt_ps (a,ssef(zero))); }
   INLINE const ssef rcp  (const ssef& a) { return _mm_div_ps(ssef::one(), a.m128); }
   INLINE const ssef sqrt (const ssef& a) { return _mm_sqrt_ps(a.m128); }
   INLINE const ssef sqr  (const ssef& a) { return _mm_mul_ps(a,a); }
@@ -180,13 +179,14 @@ namespace pf
 #else
   INLINE ssef select(const sseb& mask, const ssef& t, const ssef& f) { return _mm_blendv_ps(f, t, mask); }
 #endif /* defined(_MSC_VER) && (_MSC_VER < 1600) */
-
+#if 0
   INLINE ssef round_even(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT); }
   INLINE ssef round_down(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_NEG_INF); }
   INLINE ssef round_up  (const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_POS_INF); }
   INLINE ssef round_zero(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_ZERO); }
   INLINE ssef floor(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_NEG_INF); }
   INLINE ssef ceil (const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_POS_INF); }
+#endif
   INLINE size_t movemask(const ssef& a) { return _mm_movemask_ps(a); }
   INLINE ssef fixup (const ssef& a) { return max(abs(a), ssef::epsilon()) ^ (a & ssei(0x80000000)); }
 

@@ -66,7 +66,7 @@ namespace pf
     ssef xMaxInvTanAngle;//!< Maximum tangent value along X axis
     ssef yMaxInvTanAngle;//!< Maximum tangent value along Z axis
     ssef windowing;      //!< To scale the position in {w,h}
-    ssei hizExtent;      //!< Maximum extent in the HiZ {w-1,h-1}
+    ssef hizExtent;      //!< Maximum extent in the HiZ {w-1,h-1}
     Ref<HiZ> hiz;        //!< To perform Z test
   };
 
@@ -89,10 +89,10 @@ namespace pf
                            float(hiz->tileXNum) * 0.5f,
                            float(hiz->tileYNum) * 0.5f,
                            float(hiz->tileYNum) * 0.5f);
-    this->hizExtent = ssei(hiz->tileXNum-1,
-                           hiz->tileXNum-1,
-                           hiz->tileYNum-1,
-                           hiz->tileYNum-1);
+    this->hizExtent = ssef(float(hiz->tileXNum-1),
+                           float(hiz->tileXNum-1),
+                           float(hiz->tileYNum-1),
+                           float(hiz->tileYNum-1));
   }
 
 // Do we want to use the HiZ buffer?
@@ -181,7 +181,7 @@ namespace pf
       const ssef mMs = windowing + mM * windowing;
 
       // Clamp and convert to integer
-      const ssei mMi = min(max(truncate(mMs), ssei(zero)), hizExtent);
+      const ssei mMi = truncate(min(max(mMs, ssef(zero)), hizExtent));
 
       // Traverse the HiZ buffer
       const vec2i tileMin(mMi[0], mMi[2]);

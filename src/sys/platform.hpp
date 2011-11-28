@@ -16,12 +16,9 @@
 
 #ifndef __PF_PLATFORM_HPP__
 #define __PF_PLATFORM_HPP__
-
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
-#include <memory>
-#include <stdexcept>
 #include <iostream>
 #include <cassert>
 
@@ -85,8 +82,18 @@
 #  endif
 #endif
 
+/* We require SSE ... */
+#ifndef __SSE__
+#define __SSE__
+#endif
+
+/* ... and SSE2 */
+#ifndef __SSE2__
+#define __SSE2__
+#endif
+
 #if defined(_INCLUDED_IMM)
-#define __AVX__
+// #define __AVX__
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1600) && !defined(__INTEL_COMPILER) || defined(_DEBUG) && defined(_WIN32)
@@ -94,7 +101,7 @@
 #endif
 
 #if defined(_MSC_VER) && !defined(__SSE4_2__)
-#define __SSE4_2__  //! activates SSE4.2 support
+// #define __SSE4_2__  //! activates SSE4.2 support
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
