@@ -22,8 +22,8 @@
 #include "sys/atomic.hpp"
 #include "sys/ref.hpp"
 
-#include "GL/gl3.h"
-#include "GL/glext.h"
+#include "renderer/GL/gl3.h"
+#include "renderer/GL/glext.h"
 #include <string>
 #include <vector>
 
@@ -40,15 +40,15 @@ namespace pf
 
 /*! We instantiate all GL functions here */
 #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) PROTOTYPE FIELD;
-#include "GL/ogl100.hxx"
-#include "GL/ogl110.hxx"
-#include "GL/ogl120.hxx"
-#include "GL/ogl130.hxx"
-#include "GL/ogl150.hxx"
-#include "GL/ogl200.hxx"
-#include "GL/ogl300.hxx"
-#include "GL/ogl310.hxx"
-#include "GL/ogl320.hxx"
+#include "renderer/GL/ogl100.hxx"
+#include "renderer/GL/ogl110.hxx"
+#include "renderer/GL/ogl120.hxx"
+#include "renderer/GL/ogl130.hxx"
+#include "renderer/GL/ogl150.hxx"
+#include "renderer/GL/ogl200.hxx"
+#include "renderer/GL/ogl300.hxx"
+#include "renderer/GL/ogl310.hxx"
+#include "renderer/GL/ogl320.hxx"
 #undef DECL_GL_PROC
 
     /*! We count all OGL allocations by overriding all OGL allocation and
@@ -131,6 +131,4 @@ namespace pf
     } while (0)
 #endif /* NDEBUG */
 }
-
 #endif /* __PF_OGL_HPP__ */
-

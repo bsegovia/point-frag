@@ -29,7 +29,7 @@ namespace pf
 
   /*! Generic ray / primitive intersection */
   template <typename T>
-  INLINE void PrimIntersect(const T&, uint32_t, ssef, sse3f, Hit&);
+  INLINE void PrimIntersect(const T&, uint32, const ssef&, const sse3f&, Hit&);
 
   INLINE ssef crossZXY(const ssef &a, const ssef &b) {
     return a*b.yzxx() - a.yzxx()*b;
@@ -44,7 +44,8 @@ namespace pf
     return a.yzxx()*b.zxyy() - a.zxyy()*b.yzxx();
   }
 
-  INLINE void transpose4x3(ssef r0, ssef r1, ssef r2, ssef r3, ssef& c0, ssef& c1, ssef& c2)
+  INLINE void transpose4x3(const ssef &r0, const ssef &r1, const ssef &r2, const ssef &r3,
+                           ssef& c0,             ssef& c1,       ssef& c2)
   {
     const ssef l02 = unpacklo(r0,r2);
     const ssef h02 = unpackhi(r0,r2);
@@ -72,7 +73,7 @@ namespace pf
   /*! Generic ray / leaf intersection */
   template <typename T>
   INLINE void LeafIntersect
-    (const BVH2<T> &bvh, const BVH2Node &node, ssef org, sse3f dir, Hit &hit)
+    (const BVH2<T> &bvh, const BVH2Node &node, const ssef &org, const sse3f &dir, Hit &hit)
   {
     const uint32 firstPrim = node.getPrimID();
     const uint32 primNum = node.getPrimNum();
@@ -88,7 +89,7 @@ namespace pf
    */
   template <>
   INLINE void PrimIntersect<RTTriangle>
-    (const RTTriangle &tri, uint32_t id, ssef org, sse3f dir, Hit &hit)
+    (const RTTriangle &tri, uint32 id, const ssef &org, const sse3f &dir, Hit &hit)
   {
     const ssef a(&tri.v[0].x);
     const ssef b(&tri.v[1].x);
@@ -177,7 +178,7 @@ namespace pf
   /*! Generic ray / primitive intersection */
   template <typename T>
   INLINE void PrimIntersect
-    (const T &, uint32_t, const RayPacket&, const uint32*, uint32, PacketHit&);
+    (const T &, uint32, const RayPacket&, const uint32*, uint32, PacketHit&);
 
   /*! Kay-Kajiya AABB intersection */
   INLINE void slab
@@ -198,7 +199,9 @@ namespace pf
   }
 
   /*! Kay-Kajiya AABB with interval arithmetic */
-  INLINE bool slabIA(ssef minOrg, ssef maxOrg, sseb sign, ssef rcpMin, ssef rcpMax)
+  INLINE int slabIA(const ssef &minOrg, const ssef &maxOrg,
+                    const sseb &sign,
+                    const ssef &rcpMin, const ssef &rcpMax)
   {
     const ssef minusMin = -minOrg;
     const ssef minusMax = -maxOrg;
@@ -339,7 +342,7 @@ namespace pf
    * */
   template <>
   INLINE void PrimIntersect<RTTriangle>
-    (const RTTriangle &tri, uint32_t id, const RayPacket &pckt,
+    (const RTTriangle &tri, uint32 id, const RayPacket &pckt,
      const uint32 *active, uint32 activeNum, PacketHit &hit)
   {
     if (pckt.properties & RAY_PACKET_CO) {

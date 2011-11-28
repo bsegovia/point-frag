@@ -31,8 +31,8 @@ namespace pf
               const vec3f &view = vec3f(0.f,0.f,-1.f),
               float fov = 45.f,
               float ratio = 1.f,
-              float near = 0.1f,
-              float far = 10000.f);
+              float znear = 0.1f,
+              float zfar = 10000.f);
     FPSCamera(const FPSCamera &other);
     /*! Update the orientation of the camera */
     void updateOrientation(float dx, float dy);
@@ -40,12 +40,12 @@ namespace pf
     void updatePosition(const vec3f &d);
     /*! Return the GL view matrix for the given postion */
     INLINE mat4x4f getMatrix(void) {
-      const mat4x4f P = pf::perspective(fov, ratio, near, far);
+      const mat4x4f P = pf::perspective(fov, ratio, znear, zfar);
       const mat4x4f V = pf::lookAt(org, lookAt, up);
       return P*V;
     }
     vec3f org, up, view, lookAt;
-    float fov, ratio, near, far;
+    float fov, ratio, znear, zfar;
     float speed;           //!< "Translation" speed [m/s]
     float angularSpeed;    //!< "Rotation" speed [radian/pixel]
     static const float defaultSpeed;

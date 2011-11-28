@@ -4,8 +4,6 @@
 #include "vec.hpp"
 #include "quaternion.hpp"
 
-namespace pf
-{
 #define DECL template <typename T> INLINE
 #define M33 mat3x3<T>
 #define M43 mat4x3<T>
@@ -14,6 +12,8 @@ namespace pf
 #define V4 vec4<T>
 #define OP operator
 
+namespace pf
+{
   /////////////////////////////////////////////////////////////////////////////
   // 3x3 Matrix (linear transformation)
   /////////////////////////////////////////////////////////////////////////////

@@ -173,13 +173,13 @@
 #if defined(__WIN32__)
 namespace pf
 {
-  void Win32Fatal(const char*);
+  void Win32Fatal(const std::string&);
 } /* namespace pf */
 
 #define FATAL(MSG)                                   \
 do {                                                 \
   std::cerr << MSG << std::endl;                     \
-  pf::Win32FATAL(MSG.c_str());                       \
+  pf::Win32Fatal(MSG);                               \
   assert(0); _exit(-1);                              \
 } while (0)
 #else

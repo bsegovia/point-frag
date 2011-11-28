@@ -34,6 +34,11 @@
 
 namespace pf
 {
+#if defined(__WIN32__)
+  typedef BBox3f Box;
+
+  INLINE Box convertBox(const BBox3f &from) { return from; }
+#else
   typedef BBox<ssef> Box;
 
   /*! Computes half surface area of box. */
@@ -49,6 +54,7 @@ namespace pf
     for (size_t j = 0; j < 3; ++j) to.upper[j] = from.upper[j];
     return to;
   }
+#endif /* __WIN32__ */
 
   /* Just the barycenter of a triangle */
   struct Centroid : public vec3f {
@@ -414,9 +420,9 @@ namespace pf
     std::memcpy(tree.prim, t, sizeof(T) * primNum);
 
     PF_MSG_V("BVH2: Copying primitive IDs");
-    tree.primID = PF_NEW_ARRAY(uint32_t, tree.primNum);
+    tree.primID = PF_NEW_ARRAY(uint32, tree.primNum);
     assert(tree.primID != NULL);
-    std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32_t));
+    std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32));
     PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
   }
 

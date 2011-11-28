@@ -17,9 +17,10 @@
 #ifndef __PF_RT_CAMERA_HPP__
 #define __PF_RT_CAMERA_HPP__
 
-#include "ray.hpp"
-#include "ray_packet.hpp"
+#include "rt/ray.hpp"
+#include "rt/ray_packet.hpp"
 #include "simd/ssef.hpp"
+#include "simd/ssei.hpp"
 #include "math/vec.hpp"
 
 namespace pf
@@ -102,8 +103,8 @@ namespace pf
     ray.dir = imagePlaneOrg + float(x) * xAxis + float(y) * zAxis;
     ray.dir = normalize(ray.dir);
     ray.rdir = rcp(ray.dir);
-    ray.near = 0.f;
-    ray.far = FLT_MAX;
+    ray.tnear = 0.f;
+    ray.tfar = FLT_MAX;
   }
 
   INLINE void RTCameraPacketGen::generateRay(RayPacket &pckt, int x, int y) const

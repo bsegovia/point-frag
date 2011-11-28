@@ -14,11 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __RENDERER_HPP__
-#define __RENDERER_HPP__
+#ifndef __PF_RENDERER_HPP__
+#define __PF_RENDERER_HPP__
 
-#include "texture.hpp"
-#include "renderer_driver.hpp"
+#include "renderer/texture.hpp"
+#include "renderer/renderer_driver.hpp"
 
 namespace pf
 {
@@ -49,6 +49,4 @@ namespace pf
   };
 
 } /* namespace pf*/
-
-#endif /* __RENDERER_HPP__ */
-
+#endif /* __PF_RENDERER_HPP__ */

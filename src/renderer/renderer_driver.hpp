@@ -110,6 +110,5 @@ namespace pf
   extern const char *defaultPath[];
   extern const size_t defaultPathNum;
 }
-
 #endif /* __RENDERER_DRIVER_HPP__ */
 

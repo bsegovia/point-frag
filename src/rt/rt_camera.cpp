@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "rt_camera.hpp"
+#include <cstdlib>
 
 namespace pf
 {
@@ -29,7 +30,7 @@ namespace pf
     this->view = view_;
     this->fov = fov_;
     this->ratio = ratio_;
-    this->dist = 0.5f / tan((float)(this->fov * (float) M_PI / 360.f));
+    this->dist = 0.5f / tan((float)(this->fov * float(pi) / 360.f));
     this->view = normalize(this->view);
     this->up = normalize(this->up);
 

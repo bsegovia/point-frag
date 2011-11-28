@@ -147,9 +147,9 @@ namespace pf
     const double dt = getSeconds() - t;
     PF_MSG_V(dt * 1000. << " msec - " << CAMW * CAMH / dt << " rays/s");
     if (singleRay)
-      stbi_write_tga("single.tga", w, h, 4, rgba);
+      stbi_write_bmp("single.bmp", w, h, 4, rgba);
     else
-      stbi_write_tga("packet.tga", w, h, 4, rgba);
+      stbi_write_bmp("packet.bmp", w, h, 4, rgba);
     PF_DELETE_ARRAY(rgba);
   }
 
@@ -182,10 +182,10 @@ namespace pf
     }
 
     // Ray trace now
-    PF_MSG_V("Single ray tracing");
-    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
+   // PF_MSG_V("Single ray tracing");
+   // for (int i = 0; i < 4; ++i) rayTrace<true>(CAMW, CAMH, c);
     PF_MSG_V("Packet ray tracing");
-    for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH, c);
+    for (int i = 0; i < 4; ++i) rayTrace<false>(CAMW, CAMH, c);
     PF_DELETE_ARRAY(c);
   }
 

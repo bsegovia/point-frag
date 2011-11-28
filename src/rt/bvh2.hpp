@@ -53,8 +53,8 @@ namespace pf
     INLINE BVH2BuildOption(void) {}
     INLINE BVH2BuildOption(uint32 minPrimNum,
                            uint32 maxPrimNum,
-                           uint32 SAHIntersectionCost,
-                           uint32 SAHTraversalCost) :
+                           float SAHIntersectionCost,
+                           float SAHTraversalCost) :
       minPrimNum(minPrimNum),
       maxPrimNum(maxPrimNum),
       SAHIntersectionCost(SAHIntersectionCost),

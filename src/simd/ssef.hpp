@@ -66,7 +66,7 @@ namespace pf
 
     /*! Aligned load and store */
     static INLINE ssef load(const float *a) { return _mm_load_ps(a); }
-    static INLINE void store(ssef x, float *a) { return _mm_store_ps(a, x.m128); }
+    static INLINE void store(const ssef &x, float *a) { return _mm_store_ps(a, x.m128); }
 
     /*! Convenient constants */
     static INLINE uint32 laneNum(void) { return sizeof(ssef) / sizeof(float); }
@@ -173,7 +173,7 @@ namespace pf
   INLINE sseb operator>= (float a, const ssef& b) { return _mm_cmpnlt_ps(ssef(a), b.m128); }
 
     /*! workaround for compiler bug in VS2008 */
-#if defined(_MSC_VER) && (_MSC_VER < 1600)
+#if defined(_MSC_VER)
   INLINE ssef select(const sseb& mask, const ssef& a, const ssef& b) { return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b)); }
 #else
   INLINE ssef select(const sseb& mask, const ssef& t, const ssef& f) { return _mm_blendv_ps(f, t, mask); }

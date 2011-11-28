@@ -122,7 +122,7 @@ namespace pf
   INLINE const sseb cmpa(const ssei& a, const ssei& b) { return _mm_cmpgt_epi32(_mm_xor_si128(a.m128, _mm_set1_epi32(0x80000000)), _mm_xor_si128(b.m128, _mm_set1_epi32(0x80000000))); }
 
   /*! workaround for compiler bug in VS2008 */
-#if defined(_MSC_VER) && (_MSC_VER < 1600)
+#if defined(_MSC_VER)
   INLINE const ssei select(const sseb& mask, const ssei& a, const ssei& b) { 
     return _mm_castps_si128(_mm_or_ps(_mm_and_ps(mask, _mm_castsi128_ps(a)), _mm_andnot_ps(mask, _mm_castsi128_ps(b)))); 
   }
@@ -131,7 +131,6 @@ namespace pf
     return _mm_castps_si128(_mm_blendv_ps(_mm_castsi128_ps(b), _mm_castsi128_ps(a), mask)); 
   }
 #endif
-
 
   ////////////////////////////////////////////////////////////////////////////////
   // Movement/Shifting/Shuffling Functions
@@ -151,7 +150,7 @@ namespace pf
   template<size_t dst> INLINE const ssei insert(const ssei& a, const int32 b) { return _mm_insert_epi32(a, b, dst); }
 
   /*! workaround for compiler bug in VS2008 */
-#if defined(_MSC_VER) && (_MSC_VER < 1600)
+#if defined(_MSC_VER)
   template<size_t src> INLINE int extract(const ssei& b) { return b[src]; }
 #else
   template<size_t src> INLINE int extract(const ssei& b) { return _mm_extract_epi32(b, src); }
@@ -170,4 +169,3 @@ namespace pf
 }
 
 #endif
-

@@ -24,15 +24,15 @@ namespace pf
   const float FPSCamera::defaultAngularSpeed = 4.f * 180.f / float(pi) / 50000.f;
   const float FPSCamera::acosMinAngle = 0.95f;
 
-  FPSCamera::FPSCamera(const vec3f &org_,
-                       const vec3f &up_,
-                       const vec3f &view_,
-                       float fov_,
-                       float ratio_,
-                       float near_,
-                       float far_) :
-    org(org_), up(up_), view(view_), lookAt(org_+view_),
-    fov(fov_), ratio(ratio_), near(near_), far(far_),
+  FPSCamera::FPSCamera(const vec3f &org,
+                       const vec3f &up,
+                       const vec3f &view,
+                       float fov,
+                       float ratio,
+                       float znear,
+                       float zfar) :
+    org(org), up(up), view(view), lookAt(org+view),
+    fov(fov), ratio(ratio), znear(znear), zfar(zfar),
     speed(defaultSpeed), angularSpeed(defaultAngularSpeed)
   {}
 
@@ -43,8 +43,8 @@ namespace pf
     this->lookAt = other.lookAt;
     this->fov = other.fov;
     this->ratio = other.ratio;
-    this->near = other.near;
-    this->far = other.far;
+    this->znear = other.znear;
+    this->zfar = other.zfar;
     this->speed = other.speed;
     this->angularSpeed = other.angularSpeed;
   }

@@ -27,6 +27,11 @@
 #include <vector>
 #include <algorithm>
 
+// XXX just to make it work on windows
+#if defined (__WIN32__)
+#define strtok_r(a,b,c) strtok(a,b)
+#endif
+
 namespace pf
 {
   struct ObjLoaderVec;

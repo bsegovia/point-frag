@@ -16,6 +16,7 @@
 
 #include "sys/platform.hpp"
 #include "sys/intrinsics.hpp"
+#include <string>
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Windows Platform
@@ -34,8 +35,8 @@ namespace pf
     QueryPerformanceCounter(&val);
     return (double)val.QuadPart / (double)freq.QuadPart;
   }
-  void Win32Fatal(const char *msg) {
-    MessageBox(NULL, msg, "Fatal Error", MB_OK);
+  void Win32Fatal(const std::string &msg) {
+    MessageBox(NULL, msg.c_str(), "Fatal Error", MB_OK);
   }
 }
 #endif

@@ -27,10 +27,10 @@ namespace pf
   // Renderer owns all RendererObj
   class Renderer;
   // We build the renderer obj from a Wavefront OBJ
-  class Obj;
+  struct Obj;
   // We build the hierarchy of segment if a BVH of triangles is given
   struct RTTriangle;
-  template <typename T> class BVH2;
+  template <typename T> struct BVH2;
 
   /*! Entity used for rendering of OBJ models */
   class RendererObj : public RefCount

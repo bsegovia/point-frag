@@ -21,17 +21,21 @@
 #include "renderer/texture.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
-#include <GL/freeglut.h>
+#include "renderer/renderer_driver.hpp"
+#include "image/stb_image.hpp"
 
 #include "sys/logging.hpp"
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "rt/bvh2.hpp" // XXX to do frustum culling
 #include "rt/bvh2_traverser.hpp" // XXX to do frustum culling
+
+#if 1
+
 #include "rt/rt_triangle.hpp" // XXX to do frustum culling
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "renderer/hiz.hpp" // XXX HiZ
+#include <GL/freeglut.h>
 #include <cstring>
-#include "image/stb_image.hpp"
 
 namespace pf
 {
@@ -46,15 +50,10 @@ namespace pf
 
   INLINE vec3f rtCameraXfm(const RTCamera &cam, const vec3f &p)
   {
-    const vec3f dir = normalize(p - cam.org);
-    const float x = dot(dir, normalize(cam.xAxis));
-    const float y = dot(dir, cam.zAxis);
-    //const float z = dot(p - cam.org, cam.view);
-    float z;
-    if (dot(p - cam.org, cam.view) < 0.f)
-      z = -distance(p, cam.org);
-    else 
-      z = distance(p, cam.org);
+    const vec3f dir = p - cam.org;
+    const float z = dot(p - cam.org, cam.view);
+    const float x = dot(dir, normalize(cam.xAxis)) / z;
+    const float y = dot(dir, cam.zAxis) / z;
 
     return vec3f(x,y,z);
   }
@@ -66,11 +65,11 @@ namespace pf
   static void cullObj(RendererObj &renderObj, const FPSCamera &fpsCam, const InputEvent &event)
   {
     // Boiler plate for the HiZ
-    Ref<HiZ> hiz = PF_NEW(HiZ, 1024, 1024);
+   // Ref<HiZ> hiz = PF_NEW(HiZ, 1024, 1024);
     //Ref<HiZ> hiz = PF_NEW(HiZ, 128, 128);
     //Ref<HiZ> hiz = PF_NEW(HiZ, 256, 256);
     //Ref<HiZ> hiz = PF_NEW(HiZ, 512, 512);
-    //Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     Ref<Task> task = hiz->rayTrace(cam, intersector);
@@ -82,8 +81,8 @@ namespace pf
       vec3f pmin = renderObj.sgmt[i].bbox.lower;
       vec3f pmax = renderObj.sgmt[i].bbox.upper;
       for (int j = 0; j < 3; ++j) {
-        pmin[j] -= 1.f;
-        pmax[j] += 1.f;
+        pmin[j] -= 0.f;
+        pmax[j] += 0.f;
       }
 
       const vec3f m = pmin;
@@ -107,7 +106,7 @@ namespace pf
           vmin.x, vmin.y, vmin.z, vmax.x, vmax.y, vmax.z, cam.ratio, cam.fov, cam.dist);
 #endif
       // frustum culling first
-      const float c = sin(cam.fov * (float) M_PI / 360.f);
+      const float c = tan(cam.fov * float(pi) / 360.f);
       vmax.x /= cam.ratio * c;
       vmax.y /= c;
       vmin.x /= cam.ratio * c;
@@ -123,7 +122,7 @@ namespace pf
       closest.x = (cam.org.x < pmin.x) ? pmin.x : (cam.org.x > pmax.x) ? pmax.x : cam.org.x;
       closest.y = (cam.org.y < pmin.y) ? pmin.y : (cam.org.y > pmax.y) ? pmax.y : cam.org.y;
       closest.z = (cam.org.z < pmin.z) ? pmin.z : (cam.org.z > pmax.z) ? pmax.z : cam.org.z;
-      const float z = dot(-cam.org+  closest, cam.view);
+      const float z = dot(-cam.org + closest, cam.view);
 
       // Now the z test with HiZ
       vmax.x = vmax.x * 0.5f + 0.5f;
@@ -131,9 +130,11 @@ namespace pf
       vmin.x = vmin.x * 0.5f + 0.5f;
       vmin.y = vmin.y * 0.5f + 0.5f;
       const vec2i dim(hiz->width, hiz->height);
-      const vec2f dimf(hiz->width, hiz->height);
-      const vec2i vmini = min(dim-vec2i(one), max(vec2i(zero), vec2i(dimf.x * vmin.x, dimf.y * vmin.y)));
-      const vec2i vmaxi = min(dim-vec2i(one), max(vec2i(zero), vec2i(one) + vec2i(dimf.x * vmax.x, dimf.y * vmax.y)));
+      const vec2f dimf(float(hiz->width), float(hiz->height));
+      const vec2i vmini = min(dim-vec2i(one),
+        max(vec2i(zero), vec2i(int(dimf.x * vmin.x), int(dimf.y * vmin.y))));
+      const vec2i vmaxi = min(dim-vec2i(one),
+        max(vec2i(zero), vec2i(one) + vec2i(int(dimf.x * vmax.x), int(dimf.y * vmax.y))));
 
       // traverse all touched tiles
       bool visible = false;
@@ -201,8 +202,8 @@ namespace pf
     // Set the display viewport
     R_CALL (Viewport, 0, 0, event->w, event->h);
     R_CALL (Enable, GL_DEPTH_TEST);
-    R_CALL (Disable, GL_CULL_FACE);
-    R_CALL (CullFace, GL_FRONT);
+    R_CALL (Enable, GL_CULL_FACE);
+    R_CALL (CullFace, GL_BACK);
     R_CALL (DepthFunc, GL_LEQUAL);
 
     // Clear color buffer with black
@@ -242,3 +243,4 @@ namespace pf
 
 } /* namespace pf */
 
+#endif

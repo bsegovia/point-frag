@@ -20,7 +20,7 @@
 #include "sys/string.hpp"
 #include "sys/tasking.hpp"
 #include "math/math.hpp"
-
+#include "rt/ray.hpp"
 #include <GL/freeglut.h>
 #include <fstream>
 #include <sstream>

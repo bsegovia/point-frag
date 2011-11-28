@@ -40,7 +40,7 @@ namespace pf
     /*! Get the main axis if this is not a leaf */
     INLINE uint32 getAxis(void)   const { return this->axis; }
     /*! Indicate if this is a leaf */
-    INLINE bool isLeaf(void)     const  { return this->offsetFlag & BIT_FLAG; }
+    INLINE bool isLeaf(void)     const  { return (this->offsetFlag & BIT_FLAG) != 0; }
     /*! Get the dimension of the node */
     INLINE vec3f getExtent(void) const  { return this->pmax - this->pmin; }
     /*! Set the child offset */
