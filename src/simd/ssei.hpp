@@ -129,7 +129,8 @@ namespace pf
   }
 #else
   INLINE const ssei select(const sseb& mask, const ssei& a, const ssei& b) { 
-    return _mm_castps_si128(_mm_blendv_ps(_mm_castsi128_ps(b), _mm_castsi128_ps(a), mask)); 
+    return _mm_castps_si128(_mm_or_ps(_mm_and_ps(mask, _mm_castsi128_ps(a)), _mm_andnot_ps(mask, _mm_castsi128_ps(b)))); 
+    //return _mm_castps_si128(_mm_blendv_ps(_mm_castsi128_ps(b), _mm_castsi128_ps(a), mask)); 
   }
 #endif
 
@@ -148,13 +149,13 @@ namespace pf
   //template<> INLINE const ssei shuffle<0, 1, 0, 1>(const ssei& a) { return _mm_castpd_si128(_mm_movedup_pd (_mm_castsi128_pd(a))); }
 
   template<size_t index> INLINE const ssei expand(const ssei& b) { return shuffle<index, index, index, index>(b); }
-  template<size_t dst> INLINE const ssei insert(const ssei& a, const int32 b) { return _mm_insert_epi32(a, b, dst); }
+  //template<size_t dst> INLINE const ssei insert(const ssei& a, const int32 b) { return _mm_insert_epi32(a, b, dst); }
 
   /*! workaround for compiler bug in VS2008 */
 #if defined(_MSC_VER)
   template<size_t src> INLINE int extract(const ssei& b) { return b[src]; }
 #else
-  template<size_t src> INLINE int extract(const ssei& b) { return _mm_extract_epi32(b, src); }
+  template<size_t src> INLINE int extract(const ssei& b) { return b[src]; }
 #endif
 
   INLINE ssei unpacklo(const ssei& a, const ssei& b) { return _mm_castps_si128(_mm_unpacklo_ps(_mm_castsi128_ps(a.m128), _mm_castsi128_ps(b.m128))); }

@@ -177,7 +177,8 @@ namespace pf
 #if defined(_MSC_VER)
   INLINE ssef select(const sseb& mask, const ssef& a, const ssef& b) { return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b)); }
 #else
-  INLINE ssef select(const sseb& mask, const ssef& t, const ssef& f) { return _mm_blendv_ps(f, t, mask); }
+  INLINE ssef select(const sseb& mask, const ssef& a, const ssef& b) { return _mm_or_ps(_mm_and_ps(mask, a), _mm_andnot_ps(mask, b)); }
+  //INLINE ssef select(const sseb& mask, const ssef& t, const ssef& f) { return _mm_blendv_ps(f, t, mask); }
 #endif /* defined(_MSC_VER) && (_MSC_VER < 1600) */
 #if 0
   INLINE ssef round_even(const ssef& a) { return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT); }
@@ -206,16 +207,26 @@ namespace pf
   }
   template<size_t dst, size_t src, size_t clr>
   INLINE ssef insert(const ssef& a, const ssef& b) {
-    return _mm_insert_ps(a, b, (dst << 4) | (src << 6) | clr);
+    NOT_IMPLEMENTED;
+    return ssef(zero);
+    //return _mm_insert_ps(a, b, (dst << 4) | (src << 6) | clr);
   }
   template<size_t dst, size_t src>
   INLINE ssef insert(const ssef& a, const ssef& b) { return insert<dst, src, 0>(a, b); }
   template<size_t dst>
   INLINE ssef insert(const ssef& a, const float b) { return insert<dst, 0>(a, _mm_set_ss(b)); }
   template<size_t dst>
-  INLINE ssef inserti(const ssef& a, const int b) { return _mm_castsi128_ps(_mm_insert_epi32(_mm_castps_si128(a),b,3)); }
+  INLINE ssef inserti(const ssef& a, const int b) {
+    NOT_IMPLEMENTED;
+    return ssef(zero);
+    //return _mm_castsi128_ps(_mm_insert_epi32(_mm_castps_si128(a),b,3)); }
+  }
   template<size_t src>
-  INLINE int extracti(const ssef& b) { return _mm_extract_ps(b, src); }
+  INLINE int extracti(const ssef& b) {
+    NOT_IMPLEMENTED;
+    return 0;
+    // return _mm_extract_ps(b, src);
+  }
   template<size_t src>
   INLINE float extract(const ssef& b) { return extract<0>(expand<src>(b)); }
   template<>

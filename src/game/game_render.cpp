@@ -219,7 +219,7 @@ namespace pf
                       const InputEvent &event)
   {
     // Compute the HiZ buffer
-    Ref<HiZ> hiz = PF_NEW(HiZ, 64, 64);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 128, 128);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     Ref<Task> task = hiz->rayTrace(cam, intersector);
