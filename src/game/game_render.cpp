@@ -102,7 +102,6 @@ namespace pf
 // artifacts. Should be a run-time value
 #define HIZ_GROW_AABB 1
 
-  static bool enterHIZ;
   INLINE bool PerspectiveFrustum::isVisible(const RendererSegment &sgmt)
   {
 #if HIZ_GROW_AABB
@@ -162,7 +161,7 @@ namespace pf
       const ssef closest = min(max(lower,org_aos),upper);
       const ssef d = (closest - org_aos) * view_aos;
       const float zmin = extract<0>(d + d.yyyy() + d.zzzz());
-      enterHIZ = true;
+
       // Compute the position in perspective space and project
       const ssef _z0 = rcp(z0);
       const ssef _z1 = rcp(z1);
