@@ -84,6 +84,8 @@ namespace pf
     int32_t maxTextureSize;
     int32_t maxTextureUnit;
 
+    /*! Swap back and front buffers */
+    void swapBuffers(void) const;
     /*! Check that no error happened */
     bool checkError(const char *title = NULL) const;
     /*! Check that the frame buffer is properly setup */

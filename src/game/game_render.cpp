@@ -34,7 +34,6 @@
 #include "rt/rt_triangle.hpp" // XXX to do frustum culling
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "renderer/hiz.hpp" // XXX HiZ
-#include <GL/freeglut.h>
 #include <cstring>
 
 namespace pf
@@ -229,7 +228,7 @@ namespace pf
       bbox[i] = renderObj->sgmt[i].bbox;
     //R_CALL (displayBBox, bbox, renderObj->sgmtNum);
     PF_SAFE_DELETE_ARRAY(bbox);
-    glutSwapBuffers();
+    R_CALL (swapBuffers);
 
     // XXX
     PF_DELETE_ARRAY(renderObj->sgmt);

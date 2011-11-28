@@ -123,6 +123,7 @@ namespace pf
 
 #undef OGL_NAME
 
+  void OGL::swapBuffers(void) const { glutSwapBuffers(); }
   bool OGL::checkError(const char *title) const
   {
     std::string errString;

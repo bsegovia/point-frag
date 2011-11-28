@@ -68,8 +68,30 @@ extern "C" {
 /* Function declaration macros - to move into glplatform.h */
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
+// BenS: we do not include windows.h
+// This is just too messy. Instead we just redefine APIENTRY
+#if defined(DOSWIN32) || defined(_MAC)
+#define cdecl _cdecl
+#ifndef CDECL
+#define CDECL _cdecl
+#endif
+#else
+#define cdecl
+#ifndef CDECL
+#define CDECL
+#endif
+#endif
+
+#ifdef _MAC
+#define WINAPI      CDECL
+#define APIENTRY    WINAPI
+#elif (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED)
+#define WINAPI      __stdcall
+#define APIENTRY    WINAPI
+#else
+#define WINAPI
+#define APIENTRY    WINAPI
+#endif
 #endif
 
 #ifndef APIENTRY
