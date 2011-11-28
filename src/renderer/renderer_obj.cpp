@@ -94,7 +94,8 @@ namespace pf
     virtual Task* run(void) {
       for (size_t i = 0; i < texNum; ++i) {
         if (texName[i].size() == 0) continue;
-        const TextureRequest req(texName[i], PF_TEX_FORMAT_DXT1);
+        //const TextureRequest req(texName[i], PF_TEX_FORMAT_DXT1);
+        const TextureRequest req(texName[i], PF_TEX_FORMAT_PLAIN);
         Ref<Task> loading = streamer.createLoadTask(req);
         if (loading) {
           Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, rendererObj, texName[i]);

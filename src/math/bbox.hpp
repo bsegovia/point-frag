@@ -18,6 +18,7 @@
 #define __PF_BBOX_HPP__
 
 #include "vec.hpp"
+#include "simd/ssef.hpp"
 
 namespace pf
 {
@@ -112,6 +113,7 @@ namespace pf
   /*! default template instantiations */
   typedef BBox<vec2<float> > BBox2f;
   typedef BBox<vec3<float> > BBox3f;
+  typedef BBox<ssef> Box;
 }
 
 #endif

@@ -292,12 +292,15 @@ namespace pf
 
   template<> INLINE uint32 isPowerOf<2>(uint32 i) { return ((i-1)&i) == 0; }
 
-#define ALIGNED_CLASS                                               \
-public:                                                             \
+#define ALIGNED_STRUCT                                              \
   void* operator new(size_t size) { return alignedMalloc(size); }   \
   void operator delete(void* ptr) { alignedFree(ptr); }             \
   void* operator new[](size_t size) { return alignedMalloc(size); } \
   void operator delete[](void* ptr) { alignedFree(ptr); }           \
+
+#define ALIGNED_CLASS                                               \
+public:                                                             \
+  ALIGNED_STRUCT                                                    \
 private:
 
   /*! random functions */

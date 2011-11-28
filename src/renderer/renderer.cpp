@@ -24,14 +24,14 @@ namespace pf
   {
     this->driver = PF_NEW(RendererDriver);
     this->streamer = PF_NEW(TextureStreamer, *this);
-    const TextureRequest req("Maps/chess.tga", PF_TEX_FORMAT_PLAIN, GL_NEAREST, GL_NEAREST);
+    const TextureRequest req("Maps/default.tga", PF_TEX_FORMAT_PLAIN, GL_NEAREST, GL_NEAREST);
     Ref<Task> loadingTask = this->streamer->createLoadTask(req);
     loadingTask->scheduled();
     loadingTask->waitForCompletion();
-    const TextureState state = this->streamer->getTextureState("Maps/chess.tga");
+    const TextureState state = this->streamer->getTextureState("Maps/default.tga");
     this->defaultTex = state.tex;
     FATAL_IF (defaultTex == false  || defaultTex->isValid() == false,
-              "Default \"chess.tga\" texture not found");
+              "Default \"default.tga\" texture not found");
   }
 
   Renderer::~Renderer(void)

@@ -68,9 +68,9 @@ namespace pf
   /// Unary Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  INLINE const ssei operator +(const ssei& a) { return a; }
-  INLINE const ssei operator -(const ssei& a) { return _mm_sub_epi32(_mm_setzero_si128(), a.m128); }
-  //INLINE const ssei abs(const ssei& a) { return _mm_abs_epi32(a.m128); }
+  INLINE ssei operator +(const ssei& a) { return a; }
+  INLINE ssei operator -(const ssei& a) { return _mm_sub_epi32(_mm_setzero_si128(), a.m128); }
+  INLINE ssei truncate(const __m128 a)  { return _mm_cvttps_epi32(a); }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Binary Operators

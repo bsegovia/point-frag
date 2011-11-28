@@ -35,8 +35,6 @@
 
 namespace pf
 {
-  typedef BBox<ssef> Box;
-
   /*! Computes half surface area of box. */
   INLINE float halfArea(const Box& box) {
     const ssef d = size(box);
@@ -78,7 +76,7 @@ namespace pf
     template <typename T>
     void injection(const T * const RESTRICT soup, uint32 primNum);
     /*! Build the hierarchy itself */
-    int compile(void);
+    void compile(void);
 
     Box sceneAABB;              //!< AABB of the scene
     std::vector<uint32> primID; //!< Sorted array of primitives
@@ -170,7 +168,7 @@ namespace pf
     struct Elem {
       INLINE Elem(void) {}
       INLINE Elem(int32 first, int32 last, uint32 index, const Box &aabb)
-        : first(first), last(last), id(index), aabb(aabb) {}
+        : aabb(aabb), first(first), last(last), id(index) {}
       Box aabb;
       int32 first, last;
       uint32 id;
@@ -289,23 +287,7 @@ namespace pf
       c.primID.push_back(c.IDs[0][j]);
   }
 
-  /*! Grow the bounding boxen with an epsilon */
-  INLINE void doGrowBoxes(BVH2Builder &c) {
-    const int aabbNum = 2 * c.n - 1;
-    for (int i = 0; i < aabbNum; ++i) {
-      vec3f pmin = c.root[i].getMin();
-      vec3f pmax = c.root[i].getMax();
-      for (int j = 0; j < 3; ++j) {
-        const float d = abs(pmax[j] - pmin[j]);
-        pmin[j] -= aabbEps * d;
-        pmax[j] += aabbEps * d;
-      }
-      c.root[i].setMin(pmin);
-      c.root[i].setMax(pmax);
-    }
-  }
-
-  int BVH2Builder::compile(void)
+  void BVH2Builder::compile(void)
   {
     Stack stack;
     Stack::Elem node;
@@ -371,9 +353,6 @@ namespace pf
         currID += 2;
       }
     }
-
-    doGrowBoxes(*this);
-    return 0;
   }
 
   const BVH2BuildOption defaultBVH2Options(2, 16, 1.f, 1.f);

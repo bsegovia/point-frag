@@ -64,16 +64,18 @@ namespace pf
     }
     GEN_VEC4_SWZ_FUNCS(ssef);
 
-    /*! Aligned load and store */
+    /*! Explicit loads and stores */
     static INLINE ssef load(const float *a) { return _mm_load_ps(a); }
+    static INLINE ssef uload(const float *a) { return _mm_loadu_ps(a); }
     static INLINE void store(const ssef &x, float *a) { return _mm_store_ps(a, x.m128); }
+    static INLINE void ustore(const ssef &x, float *a) { return _mm_storeu_ps(a, x.m128); }
 
     /*! Convenient constants */
-    static INLINE uint32 laneNum(void) { return sizeof(ssef) / sizeof(float); }
-    static INLINE ssef laneNumv(void)  { return LANE_NUM; }
-    static INLINE ssef one(void)       { return ONE; }
-    static INLINE ssef identity(void)  { return IDENTITY; }
-    static INLINE ssef epsilon(void)   { return EPSILON; }
+    static INLINE uint32 laneNum(void)  { return sizeof(ssef) / sizeof(float); }
+    static INLINE ssef   laneNumv(void) { return LANE_NUM; }
+    static INLINE ssef   one(void)      { return ONE; }
+    static INLINE ssef   identity(void) { return IDENTITY; }
+    static INLINE ssef   epsilon(void)  { return EPSILON; }
     static const uint32 CHANNEL_NUM = 4;
 
   private:
@@ -192,14 +194,12 @@ namespace pf
   /// Movement/Shifting/Shuffling Functions
   ////////////////////////////////////////////////////////////////////////////////
   //INLINE const ssef shuffle8(const ssef& a, const ssei& shuf) { return _mm_castsi128_ps(_mm_shuffle_epi8(_mm_castps_si128(a), shuf)); }
-  template<size_t index0, size_t index1, size_t index2, size_t index3>
+  template<size_t i0, size_t i1, size_t i2, size_t i3>
   INLINE const ssef shuffle(const ssef& b) {
-    return _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(b), _MM_SHUFFLE(index3, index2, index1, index0)));
+    return _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(b), _MM_SHUFFLE(i3, i2, i1, i0)));
   }
-  //template<> INLINE const ssef shuffle<0, 0, 2, 2>(const ssef& b) { return _mm_moveldup_ps(b); }
-  //template<> INLINE const ssef shuffle<1, 1, 3, 3>(const ssef& b) { return _mm_movehdup_ps(b); }
-  //template<> INLINE const ssef shuffle<0, 1, 0, 1>(const ssef& b) { return _mm_castpd_ps(_mm_movedup_pd(_mm_castps_pd(b))); }
-  template<size_t index> INLINE const ssef expand(const ssef& b) { return shuffle<index, index, index, index>(b); }
+  template<size_t i> INLINE
+  ssef expand(const ssef& b) { return shuffle<i, i, i, i>(b); }
   template<size_t i0, size_t i1, size_t i2, size_t i3>
   INLINE ssef shuffle(const ssef& a, const ssef& b) {
     return _mm_shuffle_ps(a, b, _MM_SHUFFLE(i3, i2, i1, i0));
@@ -208,15 +208,23 @@ namespace pf
   INLINE ssef insert(const ssef& a, const ssef& b) {
     return _mm_insert_ps(a, b, (dst << 4) | (src << 6) | clr);
   }
-  template<size_t dst, size_t src> INLINE const ssef insert(const ssef& a, const ssef& b) { return insert<dst, src, 0>(a, b); }
-  template<size_t dst> INLINE const ssef insert(const ssef& a, const float b) { return insert<dst, 0>(a, _mm_set_ss(b)); }
-  template<size_t dst> INLINE const ssef inserti(const ssef& a, const int b) { return _mm_castsi128_ps(_mm_insert_epi32(_mm_castps_si128(a),b,3)); }
-  template<size_t src> INLINE int extracti(const ssef& b) { return _mm_extract_ps(b, src); }
-  template<size_t src> INLINE float extract(const ssef& b) { return extract<0>(expand<src>(b)); }
-  template<> INLINE float extract<0>(const ssef& b) { return _mm_cvtss_f32(b); }
+  template<size_t dst, size_t src>
+  INLINE ssef insert(const ssef& a, const ssef& b) { return insert<dst, src, 0>(a, b); }
+  template<size_t dst>
+  INLINE ssef insert(const ssef& a, const float b) { return insert<dst, 0>(a, _mm_set_ss(b)); }
+  template<size_t dst>
+  INLINE ssef inserti(const ssef& a, const int b) { return _mm_castsi128_ps(_mm_insert_epi32(_mm_castps_si128(a),b,3)); }
+  template<size_t src>
+  INLINE int extracti(const ssef& b) { return _mm_extract_ps(b, src); }
+  template<size_t src>
+  INLINE float extract(const ssef& b) { return extract<0>(expand<src>(b)); }
+  template<>
+  INLINE float extract<0>(const ssef& b) { return _mm_cvtss_f32(b); }
 
   INLINE ssef unpacklo(const ssef& a, const ssef& b) { return _mm_unpacklo_ps(a.m128, b.m128); }
   INLINE ssef unpackhi(const ssef& a, const ssef& b) { return _mm_unpackhi_ps(a.m128, b.m128); }
+  INLINE ssef movelh(const ssef& a, const ssef& b) { return _mm_movelh_ps(a.m128, b.m128); }
+  INLINE ssef movehl(const ssef& a, const ssef& b) { return _mm_movehl_ps(a.m128, b.m128); }
 
   INLINE void transpose(const ssef& r0, const ssef& r1, const ssef& r2, const ssef& r3,
                               ssef& c0,       ssef& c1,       ssef& c2,       ssef& c3)

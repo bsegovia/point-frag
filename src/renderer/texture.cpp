@@ -39,10 +39,14 @@ namespace pf
     for (int y = 0; y < mmH; ++y) {
       for (int x = 0; x < mmW; ++x) {
         const int offset = (x + y*mmW) * channelNum;
-        const int offset0 = (2*x+0 + 2*y*w+0) * channelNum;
-        const int offset1 = (2*x+1 + 2*y*w+w) * channelNum;
-        const int offset2 = (2*x+0 + 2*y*w+w) * channelNum;
-        const int offset3 = (2*x+1 + 2*y*w+0) * channelNum;
+        const int upperX0 = min(2*x+0, w-1);
+        const int upperY0 = min(2*y+0, h-1);
+        const int upperX1 = min(2*x+1, w-1);
+        const int upperY1 = min(2*y+1, h-1);
+        const int offset0 = (upperX0 + w*upperY0) * channelNum;
+        const int offset1 = (upperX1 + w*upperY0) * channelNum;
+        const int offset2 = (upperX0 + w*upperY1) * channelNum;
+        const int offset3 = (upperX1 + w*upperY1) * channelNum;
         for (int c = 0; c < channelNum; ++c) {
           const float f = float(src[offset0+c]) +
                           float(src[offset1+c]) +
