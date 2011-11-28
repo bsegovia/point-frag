@@ -1,0 +1,69 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2006 Google, Inc.
+
+newmtl OrnamentBorder0178_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.572549 0.443137 0.313725
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/OrnamentBorder0178_S_1_.jpg
+
+newmtl MarbleTiles0040_1_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.666667 0.560784 0.372549
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/MarbleTiles0040_1_S_1_.jpg
+
+newmtl WoodFine0007_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.258824 0.192157 0.137255
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/WoodFine0007_S_1_.jpg
+
+newmtl PlanksOld0244_7_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.074510 0.058824 0.039216
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/PlanksOld0244_7_S_1_.jpg
+
+newmtl BrickOldSharp0108_5_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.752941 0.670588 0.568627
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/BrickOldSharp0108_5_S_1_.jpg
+
+newmtl Ivy0070_7_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.207843 0.227451 0.109804
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/Ivy0070_7_S_1_.jpg
+
+newmtl BrickOldSharp0184_1_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.556863 0.478431 0.341176
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/BrickOldSharp0184_1_S_1_.jpg
+
+newmtl PlanksOld0002_5_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.258824 0.192157 0.137255
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/PlanksOld0002_5_S_1_.jpg
+
+newmtl LoamWalls0003_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.584314 0.529412 0.372549
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/LoamWalls0003_S_1_.jpg
+
+newmtl FrontColor
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.330000 0.330000 0.330000
+
+newmtl LoamWalls0029_S_1_
+Ka 0.000000 0.000000 0.000000
+Kd 0.709804 0.623529 0.419608
+Ks 0.330000 0.330000 0.330000
+map_Kd arabic_city_II/LoamWalls0029_S_1_.jpg
+

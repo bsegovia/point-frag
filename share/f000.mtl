@@ -1,0 +1,1072 @@
+newmtl SkinTorso
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinHip
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinNeck
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinHead
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl SkinScalp
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl Lips
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.992157 0.992157 0.992157
+Km 0.03
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl InnerMouth
+d 1
+Ns 0.776393
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.12
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl Nostrils
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 0.258824 0.219608 0.203922
+Ks 0.670588 0.670588 0.670588
+Km 0.066
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl EyeSocket
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.647059 0.647059 0.647059
+Km 0
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl Lacrimal
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.647059 0.647059 0.647059
+Km 0.15
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl Eyelashes
+d 1
+Ns 1
+Ni 1
+Ka 0 0 0
+Kd 0.235294 0.117647 0
+Ks 0 0 0
+Km 0.15
+map_D /ConvertedMaps/V3Lo_Trans.tif.jpg
+newmtl Eyebrows
+d 0
+Ns 1
+Ni 1
+Ka 0 0 0
+Kd 0.188235 0.129412 0.0862745
+Ks 0 0 0
+Km 0.15
+newmtl Tongue
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.647059 0.647059 0.647059
+Km 0.15
+map_Kd /Maps/V3Lo_HeadM.jpg
+map_Bump /ConvertedMaps/V3Lo_HeadB.tif.jpg
+newmtl Teeth
+d 1
+Ns 0.65
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.647059 0.647059 0.647059
+Km 0.12
+map_Kd /Maps/V3Lo_TeethGumsM.jpg
+map_Bump /ConvertedMaps/V3Lo_TeethGumsB.tif.jpg
+newmtl Gums
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.647059 0.647059 0.647059
+Km 0.08
+map_Kd /Maps/V3Lo_TeethGumsM.jpg
+map_Bump /ConvertedMaps/V3Lo_TeethGumsB.tif.jpg
+newmtl LCornea
+d 0
+Ns 0.7
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.015
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+newmtl LPupil
+d 1
+Ns 1
+Ni 1
+Ka 0 0 0
+Kd 0 0 0
+Ks 0 0 0
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl LEyewhite
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl LIris
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.427451 0.427451 0.427451
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl RCornea
+d 0
+Ns 0.7
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+newmtl RPupil
+d 1
+Ns 1
+Ni 1
+Ka 0 0 0
+Kd 0 0 0
+Ks 0 0 0
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl REyewhite
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl RIris
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.427451 0.427451 0.427451
+Km 0.006
+map_Kd /Maps/V3Lo_EyeBlueM.jpg
+map_Bump /ConvertedMaps/V3Lo_EyeB.tif.jpg
+newmtl Nipples
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinForearm
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinArm
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinHand
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl Fingernails
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinLeg
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl SkinFeet
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl Toenails
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.670588 0.670588 0.670588
+Km 0.03
+map_Kd /Maps/V3Lo_BodyM(NG).jpg
+map_Bump /ConvertedMaps/V3Lo_BodyB(NG).tif.jpg
+newmtl antennae
+d 1
+Ns 0.612702
+Ni 1
+Ka 0 0 0
+Kd 0 0 0
+Ks 1 1 1
+Km 0
+newmtl BodiceBottom
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+map_D /ConvertedMaps/FaerieDressTr02.tif.jpg
+newmtl Panties
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 0.8 0.8 0.8
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+map_D /ConvertedMaps/FaerieDressTr02.tif.jpg
+newmtl Bodice
+d 1
+Ns 0.7
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+map_D /ConvertedMaps/FaerieDressTr02.tif.jpg
+newmtl Straps
+d 0
+Ns 0.75
+Ni 1
+Ka 0 0 0
+Kd 0.8 0.8 0.8
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+newmtl OverSkirt
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+map_D /ConvertedMaps/FaerieDressTr02.tif.jpg
+newmtl Skirt
+d 1
+Ns 0.8
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.372549 0.470588 0.337255
+Km 2
+map_Kd /Maps/FaerieDressM.jpg
+map_D /ConvertedMaps/FaerieDressTr02.tif.jpg
+newmtl WandRails
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 0.686275 0.537255 0
+Ks 0.921569 0.984314 0.219608
+Km 0.02
+newmtl WandBalls
+d 1
+Ns 0.735425
+Ni 1
+Ka 0 0 0
+Kd 0.623529 0.827451 1
+Ks 1 1 1
+Km 0.2
+newmtl CtrBall
+d 1
+Ns 0.668338
+Ni 1
+Ka 0 0 0
+Kd 0.713726 0.152941 0
+Ks 1 1 1
+Km 0.2
+newmtl BtmLgBall
+d 1
+Ns 0.408392
+Ni 1
+Ka 0 0 0
+Kd 0.870588 0.8 0.0156863
+Ks 0.929412 0.984314 0.498039
+Km 0.2
+newmtl BtmSmBall
+d 1
+Ns 0.408392
+Ni 1
+Ka 0 0 0
+Kd 0.870588 0.8 0.0156863
+Ks 0.929412 0.984314 0.498039
+Km 0.2
+newmtl Tori
+d 1
+Ns 0.408392
+Ni 1
+Ka 0 0 0
+Kd 0.870588 0.8 0.0156863
+Ks 0.929412 0.984314 0.498039
+Km 0.2
+newmtl Wand
+d 1
+Ns 0.6
+Ni 1
+Ka 0 0 0
+Kd 0.282353 0.196078 0.117647
+Ks 0.596078 0.568627 0.407843
+Km 0.2
+newmtl Spirals
+d 1
+Ns 0.434315
+Ni 1
+Ka 0 0 0
+Kd 0.192157 0.372549 0.027451
+Ks 0.34902 0.321569 0.0745098
+Km 0.2
+newmtl Wing3out
+d 1
+Ns 0.75
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.2
+map_Kd /Maps/FWWings03.jpg
+newmtl Wing3In
+d 1
+Ns 0.75
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 1 1 1
+Km 0.2
+map_Kd /Maps/FWWings03.jpg
+newmtl BaseMess
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl Base
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl Bun
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl NeckMess
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl BurnMess
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl Bangs
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl BunMess
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.631373 0.584314 0.509804
+Km 0.02
+map_Kd /Maps/UpDoMBr.jpg
+map_D /ConvertedMaps/UpDoTr.tif.jpg
+newmtl TilingTerrain
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_Flr.jpg
+map_Bump /ConvertedMaps/FFSummerwood_FlrB.tif.jpg
+newmtl Scenery_Right
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R.jpg
+newmtl Scenery_Centre
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_C.jpg
+newmtl Scenery_Left
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_L.jpg
+newmtl SkyCentre
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+newmtl SkyLeft
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+newmtl SkyRight
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Right
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Centre
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Left
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Right
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Centre
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Left
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Right_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Centre_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Weather_Left_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Right_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Centre_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Cloud_Left_Wallsback
+d 0
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Scenery_Right_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_R2.jpg
+newmtl Scenery_Centre_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_C2.jpg
+newmtl Scenery_Left_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+map_Kd /Maps/FFSummerwood_L2.jpg
+newmtl SkyCentre_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+newmtl SkyLeft_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+newmtl SkyRight_Wallsback
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0 0 0
+Km 0.02
+newmtl dbody
+d 1
+Ns 0.65
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.74902 0.74902 0.74902
+Km 0.02
+map_Kd /Maps/DDko.jpg
+newmtl wings
+d 1
+Ns 0.55
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.803922 0.847059 1
+Km 0.02
+map_Kd /Maps/DDko.jpg
+map_D /ConvertedMaps/DHTM.tif.jpg
+newmtl eyes
+d 1
+Ns 0.52
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.803922 0.917647 0.901961
+Km 0.02
+map_Kd /Maps/DDko.jpg
+newmtl Tree
+d 1
+Ns 0.45
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.501961 0.486275 0.435294
+Km 2
+map_Kd /Maps/FFTree_OldPine.jpg
+newmtl Trunk
+d 1
+Ns 0.5
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.635294 0.635294 0.635294
+Km 0.2
+map_Kd /Maps/UltimateTreeMed.jpg
+newmtl Grass
+d 1
+Ns 0.3
+Ni 1
+Ka 0 0 0
+Kd 0.235294 0.313726 0.156863
+Ks 0.752941 0.752941 0.752941
+Km 2
+newmtl Grass_GrassTuft
+d 1
+Ns 0.3
+Ni 1
+Ka 0 0 0
+Kd 0.235294 0.313726 0.156863
+Ks 0.752941 0.752941 0.752941
+Km 2
+newmtl Grass_GrassTuft_(2)
+d 1
+Ns 0.3
+Ni 1
+Ka 0 0 0
+Kd 0.235294 0.313726 0.156863
+Ks 0.752941 0.752941 0.752941
+Km 2
+newmtl Surface
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.0509804 0.105882 0.0235294
+Km 0.175
+map_Kd /Maps/FFMottleStone.jpg
+map_Bump /ConvertedMaps/FFMottleStoneB.tif.jpg
+newmtl Surface_Rock_(2)
+d 1
+Ns 0.85
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.0509804 0.105882 0.0235294
+Km 0.175
+map_Kd /Maps/FFMottleStone.jpg
+map_Bump /ConvertedMaps/FFMottleStoneB.tif.jpg
+newmtl Stem
+d 1
+Ns 0.65
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.1
+map_Kd /Maps/FFMushroom1.jpg
+map_Bump /ConvertedMaps/FFMushroom1B.tif.jpg
+newmtl Cap
+d 1
+Ns 0.65
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.2
+map_Kd /Maps/FFMushroom1.jpg
+map_Bump /ConvertedMaps/FFMushroom1B.tif.jpg
+newmtl Gills
+d 1
+Ns 0.65
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.2
+map_Kd /Maps/FFMushroom1.jpg
+map_Bump /ConvertedMaps/FFMushroom1B.tif.jpg
+newmtl Stem_Fern
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(2)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(2)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(3)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(3)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(4)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(4)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(5)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(5)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(6)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(6)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Fern_(7)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFPlant_Stem.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Leaves_Fern_(7)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.752941 0.752941 0.752941
+Km 0.125
+map_Kd /Maps/FFfern.jpg
+map_D /ConvertedMaps/FFfernTr.tif.jpg
+map_Bump /ConvertedMaps/FFPlant_StemB.tif.jpg
+newmtl Stem_Mushroom2
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
+newmtl Cap_Mushroom2
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
+newmtl Gills_Mushroom2
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
+newmtl Stem_Mushroom2_(2)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
+newmtl Cap_Mushroom2_(2)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
+newmtl Gills_Mushroom2_(2)
+d 1
+Ns 0.55
+Ni 1
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.811765 0.815686 0.721569
+Km 0.1
+map_Kd /Maps/FFMushroom2.jpg
+map_Bump /ConvertedMaps/FFMushroom2B.tif.jpg
