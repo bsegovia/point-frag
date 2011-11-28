@@ -24,26 +24,14 @@
 
 namespace pf
 {
-  // Renderer owns all RendererObj
-  class Renderer;
-  // We build the renderer obj from a Wavefront OBJ
-  struct Obj;
-  // We build the hierarchy of segment if a BVH of triangles is given
-  struct RTTriangle;
-  template <typename T> struct BVH2;
+  class Renderer;         // Renderer owns all RendererObj
+  struct Obj;             // We build the renderer obj from a Wavefront OBJ
+  struct RendererSegment; // To make a partition of the objects to display
 
   /*! Entity used for rendering of OBJ models */
   class RendererObj : public RefCount
   {
   public:
-
-    /*! Store triangles with the same material */
-    struct Segment
-    {
-      BBox3f bbox;        //!< Bounding box of the triangles
-      uint32 first, last; //!< First and last index in the index buffer
-      uint32 matID;       //!< Material ID
-    };
 
     /*! Renderer mapping of a OBJ material */
     struct Material
@@ -70,27 +58,26 @@ namespace pf
     };
 
     /*! Note that this object actually belongs to a renderer */
-    RendererObj(Renderer &renderer, const Obj &obj, const BVH2<RTTriangle> *bvh = NULL);
+    RendererObj(Renderer &renderer, const Obj &obj);
     /*! Release it (still from a renderer */
     ~RendererObj(void);
     /*! Valid means it is OGL uploaded */
-    INLINE bool isValid(void) { return this->sgmtNum > 0; }
+    INLINE bool isValid(void) { return this->segmentNum > 0; }
     /*! Display it using the renderer */
     void display(void);
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
-    Renderer &renderer;   //!< A RendererObj belongs to a renderer
-    Material *mat;        //!< All the material of the object
-    Segment *sgmt;        //!< All the sub-meshes to display
-    uint32 matNum;        //!< Number of materials
-    uint32 sgmtNum;       //!< Number of segments
-    BVH2<Segment> bvh;    //!< Sorts the geometry
-    GLuint vertexArray;   //!< Vertex declaration
-    GLuint arrayBuffer;   //!< Vertex data (positions, normals...)
-    GLuint elementBuffer; //!< Indices
-    GLuint topology;      //!< Mostly triangle or triangle strip
-    Ref<Task> texLoading; //!< XXX To load the textures
-    MutexSys mutex;       //!< XXX just to play with async load
+    Renderer &renderer;           //!< A RendererObj belongs to a renderer
+    Material *mat;                //!< All the material of the object
+    RendererSegment *segments;    //!< All the sub-meshes to display
+    uint32 matNum;                //!< Number of materials
+    uint32 segmentNum;            //!< Number of segments
+    GLuint vertexArray;           //!< Vertex declaration
+    GLuint arrayBuffer;           //!< Vertex data (positions, normals...)
+    GLuint elementBuffer;         //!< Indices
+    GLuint topology;              //!< Mostly triangle or triangle strip
+    Ref<Task> texLoading;         //!< XXX To load the textures
+    MutexSys mutex;               //!< XXX just to play with async load
     friend class Renderer;
   };
 }

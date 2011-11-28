@@ -22,14 +22,13 @@
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
 #include "renderer/renderer_driver.hpp"
+#include "renderer/renderer_segment.hpp"
 #include "image/stb_image.hpp"
 
 #include "sys/logging.hpp"
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
 #include "rt/bvh2.hpp" // XXX to do frustum culling
 #include "rt/bvh2_traverser.hpp" // XXX to do frustum culling
-
-#if 1
 
 #include "rt/rt_triangle.hpp" // XXX to do frustum culling
 #include "rt/rt_camera.hpp" // XXX to do frustum culling
@@ -57,7 +56,7 @@ namespace pf
     return vec3f(x,y,z);
   }
 
-  static RendererObj::Segment *cullSegment = NULL;
+  static RendererSegment *cullSegment = NULL;
   static uint32 cullNum = 0;
 
   // XXX Quick and dirty test
@@ -74,11 +73,11 @@ namespace pf
     Ref<Task> task = hiz->rayTrace(cam, intersector);
     task->waitForCompletion();
 
-    RendererObj::Segment *sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
+    RendererSegment *segments = PF_NEW_ARRAY(RendererSegment, renderObj.segmentNum);
     uint32 curr = 0;
-    for (uint32 i = 0; i < renderObj.sgmtNum; ++i) {
-      vec3f pmin = renderObj.sgmt[i].bbox.lower;
-      vec3f pmax = renderObj.sgmt[i].bbox.upper;
+    for (uint32 i = 0; i < renderObj.segmentNum; ++i) {
+      vec3f pmin = renderObj.segments[i].bbox.lower;
+      vec3f pmax = renderObj.segments[i].bbox.upper;
       for (int j = 0; j < 3; ++j) {
         pmin[j] -= 0.f;
         pmax[j] += 0.f;
@@ -153,19 +152,19 @@ namespace pf
 
       //if (!visible) printf("%i ", i);
       if (visible)
-      sgmt[curr++] = renderObj.sgmt[i];
+      segments[curr++] = renderObj.segments[i];
       }
     }
     if (event.getKey('l')) {
       if (cullSegment) PF_DELETE_ARRAY(cullSegment);
-      cullSegment = PF_NEW_ARRAY(RendererObj::Segment, curr);
-      std::memcpy(cullSegment, sgmt, curr * sizeof(RendererObj::Segment));
+      cullSegment = PF_NEW_ARRAY(RendererSegment, curr);
+      std::memcpy(cullSegment, segments, curr * sizeof(RendererSegment));
       cullNum = curr;
     }
     if (event.getKey('k') && cullSegment) {
-      PF_DELETE_ARRAY(sgmt);
-      sgmt = PF_NEW_ARRAY(RendererObj::Segment, cullNum);
-      std::memcpy(sgmt, cullSegment, cullNum * sizeof(RendererObj::Segment));
+      PF_DELETE_ARRAY(segments);
+      segments = PF_NEW_ARRAY(RendererSegment, cullNum);
+      std::memcpy(segments, cullSegment, cullNum * sizeof(RendererSegment));
       curr = cullNum;
     }
     // XXX for HiZ
@@ -188,8 +187,8 @@ namespace pf
       PF_DELETE_ARRAY(rgba);
     }
 
-    renderObj.sgmt = sgmt;
-    renderObj.sgmtNum = curr;
+    renderObj.segments = segments;
+    renderObj.segmentNum = curr;
   }
 
   Task* TaskGameRender::run(void)
@@ -215,25 +214,25 @@ namespace pf
     R_CALL (UniformMatrix4fv, renderer->driver->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
 
     // XXX
-    RendererObj::Segment *saved  = renderObj->sgmt;
-    const uint32 savedNum = renderObj->sgmtNum;
+    RendererSegment *saved  = renderObj->segments;
+    const uint32 savedNum = renderObj->segmentNum;
     cullObj(*renderObj, *cam, *event);
     renderObj->display();
     R_CALL (UseProgram, 0);
 
     // Display all the bounding boxes
     R_CALL (setMVP, MVP);
-    BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->sgmtNum);
-    for (size_t i = 0; i < renderObj->sgmtNum; ++i)
-      bbox[i] = renderObj->sgmt[i].bbox;
-    //R_CALL (displayBBox, bbox, renderObj->sgmtNum);
+    BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->segmentNum);
+    for (size_t i = 0; i < renderObj->segmentNum; ++i)
+      bbox[i] = renderObj->segments[i].bbox;
+    //R_CALL (displayBBox, bbox, renderObj->segmentNum);
     PF_SAFE_DELETE_ARRAY(bbox);
-    R_CALL (swapBuffers);
+    R_CALL(swapBuffers);
 
     // XXX
-    PF_DELETE_ARRAY(renderObj->sgmt);
-    renderObj->sgmt = saved;
-    renderObj->sgmtNum = savedNum;
+    PF_DELETE_ARRAY(renderObj->segments);
+    renderObj->segments = saved;
+    renderObj->segmentNum = savedNum;
 
     return NULL;
   }
@@ -242,4 +241,3 @@ namespace pf
 
 } /* namespace pf */
 
-#endif

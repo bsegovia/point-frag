@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "renderer/renderer_obj.hpp"
+#include "renderer/renderer_segment.hpp"
 #include "renderer/renderer.hpp"
 #include "models/obj.hpp"
 #include "rt/bvh2.hpp"
@@ -111,41 +112,7 @@ namespace pf
     std::string *texName;      //!< All the textures to load
     size_t texNum;             //!< The number of texture to load
   };
-#if 0
-  /*! In the case the user does not provide any BVH to segment the triangles,
-   *  we simply take the groups as given by the OBJ loader. It retuns the
-   *  indices to upload
-   */
-  static GLuint *RendererObjSegment(RendererObj &renderObj, const Obj &obj)
-  {
-    // Compute the bounding boxes of each segment
-    renderObj.sgmt = PF_NEW_ARRAY(RendererObj::Segment, obj.grpNum);
-    renderObj.sgmtNum = obj.grpNum;
-    for (size_t grpID = 0; grpID < obj.grpNum; ++grpID) {
-      const size_t first = obj.grp[grpID].first, last = obj.grp[grpID].last;
-      RendererObj::Segment &segment = renderObj.sgmt[grpID];
-      segment.first = first;
-      segment.last = last;
-      segment.bbox = BBox3f(empty);
-      segment.matID = grpID;
-      for (size_t j = first; j < last; ++j) {
-        segment.bbox.grow(obj.vert[obj.tri[j].v[0]].p);
-        segment.bbox.grow(obj.vert[obj.tri[j].v[1]].p);
-        segment.bbox.grow(obj.vert[obj.tri[j].v[2]].p);
-      }
-    }
 
-    // Just take the indices as they are returned by the parser
-    GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
-    for (size_t from = 0, to = 0; from < obj.triNum; ++from, to += 3) {
-      indices[to+0] = obj.tri[from].v[0];
-      indices[to+1] = obj.tri[from].v[1];
-      indices[to+2] = obj.tri[from].v[2];
-    }
-
-    return indices;
-  }
-#endif
   /*! Compute half of the node area */
   INLINE float halfArea(const BVH2Node &node) {
     const vec3f d = node.pmax - node.pmin;
@@ -164,7 +131,7 @@ namespace pf
    *  structure and first is the ID of the same triangle in the sorted array of
    *  triangle indices
    */
-  INLINE void startSegment(RendererObj::Segment &segment,
+  INLINE void startSegment(RendererSegment &segment,
                            const Obj &obj,
                            uint32 triID,
                            uint32 first)
@@ -174,8 +141,8 @@ namespace pf
     segment.matID = obj.tri[triID].m; // Be aware, they must be remapped
   }
 
-  /*! Symetry maniacs. We finish the segment with the last primitive index */
-  INLINE void endSegment(RendererObj::Segment &segment, uint32 last)
+  /*! Symmetry maniacs. We finish the segments with the last primitive index */
+  INLINE void endSegment(RendererSegment &segment, uint32 last)
   {
     segment.last = last;
   }
@@ -191,7 +158,7 @@ namespace pf
 
   static void doSegment(const Obj &obj,
                         BVH2<RTTriangle> &bvh,
-                        std::vector<RendererObj::Segment> &segments,
+                        std::vector<RendererSegment> &segments,
                         uint32 nodeID)
   {
     BVH2Node &node = bvh.node[nodeID];
@@ -207,10 +174,10 @@ namespace pf
     uint32 segmentID = firstSegment;
     uint32 triID = IDs[0];
     int32 matID = obj.tri[triID].m;
-    segments.push_back(RendererObj::Segment());
+    segments.push_back(RendererSegment());
     startSegment(segments[segmentID], obj, triID, first);
 
-    // When a new material is encountered, we finish the current segment and
+    // When a new material is encountered, we finish the current segments and
     // start a new one
     for (size_t i = 1; i < n; ++i) {
       triID = IDs[i];
@@ -221,7 +188,7 @@ namespace pf
         // Start the new one
         matID = obj.tri[triID].m;
         segmentID = segments.size();
-        segments.push_back(RendererObj::Segment());
+        segments.push_back(RendererSegment());
         startSegment(segments[segmentID], obj, triID, first+i);
       }
       growBBox(segments[segmentID].bbox, obj, triID);
@@ -230,8 +197,7 @@ namespace pf
     node.setPrimID(firstSegment);
   }
 
-#if 1
-  /*! Create segment from a SAH BVH of triangles */
+  /*! Create segments from a SAH BVH of triangles */
   static GLuint *RendererObjSegment(RendererObj &renderObj, const Obj &obj)
   {
     // Compute the RT triangles first
@@ -245,25 +211,25 @@ namespace pf
     }
 
     // Build the BVH with appropriate options (this is *not* for ray tracing
-    // but for GPU rasterization
+    // but for GPU rasterization)
     BVH2<RTTriangle> bvh;
     const BVH2BuildOption option(1024, 0xffffffff, 1.f, 2048.f);
     buildBVH2(tris, obj.triNum, bvh, option);
     PF_DELETE_ARRAY(tris);
 
     // Traverse all leaves and create the segments
-    std::vector<RendererObj::Segment> segments;
+    std::vector<RendererSegment> segments;
     for (size_t nodeID = 0; nodeID < bvh.nodeNum; ++nodeID) {
       BVH2Node &node = bvh.node[nodeID];
       if (node.isLeaf()) doSegment(obj, bvh, segments, nodeID);
     }
 
-    // Now we allocate the segment in the OBJ
+    // Now we allocate the segments in the OBJ
     PF_MSG_V("RendererObj: " << segments.size() << " segments are created");
-    renderObj.sgmtNum = segments.size();
-    renderObj.sgmt = PF_NEW_ARRAY(RendererObj::Segment, renderObj.sgmtNum);
-    for (size_t segmentID = 0; segmentID < renderObj.sgmtNum; ++segmentID)
-      renderObj.sgmt[segmentID] = segments[segmentID];
+    renderObj.segmentNum = segments.size();
+    renderObj.segments = PF_NEW_ARRAY(RendererSegment, renderObj.segmentNum);
+    for (size_t segmentID = 0; segmentID < renderObj.segmentNum; ++segmentID)
+      renderObj.segments[segmentID] = segments[segmentID];
 
     // Build the new index buffer
     GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
@@ -277,10 +243,9 @@ namespace pf
 
     return indices;
   }
-#endif
 
-  RendererObj::RendererObj(Renderer &renderer, const Obj &obj, const BVH2<RTTriangle> *bvh) :
-    renderer(renderer), mat(NULL), sgmt(NULL), matNum(0), sgmtNum(0),
+  RendererObj::RendererObj(Renderer &renderer, const Obj &obj) :
+    renderer(renderer), mat(NULL), segments(NULL), matNum(0), segmentNum(0),
     vertexArray(0), arrayBuffer(0), elementBuffer(0)
   {
     TextureStreamer &streamer = *renderer.streamer;
@@ -306,12 +271,11 @@ namespace pf
       this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
       this->texLoading->scheduled();
 
-      // Right now we only create one segment per material
+      // Right now we only create one segments per material
       PF_MSG_V("RendererObj: creating geometry segments");
-      //GLuint *indices = RendererObjSegment(*this, obj);
       GLuint *indices = RendererObjSegment(*this, obj);
-      for (size_t segmentID = 0; segmentID < sgmtNum; ++segmentID)
-        sgmt[segmentID].matID = matRemap[sgmt[segmentID].matID];
+      for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
+        segments[segmentID].matID = matRemap[segments[segmentID].matID];
 
       // Create the OGL index buffer
       PF_MSG_V("RendererObj: creating OGL objects");
@@ -348,7 +312,7 @@ namespace pf
     if (this->vertexArray)   R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
     if (this->arrayBuffer)   R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-    PF_SAFE_DELETE_ARRAY(this->sgmt);
+    PF_SAFE_DELETE_ARRAY(this->segments);
     PF_SAFE_DELETE_ARRAY(this->mat);
   }
 
@@ -357,8 +321,8 @@ namespace pf
     R_CALL (BindVertexArray, vertexArray);
     R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);
-    for (size_t sgmtID = 0; sgmtID < sgmtNum; ++sgmtID) {
-      const Segment &segment = sgmt[sgmtID];
+    for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID) {
+      const RendererSegment &segment = segments[segmentID];
       const Material &material = mat[segment.matID];
       const uintptr_t offset = segment.first * sizeof(int[3]);
       const GLuint n = segment.last - segment.first + 1;

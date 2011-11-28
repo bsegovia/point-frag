@@ -83,69 +83,64 @@ namespace pf
     /*! Build the hierarchy itself */
     int compile(void);
 
-    std::vector<int> pos;
-    std::vector<uint32> IDs[3];
-    std::vector<uint32> primID;
-    std::vector<uint32> tmpIDs;
-    std::vector<Box> aabbs;
-    std::vector<Box> rlAABBs;
-    int n;
-    int nodeNum;
-    uint32 currID;
-    Box sceneAABB;
-    BVH2Node * RESTRICT root;
+    std::vector<uint32> primID; //!< Sorted array of primitives
+    uint32 *IDs[3];             //!< Sorted ID per axis
+    int32  *pos;                //!< Says if a node is on left or on right of the cut
+    uint32 *tmpIDs;             //!< Used to temporaly store IDs
+    Box *aabbs;                 //!< All the bounding boxes
+    Box *rlAABBs;               //!< Bounding boxes sorted right to left
+    BVH2Node * RESTRICT root;   //!< Root of the tree
+    int32 n;                    //!< NUmber of primitives
+    int32 nodeNum;              //!< Maximum number of nodes (== 2*n+1 for a BVH)
+    uint32 currID;              //!< Last node pushed
+    Box sceneAABB;              //!< AABB of the scene
     BVH2BuildOption options;
   };
+
+  BVH2Builder::BVH2Builder(void) :
+    pos(NULL), tmpIDs(NULL),
+    aabbs(NULL), rlAABBs(NULL), root(NULL),
+    n(0), nodeNum(0), currID(0)
+  {
+    for (size_t i = 0; i < 3; ++i) IDs[i] = NULL;
+  }
+
+  BVH2Builder::~BVH2Builder(void) {
+    PF_ALIGNED_FREE(rlAABBs);
+    PF_ALIGNED_FREE(aabbs);
+    PF_ALIGNED_FREE(tmpIDs);
+    PF_ALIGNED_FREE(pos);
+    for (size_t i = 0; i < 3; ++i) PF_ALIGNED_FREE(IDs[i]);
+  }
 
   /*! Sort the centroids along the given axis */
   template<uint32 axis>
   struct CentroidSorter : public std::binary_function<int, int, bool> {
-    const std::vector<Centroid> &centroids;
-    CentroidSorter(const std::vector<Centroid> &c) : centroids(c) {}
+    const Centroid *centroids;
+    CentroidSorter(const Centroid *c) : centroids(c) {}
     INLINE int operator() (const uint32 a, const uint32 b) const {
       return centroids[a][axis] <  centroids[b][axis];
     }
   };
 
-  /*! To perform the sorts in parallel */
-  template <uint32 axis>
-  class TaskCentroidSort : public Task
-  {
-  public:
-    /*! Save the data in the task fields */
-    TaskCentroidSort(const std::vector<Centroid> &centroids,
-                     std::vector<uint32> &IDs) :
-      Task("TaskCentroidSort"), centroids(centroids), IDs(IDs) {}
-
-    /*! Increasing order sort for the given axis */
-    virtual Task *run(void) {
-      for (size_t j = 0; j < IDs.size(); ++j) IDs[j] = j;
-      std::sort(IDs.begin(), IDs.end(), CentroidSorter<axis>(centroids));
-      return NULL;
-    }
-  private:
-    const std::vector<Centroid> &centroids; //!< Centroids of the primitives
-    std::vector<uint32> &IDs;               //!< Array to sort
-  };
-
   template <typename T>
   void BVH2Builder::injection(const T * const RESTRICT soup, uint32 primNum)
   {
-    std::vector<Centroid> centroids;
+    Centroid *centroids = NULL;
     double t = getSeconds();
 
     // Allocate nodes and leaves for the BVH2
     nodeNum = 2 * primNum + 1;
-    root = (BVH2Node *) PF_ALIGNED_MALLOC(nodeNum * sizeof(BVH2Node), 16);
+    root = (BVH2Node*) PF_ALIGNED_MALLOC(nodeNum * sizeof(BVH2Node), CACHE_LINE);
 
     // Allocate the data for the compiler
     for (int i = 0; i < 3; ++i)
-      IDs[i].resize(primNum);
-    pos.resize(primNum);
-    tmpIDs.resize(primNum);
-    centroids.resize(primNum);
-    aabbs.resize(primNum);
-    rlAABBs.resize(primNum);
+      IDs[i] = (uint32*) PF_ALIGNED_MALLOC(sizeof(uint32) * primNum, CACHE_LINE);
+    tmpIDs = (uint32*) PF_ALIGNED_MALLOC(sizeof(uint32) * primNum, CACHE_LINE);
+    pos = (int32*) PF_ALIGNED_MALLOC(sizeof(int32) * primNum, CACHE_LINE);
+    aabbs = (Box*) PF_ALIGNED_MALLOC(sizeof(Box) * primNum, CACHE_LINE);
+    rlAABBs = (Box*) PF_ALIGNED_MALLOC(sizeof(Box) * primNum, CACHE_LINE);
+    centroids = (Centroid*) PF_ALIGNED_MALLOC(sizeof(Centroid) * primNum, CACHE_LINE);
     n = primNum;
 
     // Compute centroids and bounding boxes
@@ -160,15 +155,13 @@ namespace pf
     // Sort the bounding boxes along their axes
     for (int j = 0; j < n; ++j) 
       IDs[0][j] = IDs[1][j] = IDs[2][j] = j;
-    std::sort(IDs[0].begin(), IDs[0].end(), CentroidSorter<0>(centroids));
-    std::sort(IDs[1].begin(), IDs[1].end(), CentroidSorter<1>(centroids));
-    std::sort(IDs[2].begin(), IDs[2].end(), CentroidSorter<2>(centroids));
+    std::sort(IDs[0], IDs[0]+n, CentroidSorter<0>(centroids));
+    std::sort(IDs[1], IDs[1]+n, CentroidSorter<1>(centroids));
+    std::sort(IDs[2], IDs[2]+n, CentroidSorter<2>(centroids));
 
     PF_MSG_V("BVH2: Injection time, " << getSeconds() - t);
+    PF_ALIGNED_FREE(centroids);
   }
-
-  BVH2Builder::BVH2Builder(void) : currID(0) { }
-  BVH2Builder::~BVH2Builder(void) { }
 
   /*! Grows up the bounding boxen to avoid precision problems */
   static const float aabbEps = 1e-6f;
@@ -427,8 +420,7 @@ namespace pf
   }
 
   // Instantiation for RTTriangle
-  template void buildBVH2<RTTriangle>
-    (const RTTriangle*, uint32, BVH2<RTTriangle>&, const BVH2BuildOption&);
+  template void buildBVH2<RTTriangle>(const RTTriangle*, uint32, BVH2<RTTriangle>&, const BVH2BuildOption&);
   template BVH2<RTTriangle>::BVH2(void);
   template BVH2<RTTriangle>::~BVH2(void);
 
