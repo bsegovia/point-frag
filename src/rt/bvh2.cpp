@@ -30,31 +30,28 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
+#include <cassert>
 #include <vector>
 
 namespace pf
 {
-#if defined(__WIN32__)
-  typedef BBox3f Box;
-
-  INLINE Box convertBox(const BBox3f &from) { return from; }
-#else
   typedef BBox<ssef> Box;
 
   /*! Computes half surface area of box. */
   INLINE float halfArea(const Box& box) {
-    ssef d = size(box);
-    ssef a = d*shuffle<1,2,0,3>(d);
+    const ssef d = size(box);
+    const ssef a = d*shuffle<1,2,0,3>(d);
     return extract<0>(reduce_add(a));
   }
 
+  /*! Be aware with the unused w component */
   INLINE Box convertBox(const BBox3f &from) {
     Box to;
     for (size_t j = 0; j < 3; ++j) to.lower[j] = from.lower[j];
     for (size_t j = 0; j < 3; ++j) to.upper[j] = from.upper[j];
+    to.upper[3] = to.lower[3] = 0.f;
     return to;
   }
-#endif /* __WIN32__ */
 
   /* Just the barycenter of a triangle */
   struct Centroid : public vec3f {
@@ -83,6 +80,7 @@ namespace pf
     /*! Build the hierarchy itself */
     int compile(void);
 
+    Box sceneAABB;              //!< AABB of the scene
     std::vector<uint32> primID; //!< Sorted array of primitives
     uint32 *IDs[3];             //!< Sorted ID per axis
     int32  *pos;                //!< Says if a node is on left or on right of the cut
@@ -93,7 +91,6 @@ namespace pf
     int32 n;                    //!< NUmber of primitives
     int32 nodeNum;              //!< Maximum number of nodes (== 2*n+1 for a BVH)
     uint32 currID;              //!< Last node pushed
-    Box sceneAABB;              //!< AABB of the scene
     BVH2BuildOption options;
   };
 
@@ -172,18 +169,22 @@ namespace pf
     /*! First and last index, ID and AAB of the currently processed node */
     struct Elem {
       INLINE Elem(void) {}
-      INLINE Elem(int first, int last, uint32 index, const Box &aabb)
+      INLINE Elem(int32 first, int32 last, uint32 index, const Box &aabb)
         : first(first), last(last), id(index), aabb(aabb) {}
-      int first, last;
-      uint32 id;
       Box aabb;
+      int32 first, last;
+      uint32 id;
     };
     /*! Push a new element on the stack */
     INLINE void push(int a, int b, uint32 id, const Box &aabb) {
+      assert(n < MAX_DEPTH-1);
       data[n++] = Stack::Elem(a, b, id, aabb);
     }
     /*! Pop an element from the stack */
-    INLINE Elem pop(void) { return data[--n]; }
+    INLINE Elem pop(void) {
+      assert(n > 0);
+      return data[--n];
+    }
     /*! Indicates if there is anything on the stack */
     INLINE bool isNotEmpty(void) const { return n != 0; }
     INLINE Stack(void) { n = 0; }
@@ -197,25 +198,26 @@ namespace pf
   /*! A partition of the current given sub-array */
   struct Partition
   {
-    INLINE Partition(void) {}
-    INLINE Partition(int first_, int last_, uint32 d) :
-      cost(FLT_MAX), axis(d) {
+    INLINE void init(int32 first_, int32 last_, uint32 d)
+    {
       aabbs[ON_LEFT] = aabbs[ON_RIGHT] = Box(empty);
       first[ON_RIGHT] = first[ON_LEFT] = first_;
       last[ON_RIGHT] = last[ON_LEFT] = last_;
+      axis = d;
+      cost = FLT_MAX;
     }
     Box aabbs[2];
-    float cost;
+    int32 first[2], last[2];
     uint32 axis;
-    int first[2], last[2];
+    float cost;
   };
 
   /*! Sweep left to right and find the best partition */
   template <uint32 axis>
-  static INLINE Partition doSweep(BVH2Builder &c, int first, int last)
+  static void doSweep(BVH2Builder &c, Partition &part, int first, int last)
   {
-    // We return the best partition
-    Partition part(first, last, axis);
+    assert(first >= 0 && last < c.n);
+    part.init(first, last, axis);
 
     // Compute sequence (from right to left) of the bounding boxes
     c.rlAABBs[c.IDs[axis][last]] = c.aabbs[c.IDs[axis][last]];
@@ -233,7 +235,7 @@ namespace pf
     uint32 n = 1;
     part.cost = FLT_MAX;
     for (int j = first; j < last; ++j) {
-      aabb.grow(c.aabbs[c.IDs[axis][j]]);
+      aabb.grow(c.aabbs[c.IDs[axis][j]]); 
       const float cost = halfArea(aabb) * float(n)
                        + halfArea(c.rlAABBs[c.IDs[axis][j + 1]]) * float(primNum - n);
       ++n;
@@ -246,7 +248,7 @@ namespace pf
     }
 
     // We want at most maxPrimNum
-    if (primNum > c.options.maxPrimNum) return part;
+    if (primNum > c.options.maxPrimNum) return;
 
     // Test the last partition where all primitives are inside one node
     aabb.grow(c.aabbs[c.IDs[axis][last]]);
@@ -260,18 +262,16 @@ namespace pf
       part.first[ON_RIGHT] = part.first[ON_LEFT] = -1;
       part.aabbs[ON_RIGHT] = part.aabbs[ON_LEFT] = aabb;
     }
-
-    return part;
   }
 
   /*! Basically convert box into a node */
-  static INLINE void doSetNodeBBox(BVH2Node &node, const Box &box) {
+  INLINE void doSetNodeBBox(BVH2Node &node, const Box &box) {
     for (size_t j = 0; j < 3; ++j) node.pmin[j] = box.lower[j];
     for (size_t j = 0; j < 3; ++j) node.pmax[j] = box.upper[j];
   }
 
   /*! Store a node in the BVH2 */
-  static INLINE void doMakeNode(BVH2Builder &c, const Stack::Elem &data, uint32 axis) {
+  INLINE void doMakeNode(BVH2Builder &c, const Stack::Elem &data, uint32 axis) {
     c.root[data.id].setAxis(axis);
     doSetNodeBBox(c.root[data.id], data.aabb);
     c.root[data.id].setOffset(c.currID + 1);
@@ -279,7 +279,7 @@ namespace pf
   }
 
   /*! Store a leaf in the BVH2 */
-  static INLINE void doMakeLeaf(BVH2Builder &c, const Stack::Elem &data) {
+  INLINE void doMakeLeaf(BVH2Builder &c, const Stack::Elem &data) {
     const uint32 primNum = data.last - data.first + 1;
     doSetNodeBBox(c.root[data.id], data.aabb);
     c.root[data.id].setPrimNum(primNum);
@@ -290,7 +290,7 @@ namespace pf
   }
 
   /*! Grow the bounding boxen with an epsilon */
-  static INLINE void doGrowBoxes(BVH2Builder &c) {
+  INLINE void doGrowBoxes(BVH2Builder &c) {
     const int aabbNum = 2 * c.n - 1;
     for (int i = 0; i < aabbNum; ++i) {
       vec3f pmin = c.root[i].getMin();
@@ -323,10 +323,11 @@ namespace pf
         }
 
         // Find the best partition for this node
-        Partition best = doSweep<0>(*this, node.first, node.last);
-        Partition part = doSweep<1>(*this, node.first, node.last);
+        Partition best, part;
+        doSweep<0>(*this, best, node.first, node.last);
+        doSweep<1>(*this, part, node.first, node.last);
         if (part.cost < best.cost) best = part;
-        part = doSweep<2>(*this, node.first, node.last);
+        doSweep<2>(*this, part, node.first, node.last);
         if (part.cost < best.cost) best = part;
 
         // The best partition is actually *no* partition: we make a leaf
@@ -382,22 +383,22 @@ namespace pf
   {
     PF_MSG_V("BVH2: compiling BVH2");
     PF_MSG_V("BVH2: " << primNum << " primitives");
-    Ref<BVH2Builder> c = PF_NEW(BVH2Builder);
+    BVH2Builder c;
     const double start = getSeconds();
-    c->options = option;
+    c.options = option;
 
-    if (UNLIKELY(c->options.maxPrimNum < c->options.minPrimNum))
+    if (UNLIKELY(c.options.maxPrimNum < c.options.minPrimNum))
       FATAL("Bad BVH2 compilation parameters");
 
-    c->injection<T>(t, primNum);
-    c->compile();
+    c.injection<T>(t, primNum);
+    c.compile();
 
     PF_MSG_V("BVH2: Compacting node array");
-    tree.nodeNum = c->currID + 1;
+    tree.nodeNum = c.currID + 1;
     const size_t nodeSize = sizeof(BVH2Node) * tree.nodeNum;
     tree.node = (BVH2Node*) PF_ALIGNED_MALLOC(nodeSize, CACHE_LINE);
-    std::memcpy(tree.node, c->root, nodeSize);
-    PF_ALIGNED_FREE(c->root);
+    std::memcpy(tree.node, c.root, nodeSize);
+    PF_ALIGNED_FREE(c.root);
     PF_MSG_V("BVH2: " << tree.nodeNum << " nodes");
     uint32 leafNum = 0;
     for (size_t nodeID = 0; nodeID < tree.nodeNum; ++nodeID)
@@ -415,7 +416,7 @@ namespace pf
     PF_MSG_V("BVH2: Copying primitive IDs");
     tree.primID = PF_NEW_ARRAY(uint32, tree.primNum);
     assert(tree.primID != NULL);
-    std::memcpy(tree.primID, &c->primID[0], tree.primNum * sizeof(uint32));
+    std::memcpy(tree.primID, &c.primID[0], tree.primNum * sizeof(uint32));
     PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
   }
 

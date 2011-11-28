@@ -27,9 +27,8 @@
 #include <vector>
 #include <algorithm>
 
-// XXX just to make it work on windows
 #if defined (__WIN32__)
-#define strtok_r(a,b,c) strtok(a,b)
+#define strtok_r(a,b,c) strtok_s(a,b,c)
 #endif
 
 namespace pf
@@ -603,3 +602,6 @@ namespace pf
   }
 }
 
+#if defined (__WIN32__)
+#undef strtok_r
+#endif

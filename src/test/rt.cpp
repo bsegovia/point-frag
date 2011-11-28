@@ -35,6 +35,7 @@ namespace pf
 {
   Ref<Intersector> intersector  = NULL;
   static LoggerStream *coutStream = NULL;
+  static LoggerStream *fileStream = NULL;
   static const int CAMW = 1024, CAMH = 1024;
 
   class CoutStream : public LoggerStream {
@@ -45,14 +46,33 @@ namespace pf
     }
   };
 
+  class FileStream : public LoggerStream {
+  public:
+    FileStream(void) {
+      file = fopen("log_rt.txt", "w");
+      assert(file);
+    }
+    virtual ~FileStream(void) {fclose(file);}
+    virtual LoggerStream& operator<< (const std::string &str) {
+      fprintf(file, str.c_str());
+      return *this;
+    }
+  private:
+    FILE *file;
+  };
+
   static void LoggerStart(void) {
     logger = PF_NEW(Logger);
     coutStream = PF_NEW(CoutStream);
+    fileStream = PF_NEW(FileStream);
     logger->insert(*coutStream);
+    logger->insert(*fileStream);
   }
 
   static void LoggerEnd(void) {
+    logger->remove(*fileStream);
     logger->remove(*coutStream);
+    PF_DELETE(fileStream);
     PF_DELETE(coutStream);
     PF_DELETE(logger);
     logger = NULL;
@@ -182,10 +202,10 @@ namespace pf
     }
 
     // Ray trace now
-   // PF_MSG_V("Single ray tracing");
-   // for (int i = 0; i < 4; ++i) rayTrace<true>(CAMW, CAMH, c);
+    PF_MSG_V("Single ray tracing");
+    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
     PF_MSG_V("Packet ray tracing");
-    for (int i = 0; i < 4; ++i) rayTrace<false>(CAMW, CAMH, c);
+    for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH, c);
     PF_DELETE_ARRAY(c);
   }
 
@@ -205,4 +225,3 @@ int main(int argc, char **argv)
   MemDebuggerDumpAlloc();
   return 0;
 }
-
