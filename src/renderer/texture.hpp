@@ -23,7 +23,7 @@
 #include "sys/tasking.hpp"
 #include "renderer/GL/gl3.h"
 
-#include <unordered_map>
+#include <tr1/unordered_map>
 
 namespace pf
 {
@@ -129,7 +129,7 @@ namespace pf
 
   private:
     /*! Store for each texture its state */
-    std::unordered_map<std::string, TextureState> texMap;
+    std::tr1::unordered_map<std::string, TextureState> texMap;
     /*! Serialize the streamer access */
     MutexSys mutex;
     /*! Unlocked for internal use */

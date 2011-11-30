@@ -22,7 +22,6 @@
 #include "renderer/renderer_obj.hpp"
 #include "math/matrix.hpp"
 #include "math/bbox.hpp"
-#include <unordered_map>
 #include <string>
 #include <cassert>
 
@@ -92,8 +91,6 @@ namespace pf
     void destroyDiffuse(void);
 
   private:
-    /*! Store the texture per name (only its base name is taken into account) */
-    //std::unordered_map<std::string, Ref<Texture2D>> texMap;
     /*! Default colors */
     vec4f defaultDiffuseCol, defaultSpecularCol;
     /*! Model view projection */

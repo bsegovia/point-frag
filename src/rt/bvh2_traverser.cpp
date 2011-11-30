@@ -363,6 +363,16 @@ namespace pf
       const sse3f v1(sv1.xxxx(), sv1.yyyy(), sv1.zzzz());
       const sse3f v2(sv2.xxxx(), sv2.yyyy(), sv2.zzzz());
       const sse3f n(sn.xxxx(), sn.yyyy(), sn.zzzz());
+#if 0
+      const ssef cru = dotZXY(v0, pckt.crdir);
+      const ssef crv = dotZXY(v1, pckt.crdir);
+      const ssef crw = dotZXY(v2, pckt.crdir);
+
+      if (movemask(cru) == 0) return;
+      if (movemask(crv) == 0) return;
+      if (movemask(crw) == 0) return;
+#endif
+
       for(uint32 i = 0; i < activeNum; ++i) {
         const uint32 curr = active[i];
         const ssef u = dotZXY(v0, pckt.dir[curr]);
@@ -372,6 +382,7 @@ namespace pf
         const uint32 vs = movemask(v);
         const uint32 ws = movemask(w);
         const uint32 aperture = (us&vs&ws) | ((us^0xf)&(vs^0xf)&(ws^0xf));
+        //const uint32 aperture = (us&vs&ws);
         if (!aperture) continue;
         const ssef n0 = dotZXY(n, pckt.dir[curr]);
         const ssef num = snum.xxxx();

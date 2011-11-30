@@ -311,7 +311,6 @@ namespace pf
         if (part.cost < best.cost) best = part;
         doSweep<2>(*this, part, node.first, node.last);
         if (part.cost < best.cost) best = part;
-
         // The best partition is actually *no* partition: we make a leaf
         if (best.first[ON_LEFT] == -1) {
           doMakeLeaf(*this, node);

@@ -26,6 +26,7 @@ namespace pf
   {
     RTTriangle(void);
     RTTriangle(const vec3f &a, const vec3f &b, const vec3f &c);
+    RTTriangle& operator= (const RTTriangle& other);
     BBox3f getAABB(void) const;
     vec3f v[3];
     vec3f n;
@@ -39,7 +40,14 @@ namespace pf
     n = cross(c - a, b - a);
     pad = 0.f;
   }
-
+  INLINE RTTriangle& RTTriangle::operator=(const RTTriangle& other) {
+    this->v[0] = other.v[0];
+    this->v[1] = other.v[1];
+    this->v[2] = other.v[2];
+    this->n = other.n;
+    this->pad = 0.f;
+    return *this;
+  }
   INLINE BBox3f RTTriangle::getAABB(void) const {
     return BBox3f(vec3f(min(min(v[0].x, v[1].x), v[2].x),
                         min(min(v[0].y, v[1].y), v[2].y),

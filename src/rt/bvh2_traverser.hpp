@@ -32,7 +32,7 @@ namespace pf
   {
   public:
     /*! We keep a reference on the BVH */
-    BVH2Traverser(Ref<BVH2<T>> bvh) : bvh(bvh) {}
+    BVH2Traverser(Ref< BVH2<T> > bvh) : bvh(bvh) {}
 
     /*! Traverse routine for rays */
     virtual void traverse(const Ray &ray, Hit &hit) const;
@@ -46,7 +46,7 @@ namespace pf
     virtual bool occluded(const Ray &ray) const;
 
     /*! The BVH we intersect */
-    Ref<BVH2<T>> bvh;
+    Ref< BVH2<T> > bvh;
   };
 
 } /* namespace pf */

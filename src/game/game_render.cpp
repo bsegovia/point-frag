@@ -15,16 +15,17 @@
 // ======================================================================== //
 
 #include "camera.hpp"
+
 #include "game_render.hpp"
 #include "game_event.hpp"
 #include "models/obj.hpp"
 #include "renderer/texture.hpp"
+
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
 #include "renderer/renderer_driver.hpp"
 #include "renderer/renderer_segment.hpp"
 #include "image/stb_image.hpp"
-
 #include "sys/logging.hpp"
 
 // To do HIZ culling
@@ -39,7 +40,7 @@
 namespace pf
 {
   extern Ref<RendererObj> renderObj; //!< Real world should come later
-  Ref<BVH2<RTTriangle>> bvh = NULL;  // XXX -> HiZ
+  Ref< BVH2<RTTriangle> > bvh = NULL;  // XXX -> HiZ
 
 #define OGL_NAME ((RendererDriver*)renderObj->renderer.driver)
 
@@ -219,7 +220,7 @@ namespace pf
                       const InputEvent &event)
   {
     // Compute the HiZ buffer
-    Ref<HiZ> hiz = PF_NEW(HiZ, 128, 128);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 256, 128);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     Ref<Task> task = hiz->rayTrace(cam, intersector);

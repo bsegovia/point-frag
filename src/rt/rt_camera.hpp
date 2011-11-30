@@ -201,7 +201,7 @@ namespace pf
   {
     this->generateRay(pckt,x,y);
     // Unused since we do not use back face culling right now
-    // this->generateCR(pckt,x,y);
+    this->generateCR(pckt,x,y);
     pckt.properties = RAY_PACKET_CO;
     if (this->generateIA(pckt,x,y))
       pckt.properties |= RAY_PACKET_IA;

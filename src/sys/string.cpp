@@ -19,6 +19,8 @@
 
 #include <cstdio>
 #include <cctype>
+#include <istream>
+#include <fstream>
 #include <algorithm>
 
 namespace std
@@ -38,9 +40,10 @@ namespace std
 }
 namespace pf
 {
+
   std::string loadFile(const FileName &path)
   {
-    std::ifstream stream(path, std::ios::in);
+    std::ifstream stream(path.c_str(), std::istream::in);
     if (stream.is_open() == false)
       return std::string();
     std::string str = loadFile(stream);

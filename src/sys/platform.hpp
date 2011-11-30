@@ -23,13 +23,41 @@
 #include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////
-/// detect platform
+/// CPU architecture
 ////////////////////////////////////////////////////////////////////////////////
 
 /* detect 32 or 64 platform */
 #if defined(__x86_64__) || defined(__ia64__) || defined(_M_X64)
 #define __X86_64__
+#else
+#define __X86__
 #endif
+
+/* We require SSE ... */
+#ifndef __SSE__
+#define __SSE__
+#endif
+
+/* ... and SSE2 */
+#ifndef __SSE2__
+#define __SSE2__
+#endif
+
+#if defined(_INCLUDED_IMM)
+// #define __AVX__
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1600) && !defined(__INTEL_COMPILER) || defined(_DEBUG) && defined(_WIN32)
+#define __NO_AVX__
+#endif
+
+#if defined(_MSC_VER) && !defined(__SSE4_2__)
+// #define __SSE4_2__  //! activates SSE4.2 support
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+/// Operating system
+////////////////////////////////////////////////////////////////////////////////
 
 /* detect Linux platform */
 #if defined(linux) || defined(__linux__) || defined(__LINUX__)
@@ -82,26 +110,23 @@
 #  endif
 #endif
 
-/* We require SSE ... */
-#ifndef __SSE__
-#define __SSE__
+////////////////////////////////////////////////////////////////////////////////
+/// Compiler
+////////////////////////////////////////////////////////////////////////////////
+
+/*! GCC compiler */
+#ifdef __GNUC__
+// #define __GNUC__
 #endif
 
-/* ... and SSE2 */
-#ifndef __SSE2__
-#define __SSE2__
+/*! Intel compiler */
+#ifdef __INTEL_COMPILER
+#define __ICC__
 #endif
 
-#if defined(_INCLUDED_IMM)
-// #define __AVX__
-#endif
-
-#if defined(_MSC_VER) && (_MSC_VER < 1600) && !defined(__INTEL_COMPILER) || defined(_DEBUG) && defined(_WIN32)
-#define __NO_AVX__
-#endif
-
-#if defined(_MSC_VER) && !defined(__SSE4_2__)
-// #define __SSE4_2__  //! activates SSE4.2 support
+/*! Visual C compiler */
+#ifdef _MSC_VER
+#define __MSVC__
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +272,7 @@ typedef int32 index_t;
 /// Disable some compiler warnings
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__INTEL_COMPILER)
+#ifdef __ICC__
 #pragma warning(disable:265)  // floating-point operation result is out of range
 #pragma warning(disable:383)  // value copied to temporary, reference to temporary used
 #pragma warning(disable:869)  // parameter was never referenced
@@ -255,7 +280,8 @@ typedef int32 index_t;
 #pragma warning(disable:1418) // external function definition with no prior declaration
 #pragma warning(disable:1419) // external declaration in primary source file
 #pragma warning(disable:1572) // floating-point equality and inequality comparisons are unreliable
-#endif
+#pragma warning(disable:1125) // virtual function override intended?
+#endif /* __ICC__ */
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Default Includes and Functions

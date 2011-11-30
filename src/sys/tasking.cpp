@@ -24,6 +24,7 @@
 #include <vector>
 #include <cstdlib>
 #include <emmintrin.h>
+#include <stdint.h>
 
 // One important remark about reference counting. Tasks are referenced
 // counted but we do not use Ref<Task> here. This is for performance reasons.
@@ -60,7 +61,7 @@ namespace pf
      *  Since we properly sort priorities from 0 to 3, using bit scan forward
      *  will return the first non-empty queue with the highest priority
      */
-    NOINLINE int getActiveMask(void) const {
+    INLINE int getActiveMask(void) const {
 #if defined(__WIN32__)
       // Unfortunately, VS does not support volatile __m128 variables
       PF_COMPILER_READ_WRITE_BARRIER;

@@ -19,7 +19,7 @@
 #include "sys/mutex.hpp"
 
 #if PF_DEBUG_MEMORY
-#include <unordered_map>
+#include <tr1/unordered_map>
 #endif /* PF_DEBUG_MEMORY */
 
 #include <map>
@@ -53,7 +53,7 @@ namespace pf
     /*! Total number of allocations done */
     volatile intptr_t allocNum;
     /*! Sorts the file name and function name strings */
-    std::unordered_map<const char*, int> staticStringMap;
+    std::tr1::unordered_map<const char*, int> staticStringMap;
     /*! Each element contains the actual string */
     std::vector<const char*> staticStringVector;
     std::map<uintptr_t, AllocData> allocMap;

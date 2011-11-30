@@ -213,16 +213,16 @@ namespace pf
 
     // Build the BVH with appropriate options (this is *not* for ray tracing
     // but for GPU rasterization)
-    BVH2<RTTriangle> bvh;
-    const BVH2BuildOption option(1024, 0xffffffff, 1.f, 2048.f);
-    buildBVH2(tris, obj.triNum, bvh, option);
+    Ref< BVH2<RTTriangle> > bvh = PF_NEW(BVH2<RTTriangle>);
+    const BVH2BuildOption option(1024, 0xffffffff, 1.f, 1024.f);
+    buildBVH2(tris, obj.triNum, *bvh, option);
     PF_DELETE_ARRAY(tris);
 
     // Traverse all leaves and create the segments
     std::vector<RendererSegment> segments;
-    for (size_t nodeID = 0; nodeID < bvh.nodeNum; ++nodeID) {
-      BVH2Node &node = bvh.node[nodeID];
-      if (node.isLeaf()) doSegment(obj, bvh, segments, nodeID);
+    for (size_t nodeID = 0; nodeID < bvh->nodeNum; ++nodeID) {
+      BVH2Node &node = bvh->node[nodeID];
+      if (node.isLeaf()) doSegment(obj, *bvh, segments, nodeID);
     }
 
     // Now we allocate the segments in the OBJ
@@ -235,7 +235,7 @@ namespace pf
     // Build the new index buffer
     GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
     for (size_t from = 0, to = 0; from < obj.triNum; ++from, to += 3) {
-      const uint32 triID = bvh.primID[from];
+      const uint32 triID = bvh->primID[from];
       assert(triID < obj.triNum);
       indices[to+0] = obj.tri[triID].v[0];
       indices[to+1] = obj.tri[triID].v[1];
@@ -268,15 +268,15 @@ namespace pf
         material.name_Kd = obj.mat[matID].map_Kd;
       }
 
-      // Start to load the textures
-      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
-      this->texLoading->scheduled();
-
       // Right now we only create one segments per material
       PF_MSG_V("RendererObj: creating geometry segments");
       GLuint *indices = RendererObjSegment(*this, obj);
       for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
         segments[segmentID].matID = matRemap[segments[segmentID].matID];
+
+      // Start to load the textures
+      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
+      this->texLoading->scheduled();
 
       // Create the OGL index buffer
       PF_MSG_V("RendererObj: creating OGL objects");
