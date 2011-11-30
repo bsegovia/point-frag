@@ -268,15 +268,15 @@ namespace pf
         material.name_Kd = obj.mat[matID].map_Kd;
       }
 
+      // Start to load the textures
+      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
+      this->texLoading->scheduled();
+
       // Right now we only create one segments per material
       PF_MSG_V("RendererObj: creating geometry segments");
       GLuint *indices = RendererObjSegment(*this, obj);
       for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
         segments[segmentID].matID = matRemap[segments[segmentID].matID];
-
-      // Start to load the textures
-      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
-      this->texLoading->scheduled();
 
       // Create the OGL index buffer
       PF_MSG_V("RendererObj: creating OGL objects");

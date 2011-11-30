@@ -24,9 +24,13 @@ namespace pf
   /*! Store three vertices */
   struct RTTriangle
   {
+    /*! Nothing is done */
     RTTriangle(void);
+    /*! Copy the 3 points and compute the triangle normal */
     RTTriangle(const vec3f &a, const vec3f &b, const vec3f &c);
+    /*! Copy operator */
     RTTriangle& operator= (const RTTriangle& other);
+    /*! Compute the bounding box of the triangle */
     BBox3f getAABB(void) const;
     vec3f v[3];
     vec3f n;
@@ -37,7 +41,7 @@ namespace pf
   INLINE RTTriangle::RTTriangle(const vec3f &a, const vec3f &b, const vec3f &c)
   {
     v[0] = a; v[1] = b; v[2] = c;
-    n = cross(c - a, b - a);
+    n = cross(c-a, b-a);
     pad = 0.f;
   }
   INLINE RTTriangle& RTTriangle::operator=(const RTTriangle& other) {

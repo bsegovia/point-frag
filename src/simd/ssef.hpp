@@ -153,7 +153,6 @@ namespace pf
   INLINE ssef operator& (const ssef& a, const ssei& b) { return _mm_and_ps(a.m128,_mm_castsi128_ps(b.m128)); }
   INLINE ssef operator| (const ssef& a, const ssef& b) { return _mm_or_ps(a.m128,b.m128); }
   INLINE ssef operator| (const ssef& a, const ssei& b) { return _mm_or_ps(a.m128,_mm_castsi128_ps(b.m128)); }
-
   INLINE sseb operator== (const ssef& a, const ssef& b) { return _mm_cmpeq_ps (a.m128, b.m128); }
   INLINE sseb operator!= (const ssef& a, const ssef& b) { return _mm_cmpneq_ps(a.m128, b.m128); }
   INLINE sseb operator<  (const ssef& a, const ssef& b) { return _mm_cmplt_ps (a.m128, b.m128); }
