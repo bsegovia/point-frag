@@ -22,8 +22,11 @@
 #include "sys/mutex.hpp"
 #include "sys/tasking.hpp"
 #include "renderer/GL/gl3.h"
-
+#ifdef __MSVC__
+#include <unordered_map>
+#else
 #include <tr1/unordered_map>
+#endif
 
 namespace pf
 {

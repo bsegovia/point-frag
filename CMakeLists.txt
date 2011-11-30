@@ -16,13 +16,15 @@ set (PF_VERBOSE_VECTORIZER false CACHE bool "Output vectorizer diagnostic (GCC o
 ##############################################################
 # Compiler
 ##############################################################
-set (COMPILER "GCC" CACHE INT "Compiler to choose on Linux (GCC,ICC,MSVC)")
+if (UNIX)
+  set (COMPILER "GCC" CACHE INT "Compiler to choose on Linux (GCC,ICC)")
+endif (UNIX)
 
-if (COMPILER STREQUAL "MSVC")
+if (WIN32)
   set (DEF "/D")
-else ()
+else (WIN32)
   set (DEF "-D")
-endif ()
+endif (WIN32)
 
 if (PF_DEBUG_MEMORY)
   set (PF_DEBUG_MEMORY_FLAG "${DEF}PF_DEBUG_MEMORY=1")
@@ -51,10 +53,12 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
 ## Windows compilation
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  set (COMMON_FLAGS "${PF_DEBUG_MEMORY_FLAG} /arch:SSE2 /D_CRT_SECURE_NO_WARNINGS /D_HAS_EXCEPTIONS=0 /DNOMINMAX /GR- /W3 /wd4275")
+  set (COMMON_FLAGS "${PF_DEBUG_MEMORY_FLAG} /arch:SSE2 /D_CRT_SECURE_NO_WARNINGS /D_HAS_EXCEPTIONS=0 /DNOMINMAX /GR- /GS- /W3 /wd4275")
   set (CMAKE_CXX_FLAGS ${COMMON_FLAGS})
   set (CMAKE_C_FLAGS ${COMMON_FLAGS})
 endif ()
 
+##############################################################
+# Project source code
+##############################################################
 add_subdirectory (src)
-

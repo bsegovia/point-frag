@@ -19,7 +19,11 @@
 #include "sys/mutex.hpp"
 
 #if PF_DEBUG_MEMORY
+#ifdef __MSVC__
+#include <unordered_map>
+#else
 #include <tr1/unordered_map>
+#endif
 #endif /* PF_DEBUG_MEMORY */
 
 #include <map>

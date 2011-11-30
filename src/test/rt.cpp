@@ -202,10 +202,10 @@ namespace pf
     }
 
     // Ray trace now
-    PF_MSG_V("Single ray tracing");
-    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
     PF_MSG_V("Packet ray tracing");
     for (int i = 0; i < 16; ++i) rayTrace<false>(CAMW, CAMH, c);
+    PF_MSG_V("Single ray tracing");
+    for (int i = 0; i < 16; ++i) rayTrace<true>(CAMW, CAMH, c);
     PF_DELETE_ARRAY(c);
   }
 
