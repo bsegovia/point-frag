@@ -8,33 +8,6 @@
 #  GLUT_Xi_LIBRARY   = the full path to the Xi Library.
 
 IF (WIN32)
-
-  IF(CYGWIN)
-
-    FIND_PATH( GLUT_INCLUDE_DIR GL/glut.h
-      /usr/include
-    )
-
-    FIND_LIBRARY( GLUT_glut_LIBRARY glut32
-      ${OPENGL_LIBRARY_DIR}
-      /usr/lib
-      /usr/lib/w32api
-      /usr/local/lib
-      /usr/X11R6/lib
-    )
-
-
-  ELSE(CYGWIN)
-
-#    FIND_PATH( GLUT_INCLUDE_DIR GL/glut.h
-#     ${GLUT_ROOT_PATH}/include
-#   )
-
-#   FIND_LIBRARY( GLUT_glut_LIBRARY glut32
-#     ${GLUT_ROOT_PATH}/lib
-#     ${OPENGL_LIBRARY_DIR}
-#   )
-
 	FIND_PATH( GLUT_INCLUDE_DIR GL/glut.h
 		${GLUT_ROOT_PATH}/include
 		${PROJECT_SOURCE_DIR}/extern/glut/include
@@ -43,13 +16,9 @@ IF (WIN32)
 		NAMES freeglut glut GLUT glut32 glut32s
 		PATHS
 		${GLUT_ROOT_PATH}/lib
-		${PROJECT_SOURCE_DIR}/extern/glut/bin
 		${PROJECT_SOURCE_DIR}/extern/glut/lib
 		${OPENGL_LIBRARY_DIR}
 		DOC "The GLUT library")
-
-  ENDIF(CYGWIN)
-
 ELSE (WIN32)
 
   IF (APPLE)

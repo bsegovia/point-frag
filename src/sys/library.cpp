@@ -41,7 +41,7 @@ namespace pf
 
   /* returns address of a symbol from the library */
   void* getSymbol(lib_t lib, const std::string& sym) {
-    return GetProcAddress(HMODULE(lib),sym.c_str());
+    return (void*) GetProcAddress(HMODULE(lib),sym.c_str());
   }
 
   /* closes the shared library */

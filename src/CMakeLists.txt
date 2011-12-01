@@ -45,7 +45,7 @@ add_library (pf ${SRC})
 if (UNIX)
   target_link_libraries(pf ${GLUT_LIBRARY} pthread)
 else (UNIX)
-  target_link_libraries(pf ${GLUT_LIBRARY})
+  target_link_libraries(pf ${GLUT_LIBRARY} opengl32)
 endif (UNIX)
 
 add_executable (game game/game.cpp)

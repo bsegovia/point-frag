@@ -49,7 +49,7 @@ namespace pf
   {
 // On Windows, we directly load from OpenGL 1.1 functions
 #if defined(__WIN32__)
-  #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) this->FIELD = NAME;
+  #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) this->FIELD = (PROTOTYPE) NAME;
 #else
   #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE)                  \
     this->FIELD = (PROTOTYPE) glutGetProcAddress(#NAME);      \
@@ -219,12 +219,15 @@ namespace pf
       return false;
     o->GetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
     o->GetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
-    if (result == GL_FALSE) {
-      std::vector<char> buffer(infoLogLength);
-      o->GetShaderInfoLog(shaderName, infoLogLength, NULL, &buffer[0]);
-      PF_ERROR_V("OGL: failed to compile shader\n" << source);
-      PF_ERROR_V("OGL: " << &buffer[0]);
+    if (infoLogLength) {
+      char *buffer = PF_NEW_ARRAY(char, infoLogLength + 1);
+      buffer[infoLogLength] = 0;
+      o->GetShaderInfoLog(shaderName, infoLogLength, NULL, buffer);
+      PF_MSG_V("OGL: " << buffer);
+      PF_DELETE_ARRAY(buffer);
     }
+    if (result == GL_FALSE)
+      PF_ERROR_V("OGL: failed to compile shader\n" << source);
     return result == GL_TRUE;
   }
 

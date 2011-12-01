@@ -13,7 +13,9 @@ namespace pf
 #if defined(__WIN32__)
   #undef min
   #undef max
+#if defined(__MSVC__)
   INLINE bool finite (float x) {return _finite(x) != 0;}
+#endif
 #endif
 
   INLINE float sign (float x) {return x<0?-1.0f:1.0f;}
