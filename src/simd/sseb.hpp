@@ -89,7 +89,7 @@ namespace pf
 
   template<size_t index_0, size_t index_1, size_t index_2, size_t index_3>
   INLINE sseb shuffle(const sseb& a) {
-    return sseb(_mm_shuffle_epi32(a.m128, _MM_SHUFFLE(index_3, index_2, index_1, index_0)));
+    return sseb(_mm_shuffle_epi32(_mm_castps_si128(a.m128), _MM_SHUFFLE(index_3, index_2, index_1, index_0)));
   }
 
   //template<> INLINE const sseb shuffle<0, 0, 2, 2>(const sseb& a) { return _mm_moveldup_ps(a); }
