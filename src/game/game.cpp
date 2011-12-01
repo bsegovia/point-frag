@@ -96,9 +96,9 @@ namespace pf
     glutInitWindowPosition(64, 64);
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    //glutInitContextVersion(3, 3);
-   // glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-   // glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    glutInitContextVersion(3, 3);
+    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
