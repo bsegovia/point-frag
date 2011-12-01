@@ -145,7 +145,7 @@
 #define __dllimport extern "C"
 #endif
 
-#ifdef __WIN32__
+#ifdef __MSVC__
 #undef NOINLINE
 #define NOINLINE             __declspec(noinline)
 #define INLINE               __forceinline
@@ -212,7 +212,7 @@ namespace pf
 do {                                                 \
   std::cerr << MSG << std::endl;                     \
   pf::Win32Fatal(MSG);                               \
-  assert(0); _exit(-1);                              \
+  assert(0); exit(-1);                               \
 } while (0)
 #else
 #define FATAL(MSG)                                   \
@@ -242,7 +242,7 @@ do {                                                 \
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __WIN32__
+#if defined(__MSVC__)
 typedef          __int64  int64;
 typedef unsigned __int64 uint64;
 typedef          __int32  int32;

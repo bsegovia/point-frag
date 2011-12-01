@@ -62,7 +62,7 @@ namespace pf
      *  will return the first non-empty queue with the highest priority
      */
     INLINE int getActiveMask(void) const {
-#if defined(__WIN32__)
+#if defined(__MSVC__)
       // Unfortunately, VS does not support volatile __m128 variables
       PF_COMPILER_READ_WRITE_BARRIER;
       __m128i t, h;
@@ -74,7 +74,7 @@ namespace pf
 #else
       const __m128i t = __load_acquire(&tail.v);
       const __m128i h = __load_acquire(&head.v);
-#endif /* defined(__WIN32__) */
+#endif /* defined(__MSVC__) */
       const __m128i len = _mm_sub_epi32(t, h);
       return _mm_movemask_ps(_mm_castsi128_ps(len));
     }
