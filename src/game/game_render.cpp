@@ -41,6 +41,7 @@ namespace pf
 {
   extern Ref<RendererObj> renderObj; //!< Real world should come later
   Ref< BVH2<RTTriangle> > bvh = NULL;  // XXX -> HiZ
+  Ref<RendererObj> renderObj = NULL;
 
 #define OGL_NAME ((RendererDriver*)renderObj->renderer.driver)
 

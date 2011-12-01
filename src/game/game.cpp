@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "camera.hpp"
+#include "game_event.hpp"
 #include "game_frame.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
@@ -34,7 +36,7 @@ namespace pf
 {
   static const int defaultWidth = 1024, defaultHeight = 1024;
   Renderer *renderer = NULL;
-  Ref<RendererObj> renderObj = NULL;
+  extern Ref<RendererObj> renderObj;
   static LoggerStream *coutStream = NULL;
   static LoggerStream *fileStream = NULL;
 

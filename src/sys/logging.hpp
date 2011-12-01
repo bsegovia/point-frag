@@ -36,6 +36,7 @@ namespace pf
   {
   public:
     LoggerStream(void);
+    virtual ~LoggerStream(void);
     virtual LoggerStream& operator<< (const std::string &str) = 0;
   private:
     friend class Logger;

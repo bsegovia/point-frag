@@ -21,6 +21,7 @@
 namespace pf
 {
   LoggerStream::LoggerStream(void) : next(NULL) {}
+  LoggerStream::~LoggerStream(void) {}
 
   LoggerBuffer::LoggerBuffer(void) : logger(NULL) {}
 

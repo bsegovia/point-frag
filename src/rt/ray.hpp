@@ -28,7 +28,7 @@ namespace pf
     INLINE Ray(void) {}
     /*! Ray from origin, direction, and ray segment. near < far */
     INLINE Ray(const vec3f& org, const vec3f& dir, float near = zero, float far = inf)
-      : org(org), dir(dir), rdir(1.0f/dir), tnear(tnear), tfar(tfar) {}
+      : org(org), dir(dir), rdir(1.0f/dir), tnear(near), tfar(far) {}
     ALIGNED(16) vec3f org;  //!< Origin of the ray
     ALIGNED(16) vec3f dir;  //!< Direction of it
     ALIGNED(16) vec3f rdir; //!< Per-compoment inverse of the direction

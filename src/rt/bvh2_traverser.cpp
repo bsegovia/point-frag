@@ -138,7 +138,7 @@ namespace pf
     const ssef org = ssef(&ray.org.x).xyzz();
     const ssef rdir = ssef(&ray.rdir.x).xyzz();
     const sse3f dir(ray.dir.x, ray.dir.y, ray.dir.z);
-    const int s = movemask(rdir);
+    const uint32 s = movemask(rdir);
     const uint32 signArray[] = { s&1, (s>>1)&1, (s>>2)&1 };
     stack.push(bvh->node);
 
