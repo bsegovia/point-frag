@@ -80,10 +80,10 @@ namespace pf
     logger = NULL;
   }
 
-  //static const FileName objName("f000.obj");
+  static const FileName objName("f000.obj");
   //static const FileName objName("small.obj");
   //static const FileName objName("Arabic_City.obj");
-  static const FileName objName("arabic_city_II.obj");
+  //static const FileName objName("arabic_city_II.obj");
   //static const FileName objName("conference.obj");
   //static const FileName objName("sibenik.obj");
   //static const FileName objName("sponza.obj");
@@ -96,9 +96,9 @@ namespace pf
     glutInitWindowPosition(64, 64);
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitContextVersion(3, 3);
-    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
+    //glutInitContextVersion(3, 3);
+    //glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);

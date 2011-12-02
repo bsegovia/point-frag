@@ -63,8 +63,8 @@ namespace pf
       R_CALL (AttachShader, program, geometryName);
       R_CALL (DeleteShader, geometryName);
     }
-    R_CALL (LinkProgram, program);
-    this->validateProgram(program);
+//    R_CALL (LinkProgram, program);
+//    this->validateProgram(program);
     return program;
   }
 
@@ -166,7 +166,7 @@ namespace pf
     R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
     R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
   }
-
+#if 0
   /*! Diffuse shader -> just display geometries with a diffuse texture */
   static const char diffuseVert[] = {
     "#version 330 core\n"
@@ -195,13 +195,41 @@ namespace pf
     "  c = texture(Diffuse, In.t);\n"
     "}\n"
   };
+#else
+  /*! Diffuse shader -> just display geometries with a diffuse texture */
+  static const char diffuseVert[] = {
+    "#version 130\n"
+    "uniform mat4 MVP;\n"
+    "in vec3 p;\n"
+    "in vec2 t;\n"
+    "out vec2 out_t;\n"
+    "void main() {	\n"
+    "  out_t = t;\n"
+    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
+    "}\n"
+  };
+  static const char diffuseFrag[] = {
+    "#version 130\n"
+    "uniform sampler2D Diffuse;\n"
+    "in vec2 out_t;\n"
+    "out vec4 c;\n"
+    "void main() {\n"
+    "  c = texture(Diffuse, out_t);\n"
+    "}\n"
+  };
+#endif
   void RendererDriver::initDiffuse(void) {
     this->diffuse.program = buildProgram(diffuseVert, NULL, diffuseFrag);
-    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "Position");
-    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "Texcoord");
+    //R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "Position");
+    //R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "Texcoord");
+//    R_CALL (LinkProgram, program);
+    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "p");
+    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "t");
+    R_CALL (BindFragDataLocation, this->diffuse.program, 0, "c");
+    R_CALL (LinkProgram, this->diffuse.program);
+    R_CALL (UseProgram, this->diffuse.program);
     R_CALLR (this->diffuse.uMVP, GetUniformLocation, this->diffuse.program, "MVP");
     R_CALLR (this->diffuse.uDiffuse, GetUniformLocation, this->diffuse.program, "Diffuse");
-    R_CALL (UseProgram, this->diffuse.program);
     R_CALL (Uniform1i, this->diffuse.uDiffuse, 0);
     R_CALL (UseProgram, 0);
   }
@@ -339,19 +367,19 @@ namespace pf
   RendererDriver::RendererDriver(void) {
     PF_MSG_V("RendererDriver: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
-    this->initQuad();
-    this->initPlain();
+    //this->initQuad();
+    //this->initPlain();
     this->initDiffuse();
-    this->initGBuffer(16, 16);
+    //this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
   }
 
   RendererDriver::~RendererDriver(void) {
     PF_MSG_V("RendererDriver: destruction");
-    this->destroyGBuffer();
+    //this->destroyGBuffer();
     this->destroyDiffuse();
-    this->destroyPlain();
-    this->destroyQuad();
+    //this->destroyPlain();
+    //this->destroyQuad();
   }
 
   void RendererDriver::resize(int w, int h) {

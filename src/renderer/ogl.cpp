@@ -72,8 +72,8 @@ namespace pf
 #include "GL/ogl150.hxx"
 #include "GL/ogl200.hxx"
 #include "GL/ogl300.hxx"
-#include "GL/ogl310.hxx"  
-#include "GL/ogl320.hxx"
+//#include "GL/ogl310.hxx"  
+//#include "GL/ogl320.hxx"
 
 #undef DECL_GL_PROC
 
