@@ -24,8 +24,8 @@ namespace pf
   /*! 4-wide SSE bool type. */
   struct sseb
   {
-    //union { __m128 m128; int32 v[4]; };
-    __m128 m128;
+    union { __m128 m128; int32 v[4]; };
+    //__m128 m128;
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Constructors, Assignment & Cast Operators
@@ -62,8 +62,7 @@ namespace pf
     ////////////////////////////////////////////////////////////////////////////////
 
     INLINE bool   operator [](const size_t index) const { assert(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
-    INLINE int32& operator [](const size_t index) {
-      assert(index < 4); return ((int32*)&this->m128)[index]; }
+    INLINE int32& operator [](const size_t index) { assert(index < 4); return this->v[index]; }
   };
 
   INLINE const sseb operator !(const sseb& a) { return _mm_xor_ps(a, sseb(True)); }

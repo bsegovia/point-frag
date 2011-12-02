@@ -91,10 +91,10 @@ namespace pf
     int wrap = getNumberOfLogicalThreads()/2;
     affinity = (affinity/2) + wrap*(affinity%2);
     if (affinity >= 0 && affinity < 64*64) {
-      uint64 mask[64];
-      for (size_t i=0; i<64; i++) mask[i] = 0;
-      mask[affinity/64]= uint64(1) << (affinity % 64);
-      if (pthread_setaffinity_np(pthread_self(), sizeof(mask), (cpu_set_t*)mask) < 0)
+      union { uint64 u; cpu_set_t set; } mask[64];
+      for (size_t i=0; i<64; i++) mask[i].u = 0;
+      mask[affinity/64].u= uint64(1) << (affinity % 64);
+      if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask[0].set) < 0)
         std::cerr << "Thread: cannot set affinity" << std::endl;
     }
   }

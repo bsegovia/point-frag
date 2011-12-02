@@ -133,7 +133,7 @@ namespace pf
           PacketHit hit;
           gen.generate(pckt, x, y);
           intersector.traverse(pckt, hit);
-          const int32 *IDs = (const int32 *) hit.id0;
+          const int32 *IDs = (const int32 *) &hit.id0[0][0];
           uint32 curr = 0;
           for (uint32 j = 0; j < pckt.height; ++j) {
             for (uint32 i = 0; i < pckt.width; ++i, ++curr) {

@@ -85,7 +85,6 @@ namespace pf
   INLINE const ssei operator  ^(const ssei& a, const ssei& b) { return _mm_xor_si128(a.m128, b.m128); }
   INLINE const ssei operator <<(const ssei& a, const int32 bits) { return _mm_slli_epi32(a.m128, bits); }
   INLINE const ssei operator >>(const ssei& a, const int32 bits) { return _mm_srai_epi32(a.m128, bits); }
-
   INLINE const ssei operator  *(const ssei& a, const int32 b) { return a * ssei(b); }
   INLINE const ssei operator  *(const int32 a, const ssei& b) { return ssei(a) * b; }
   INLINE const ssei operator  &(const ssei& a, const int32 b) { return a & ssei(b); }
@@ -108,7 +107,6 @@ namespace pf
   INLINE const ssei srl (const ssei& a, const int32 b) { return _mm_srli_epi32(a.m128, b); }
   INLINE const ssei rotl(const ssei& a, const int32 b) { return _mm_or_si128(_mm_srli_epi32(a.m128, 32 - b), _mm_slli_epi32(a.m128, b)); }
   INLINE const ssei rotr(const ssei& a, const int32 b) { return _mm_or_si128(_mm_slli_epi32(a.m128, 32 - b), _mm_srli_epi32(a.m128, b)); }
-
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Comparison Operators + Select
