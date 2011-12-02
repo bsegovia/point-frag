@@ -21,12 +21,14 @@
 #include "sys/tasking.hpp"
 #include "math/math.hpp"
 #include "rt/ray.hpp"
+
 #include <GL/freeglut.h>
 #include <fstream>
 #include <sstream>
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 namespace pf
 {
@@ -81,19 +83,29 @@ namespace pf
     const unsigned char *version = NULL;
     const unsigned char *vendor = NULL;
     const unsigned char *renderer = NULL;
+    const unsigned char *glsl = NULL;
     R_CALLR (version, GetString, GL_VERSION);
     R_CALLR (vendor, GetString, GL_VENDOR);
     R_CALLR (renderer, GetString, GL_RENDERER);
+    R_CALLR (glsl, GetString, GL_SHADING_LANGUAGE_VERSION);
     PF_MSG ("OGL: " << version);
     PF_MSG ("OGL: " << vendor);
     PF_MSG ("OGL: " << renderer);
+    PF_MSG ("OGL: " << glsl);
+    FATAL_IF (atof((const char*) glsl) < 1.3f, "GLSL version 1.3 is required");
     R_CALL (PixelStorei, GL_UNPACK_ALIGNMENT, 1);
 
     // Check extensions we need
-    if (glutExtensionSupported("GL_EXT_texture_compression_s3tc"))
-      PF_MSG ("OGL: GL_EXT_texture_compression_s3tc supported");
-    else
-      FATAL ("GL_EXT_texture_compression_s3tc unsupported");
+#define CHECK_EXTENSION(EXT)                                      \
+    if (glutExtensionSupported(#EXT))                             \
+      PF_MSG ("OGL: " #EXT " supported");                         \
+    else                                                          \
+      FATAL ("OGL: " #EXT " not supported");
+    CHECK_EXTENSION(GL_EXT_texture_compression_s3tc);
+    CHECK_EXTENSION(GL_ARB_texture_float);
+    CHECK_EXTENSION(GL_ARB_sampler_objects);
+    CHECK_EXTENSION(GL_ARB_vertex_buffer_object);
+#undef CHECK_EXTENSION
 
     // ATI Driver WORK AROUND error is emitted here
     while (this->GetError() != GL_NO_ERROR);
@@ -105,6 +117,19 @@ namespace pf
     GET_CST(GL_MAX_COLOR_ATTACHMENTS, maxColorAttachmentNum);
     GET_CST(GL_MAX_TEXTURE_SIZE, maxTextureSize);
     GET_CST(GL_MAX_TEXTURE_IMAGE_UNITS, maxTextureUnit);
+    GET_CST(GL_MAX_RENDERBUFFER_SIZE, maxRenderBufferSize);
+    GET_CST(GL_MAX_VIEWPORT_DIMS, maxViewportDims);
+    GET_CST(GL_MAX_3D_TEXTURE_SIZE, max3DTextureSize);
+    GET_CST(GL_MAX_ELEMENTS_INDICES, maxElementIndices);
+    GET_CST(GL_MAX_ELEMENTS_VERTICES, maxElementVertices);
+    GET_CST(GL_MAX_CUBE_MAP_TEXTURE_SIZE, maxCubeMapTextureSize);
+    GET_CST(GL_MAX_DRAW_BUFFERS, maxDrawBuffers);
+    GET_CST(GL_MAX_VERTEX_ATTRIBS, maxVertexAttribs);
+    GET_CST(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, maxFragmentUniformComponents);
+    GET_CST(GL_MAX_VERTEX_UNIFORM_COMPONENTS, maxVertexUniformComponents);
+    GET_CST(GL_MAX_VARYING_FLOATS, maxVaryingFloats);
+    GET_CST(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, maxVertexTextureImageUnits);
+    GET_CST(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, maxCombinedTextureImageUnits);
 #undef GET_CST
 
     // Use that to wait for task destruction

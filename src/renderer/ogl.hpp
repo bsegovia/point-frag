@@ -83,6 +83,19 @@ namespace pf
     int32_t maxColorAttachmentNum;
     int32_t maxTextureSize;
     int32_t maxTextureUnit;
+    int32_t maxRenderBufferSize;
+    int32_t maxViewportDims;
+    int32_t max3DTextureSize;
+    int32_t maxElementVertices;
+    int32_t maxElementIndices;
+    int32_t maxCubeMapTextureSize;
+    int32_t maxDrawBuffers;
+    int32_t maxVertexAttribs;
+    int32_t maxFragmentUniformComponents;
+    int32_t maxVertexUniformComponents;
+    int32_t maxVaryingFloats;
+    int32_t maxVertexTextureImageUnits;
+    int32_t maxCombinedTextureImageUnits;
 
     /*! Swap back and front buffers */
     void swapBuffers(void) const;

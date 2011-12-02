@@ -308,7 +308,7 @@ namespace pf
     BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->segmentNum);
     for (size_t i = 0; i < renderObj->segmentNum; ++i)
       bbox[i] = renderObj->segments[i].bbox;
-//    R_CALL (displayBBox, bbox, renderObj->segmentNum);
+    R_CALL (displayBBox, bbox, renderObj->segmentNum);
     PF_SAFE_DELETE_ARRAY(bbox);
     R_CALL(swapBuffers);
 

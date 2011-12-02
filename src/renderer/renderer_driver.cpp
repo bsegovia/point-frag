@@ -63,8 +63,6 @@ namespace pf
       R_CALL (AttachShader, program, geometryName);
       R_CALL (DeleteShader, geometryName);
     }
-//    R_CALL (LinkProgram, program);
-//    this->validateProgram(program);
     return program;
   }
 
@@ -122,34 +120,31 @@ namespace pf
 
   /*! Plain shader -> display bounding boxex, wireframe geometries ...  */
   static const char plainVert[] = {
-    "#version 330 core\n"
-    "#define POSITION 0\n"
+    "#version 130\n"
     "uniform mat4 MVP;\n"
     "uniform vec4 c;\n"
-    "layout(location = POSITION) in vec3 p;\n"
-    "out block {\n"
-    "  vec4 c;\n"
-    "} Out;\n"
+    "in vec3 p;\n"
+    "out vec4 out_c;\n"
     "void main() {\n"
-    "  Out.c = c;\n"
+    "  out_c = c;\n"
     "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
     "}\n"
   };
   static const char plainFrag[] = {
-    "#version 330 core\n"
-    "#define FRAG_COLOR 0\n"
+    "#version 130\n"
     "uniform sampler2D Diffuse;\n"
-    "in block {\n"
-    "  vec4 c;\n"
-    "} In;\n"
-    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
+    "in vec4 out_c;\n"
+    "out vec4 c;\n"
     "void main() {\n"
-    "  c = In.c;\n"
+    "  c = out_c;\n"
     "}\n"
   };
   void RendererDriver::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
-    R_CALL (BindAttribLocation, this->plain.program, ATTR_POSITION, "Position");
+    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "p");
+    R_CALL (BindFragDataLocation, this->diffuse.program, 0, "c");
+    R_CALL (LinkProgram, this->diffuse.program);
+    R_CALL (validateProgram, this->diffuse.program);
     R_CALL (GenBuffers, 1, &this->plain.arrayBuffer);
     R_CALL (GenVertexArrays, 1, &this->plain.vertexArray);
     R_CALL (BindVertexArray, this->plain.vertexArray);
@@ -166,36 +161,7 @@ namespace pf
     R_CALL (DeleteVertexArrays, 1, &this->plain.vertexArray);
     R_CALL (DeleteBuffers, 1, &this->plain.arrayBuffer);
   }
-#if 0
-  /*! Diffuse shader -> just display geometries with a diffuse texture */
-  static const char diffuseVert[] = {
-    "#version 330 core\n"
-    "#define POSITION 0\n"
-    "#define TEXCOORD 1\n"
-    "uniform mat4 MVP;\n"
-    "layout(location = POSITION) in vec3 p;\n"
-    "layout(location = TEXCOORD) in vec2 t;\n"
-    "out block {\n"
-    "  vec2 t;\n"
-    "} Out;\n"
-    "void main() {	\n"
-    "  Out.t = t;\n"
-    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
-    "}\n"
-  };
-  static const char diffuseFrag[] = {
-    "#version 330 core\n"
-    "#define FRAG_COLOR  0\n"
-    "uniform sampler2D Diffuse;\n"
-    "in block {\n"
-    "  vec2 t;\n"
-    "} In;\n"
-    "layout(location = FRAG_COLOR, index = 0) out vec4 c;\n"
-    "void main() {\n"
-    "  c = texture(Diffuse, In.t);\n"
-    "}\n"
-  };
-#else
+
   /*! Diffuse shader -> just display geometries with a diffuse texture */
   static const char diffuseVert[] = {
     "#version 130\n"
@@ -217,16 +183,14 @@ namespace pf
     "  c = texture(Diffuse, out_t);\n"
     "}\n"
   };
-#endif
+
   void RendererDriver::initDiffuse(void) {
     this->diffuse.program = buildProgram(diffuseVert, NULL, diffuseFrag);
-    //R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "Position");
-    //R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "Texcoord");
-//    R_CALL (LinkProgram, program);
     R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "p");
     R_CALL (BindAttribLocation, this->diffuse.program, ATTR_TEXCOORD, "t");
     R_CALL (BindFragDataLocation, this->diffuse.program, 0, "c");
     R_CALL (LinkProgram, this->diffuse.program);
+    R_CALL (validateProgram, this->diffuse.program);
     R_CALL (UseProgram, this->diffuse.program);
     R_CALLR (this->diffuse.uMVP, GetUniformLocation, this->diffuse.program, "MVP");
     R_CALLR (this->diffuse.uDiffuse, GetUniformLocation, this->diffuse.program, "Diffuse");
@@ -368,7 +332,7 @@ namespace pf
     PF_MSG_V("RendererDriver: initialization");
     std::memset(&this->gbuffer, 0, sizeof(this->gbuffer));
     //this->initQuad();
-    //this->initPlain();
+    this->initPlain();
     this->initDiffuse();
     //this->initGBuffer(16, 16);
     this->defaultDiffuseCol = this->defaultSpecularCol = vec4f(1.f,0.f,0.f,1.f);
@@ -378,7 +342,7 @@ namespace pf
     PF_MSG_V("RendererDriver: destruction");
     //this->destroyGBuffer();
     this->destroyDiffuse();
-    //this->destroyPlain();
+    this->destroyPlain();
     //this->destroyQuad();
   }
 

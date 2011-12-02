@@ -23,9 +23,12 @@
 #include <unordered_map>
 #else
 #include <tr1/unordered_map>
-#endif
+#endif /* __MSVC__ */
 #endif /* PF_DEBUG_MEMORY */
 
+#if defined(__ICC__)
+#include <stdint.h>
+#endif /* __ICC__ */
 #include <map>
 #include <vector>
 

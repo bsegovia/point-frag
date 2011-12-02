@@ -85,7 +85,7 @@ extern "C" {
 #ifdef _MAC
 #define WINAPI      CDECL
 #define APIENTRY    WINAPI
-#elif (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED)
+#elif (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__GNUC__)
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 #else
