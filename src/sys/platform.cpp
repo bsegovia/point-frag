@@ -35,11 +35,19 @@ namespace pf
     QueryPerformanceCounter(&val);
     return (double)val.QuadPart / (double)freq.QuadPart;
   }
-  void Win32Fatal(const std::string &msg) {
-    MessageBox(NULL, msg.c_str(), "Fatal Error", MB_OK);
+
+  void FATAL(const std::string &msg) {
+    std::cerr << msg << std::endl;
+    MessageBox(NULL, msg.c_str(), "Fatal Error", MB_OK | MB_ICONEXCLAMATION);
+    PF_ASSERT(0);
+#ifdef __GNUC__
+    exit(-1);
+#else
+    _exit(-1);
+#endif /* __GNUC__ */
   }
-}
-#endif
+} /* namespace pf */
+#endif /* __WIN32__ */
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Unix Platform
@@ -55,7 +63,13 @@ namespace pf
     struct timeval tp; gettimeofday(&tp,NULL);
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6;
   }
-}
 
-#endif
+  void FATAL(const std::string &msg) {
+    std::cerr << msg << std::endl;
+    PF_ASSERT(0);
+    _exit(-1);
+  }
+} /* namespace pf */
+
+#endif /* __UNIX__ */
 

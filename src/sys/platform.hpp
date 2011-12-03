@@ -133,10 +133,6 @@
 /// Makros
 ////////////////////////////////////////////////////////////////////////////////
 
-/*! Modern x86 processors */
-#define CACHE_LINE 64
-#define CACHE_LINE_ALIGNED ALIGNED(CACHE_LINE)
-
 #ifdef __WIN32__
 #define __dllexport extern "C" __declspec(dllexport)
 #define __dllimport extern "C" __declspec(dllimport)
@@ -165,6 +161,10 @@
 #define __FUNCTION__    __PRETTY_FUNCTION__
 #define debugbreak()    asm ("int $3")
 #endif
+
+/*! Modern x86 processors */
+#define CACHE_LINE 64
+#define CACHE_LINE_ALIGNED ALIGNED(CACHE_LINE)
 
 #ifdef __GNUC__
   #define MAYBE_UNUSED __attribute__((used))
@@ -211,26 +211,6 @@
   struct JOIN(__,JOIN(__,__LINE__)) { int x[(value) ? 1 : -1]; }
 
 /*! Fatal error macros */
-#if defined(__WIN32__)
-namespace pf
-{
-  void Win32Fatal(const std::string&);
-} /* namespace pf */
-
-#define FATAL(MSG)                                   \
-do {                                                 \
-  std::cerr << MSG << std::endl;                     \
-  pf::Win32Fatal(MSG);                               \
-  PF_ASSERT(0); exit(-1);                               \
-} while (0)
-#else
-#define FATAL(MSG)                                   \
-do {                                                 \
-  std::cerr << MSG << std::endl;                     \
-  PF_ASSERT(0); _exit(-1);                              \
-} while (0)
-#endif /* __WIN32__ */
-
 #define NOT_IMPLEMENTED FATAL ("Not implemented")
 #define FATAL_IF(COND, MSG)                          \
 do {                                                 \
@@ -277,6 +257,17 @@ typedef int64 index_t;
 typedef int32 index_t;
 #endif
 
+/*! To protect some classes from being copied */
+class NonCopyable
+{
+protected:
+  INLINE NonCopyable(void) {}
+  INLINE ~NonCopyable(void) {}
+private: 
+  INLINE NonCopyable(const NonCopyable&) {}
+  INLINE NonCopyable& operator= (const NonCopyable&) {return *this;}
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Disable some compiler warnings
 ////////////////////////////////////////////////////////////////////////////////
@@ -305,6 +296,9 @@ namespace pf
   INLINE bool  select(bool s, bool  t , bool f) { return s ? t : f; }
   INLINE int   select(bool s, int   t,   int f) { return s ? t : f; }
   INLINE float select(bool s, float t, float f) { return s ? t : f; }
+ 
+  /*! Fatal error function */
+  void FATAL(const std::string&);
 
   /*! Return the next power of 2 */
   INLINE uint32 nextHighestPowerOf2(uint32 x) {
@@ -334,16 +328,19 @@ namespace pf
 
   template<> INLINE uint32 isPowerOf<2>(uint32 i) { return ((i-1)&i) == 0; }
 
-#define ALIGNED_STRUCT                                              \
-  void* operator new(size_t size) { return alignedMalloc(size); }   \
-  void operator delete(void* ptr) { alignedFree(ptr); }             \
-  void* operator new[](size_t size) { return alignedMalloc(size); } \
-  void operator delete[](void* ptr) { alignedFree(ptr); }           \
+#define ALIGNED_STRUCT(ALIGN)                                              \
+  void* operator new(size_t size) { return alignedMalloc(size, ALIGN); }   \
+  void operator delete(void* ptr) { alignedFree(ptr); }                    \
+  void* operator new[](size_t size) { return alignedMalloc(size, ALIGN); } \
+  void operator delete[](void* ptr) { alignedFree(ptr); }                  \
 
-#define ALIGNED_CLASS                                               \
+#define ALIGNED_CLASS(ALIGN)                                        \
 public:                                                             \
-  ALIGNED_STRUCT                                                    \
+  ALIGNED_STRUCT(ALIGN)                                             \
 private:
+
+#define ALIGNED_STRUCT_ON(T) ALIGNED_STRUCT(sizeof(T))
+#define ALIGNED_CLASS_ON(ALIGN) ALIGNED_CLASS(sizeof(T))
 
   /*! random functions */
   template<typename T> T   random() { return T(0); }

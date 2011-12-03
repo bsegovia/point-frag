@@ -25,6 +25,8 @@ namespace pf
   /*! 32 bytes BVH Node */
   struct ALIGNED(16) BVH2Node
   {
+    /* Aligned new and delete */
+    ALIGNED_STRUCT(16);
     /*! Lower bound */
     INLINE const vec3f& getMin(void)  const { return this->pmin; }
     /*! Upper bound */

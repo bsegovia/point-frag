@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2011 Intel Corporation                                    //
+// Copyright (C) 2011 Benjamin Segovia                                      //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,131 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_VECTOR_H__
-#define __PF_VECTOR_H__
-
-#include <stdio.h>
-#include <PF_ASSERT.h>
+#ifndef __PF_VECTOR_HPP__
+#define __PF_VECTOR_HPP__
 
 #include "sys/platform.hpp"
-#include "math/random.hpp"
+#include <vector>
 
 namespace pf
 {
+  /*! Add bound checks */
   template<class T>
-    class vector_t
-    {
-    public:
+  class vector : public std::vector<T>
+  {
+  public:
+    /*! Get element at position index (with a bound check) */
+    T &operator[] (size_t index) {
+      PF_ASSERT(index < this->size());
+      return std::vector<T>::operator[] (index);
+    }
+    /*! Get element at position index (with a bound check) */
+    const T &operator[] (size_t index) const {
+      PF_ASSERT(index < this->size());
+      return std::vector<T>::operator[] (index);
+    }
+  };
+} /* namespace pf */
 
-      vector_t () : m_size(0), alloced(0), t(NULL) {}
+#endif /* __PF_VECTOR_HPP__ */
 
-      void clear() {
-        if (t) alignedFree(t);
-        m_size = alloced = 0;
-        t = NULL;
-      };
-
-      vector_t(size_t sz) {
-        m_size = 0; alloced = 0; t = NULL;
-        if (sz) resize(sz);
-      }
-
-      vector_t(const vector_t<T> &other)
-        {
-          m_size = other.m_size;
-          alloced = other.alloced;
-          t = (T*)alignedMalloc(alloced*sizeof(T),64);
-          for (size_t i=0; i<m_size; i++) t[i] = other.t[i];
-        }
-
-      ~vector_t() {
-        if (t) alignedFree(t); t = NULL;
-      }
-
-    inline bool empty() const { return m_size == 0; }
-      inline size_t size() const { return m_size; };
-
-      T* begin() const { return t; };
-      T* end() const { return t+m_size; };
-
-      inline T& front() const { return t[0]; };
-      inline T& back () const { return t[m_size-1]; };
-
-      void push_back(const T &nt) {
-        T v = nt; // need local copy as input reference could point to this vector
-        reserve(m_size+1);
-        t[m_size] = v;
-        m_size++;
-      }
-
-      vector_t<T> &operator=(const vector_t<T> &other) {
-        resize(other.m_size);
-        for (size_t i=0;i<m_size;i++) t[i] = other.t[i];
-        return *this;
-      }
-
-      INLINE T& operator[](size_t i) {
-        PF_ASSERT(t);
-        PF_ASSERT(i < m_size);
-        return t[i];
-      };
-
-      INLINE const T& operator[](size_t i) const {
-        PF_ASSERT(t);
-        PF_ASSERT(i < m_size);
-        return t[i];
-      };
-
-      void resize(size_t new_sz, bool exact = true)
-      {
-        if (new_sz < m_size) {
-          if (exact) {
-            T *old_t = t;
-            PF_ASSERT(new_sz > 0);
-            t = (T*)alignedMalloc(new_sz*sizeof(T),64);
-            for (size_t i=0;i<new_sz;i++) t[i] = old_t[i];
-            alloced = new_sz;
-            if (old_t) alignedFree(old_t);
-          }
-        } else {
-          PF_ASSERT(new_sz);
-          reserve(new_sz,exact);
-        }
-        m_size = new_sz;
-      };
-
-      void reserve(size_t sz, bool exact = false)
-      {
-        PF_ASSERT(sz > 0);
-        if (sz <= alloced) return;
-
-        size_t newAlloced = alloced;
-        if (exact) newAlloced = sz;
-        else
-          while (newAlloced < sz)
-            newAlloced = (1 < (newAlloced * 2)) ? newAlloced * 2 : 1;
-
-        T* old_t = t;
-        PF_ASSERT(newAlloced > 0);
-        t = (T*)alignedMalloc(newAlloced*sizeof(T),64);
-        alloced = newAlloced;
-
-        for (size_t i=0;i<m_size;i++) t[i] = old_t[i];
-
-        if (old_t) alignedFree(old_t);
-      }
-
-      void shuffle(Random& rng)
-      {
-        for (size_t i = 0; i < m_size; i++)
-          std::swap(t[i], t[rng.getInt((int)m_size)]);
-      }
-
-    public:
-      size_t m_size;    // number of valid items
-      size_t alloced;   // number of items allocated
-      T *t;          // data array
-    };
-}
-
-#endif

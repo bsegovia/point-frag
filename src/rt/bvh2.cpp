@@ -24,6 +24,9 @@
 #include "sys/logging.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
+#include "sys/array.hpp"
+#include "sys/fixed_array.hpp"
+#include "sys/vector.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -31,7 +34,6 @@
 #include <cstring>
 #include <cstdio>
 #include <cassert>
-#include <vector>
 
 namespace pf
 {
@@ -78,35 +80,22 @@ namespace pf
     /*! Build the hierarchy itself */
     void compile(void);
 
-    Box sceneAABB;              //!< AABB of the scene
-    std::vector<uint32> primID; //!< Sorted array of primitives
-    uint32 *IDs[3];             //!< Sorted ID per axis
-    int32  *pos;                //!< Says if a node is on left or on right of the cut
-    uint32 *tmpIDs;             //!< Used to temporaly store IDs
-    Box *aabbs;                 //!< All the bounding boxes
-    Box *rlAABBs;               //!< Bounding boxes sorted right to left
-    BVH2Node * RESTRICT root;   //!< Root of the tree
-    int32 n;                    //!< NUmber of primitives
-    int32 nodeNum;              //!< Maximum number of nodes (== 2*n+1 for a BVH)
-    uint32 currID;              //!< Last node pushed
+    Box sceneAABB;         //!< AABB of the scene
+    vector<uint32> primID; //!< Sorted array of primitives
+    array<uint32> IDs[3];  //!< Sorted ID per axis
+    array<int32>  pos;     //!< Says if a node is on left or on right of the cut
+    array<uint32> tmpIDs;  //!< Used to temporaly store IDs
+    array<Box> aabbs;      //!< All the bounding boxes
+    array<Box> rlAABBs;    //!< Bounding boxes sorted right to left
+    array<BVH2Node> root;  //!< Root of the tree
+    int32 n;               //!< NUmber of primitives
+    int32 nodeNum;         //!< Maximum number of nodes (== 2*n+1 for a BVH)
+    uint32 currID;         //!< Last node pushed
     BVH2BuildOption options;
   };
 
-  BVH2Builder::BVH2Builder(void) :
-    pos(NULL), tmpIDs(NULL),
-    aabbs(NULL), rlAABBs(NULL), root(NULL),
-    n(0), nodeNum(0), currID(0)
-  {
-    for (size_t i = 0; i < 3; ++i) IDs[i] = NULL;
-  }
-
-  BVH2Builder::~BVH2Builder(void) {
-    PF_ALIGNED_FREE(rlAABBs);
-    PF_ALIGNED_FREE(aabbs);
-    PF_ALIGNED_FREE(tmpIDs);
-    PF_ALIGNED_FREE(pos);
-    for (size_t i = 0; i < 3; ++i) PF_ALIGNED_FREE(IDs[i]);
-  }
+  BVH2Builder::BVH2Builder(void) : n(0), nodeNum(0), currID(0) { }
+  BVH2Builder::~BVH2Builder(void) { }
 
   /*! Sort the centroids along the given axis */
   template<uint32 axis>
@@ -121,21 +110,19 @@ namespace pf
   template <typename T>
   void BVH2Builder::injection(const T * const RESTRICT soup, uint32 primNum)
   {
-    Centroid *centroids = NULL;
+    array<Centroid> centroids(primNum);
     double t = getSeconds();
 
     // Allocate nodes and leaves for the BVH2
     nodeNum = 2 * primNum + 1;
-    root = (BVH2Node*) PF_ALIGNED_MALLOC(nodeNum * sizeof(BVH2Node), CACHE_LINE);
+    root.init(nodeNum);
 
     // Allocate the data for the compiler
-    for (int i = 0; i < 3; ++i)
-      IDs[i] = (uint32*) PF_ALIGNED_MALLOC(sizeof(uint32) * primNum, CACHE_LINE);
-    tmpIDs = (uint32*) PF_ALIGNED_MALLOC(sizeof(uint32) * primNum, CACHE_LINE);
-    pos = (int32*) PF_ALIGNED_MALLOC(sizeof(int32) * primNum, CACHE_LINE);
-    aabbs = (Box*) PF_ALIGNED_MALLOC(sizeof(Box) * primNum, CACHE_LINE);
-    rlAABBs = (Box*) PF_ALIGNED_MALLOC(sizeof(Box) * primNum, CACHE_LINE);
-    centroids = (Centroid*) PF_ALIGNED_MALLOC(sizeof(Centroid) * primNum, CACHE_LINE);
+    for (int i = 0; i < 3; ++i) IDs[i].init(primNum);
+    tmpIDs.init(primNum);
+    pos.init(primNum);
+    aabbs.init(primNum);
+    rlAABBs.init(primNum);
     n = primNum;
 
     // Compute centroids and bounding boxes
@@ -148,14 +135,12 @@ namespace pf
     }
 
     // Sort the bounding boxes along their axes
-    for (int j = 0; j < n; ++j) 
-      IDs[0][j] = IDs[1][j] = IDs[2][j] = j;
-    std::sort(IDs[0], IDs[0]+n, CentroidSorter<0>(centroids));
-    std::sort(IDs[1], IDs[1]+n, CentroidSorter<1>(centroids));
-    std::sort(IDs[2], IDs[2]+n, CentroidSorter<2>(centroids));
+    for (int j = 0; j < n; ++j) IDs[0][j] = IDs[1][j] = IDs[2][j] = j;
+    std::sort(IDs[0].begin(), IDs[0].end(), CentroidSorter<0>(&centroids[0]));
+    std::sort(IDs[1].begin(), IDs[1].end(), CentroidSorter<1>(&centroids[0]));
+    std::sort(IDs[2].begin(), IDs[2].end(), CentroidSorter<2>(&centroids[0]));
 
     PF_MSG_V("BVH2: Injection time, " << getSeconds() - t);
-    PF_ALIGNED_FREE(centroids);
   }
 
   /*! Grows up the bounding boxen to avoid precision problems */
@@ -167,8 +152,8 @@ namespace pf
     /*! First and last index, ID and AAB of the currently processed node */
     struct Elem {
       INLINE Elem(void) {}
-      INLINE Elem(int32 first, int32 last, uint32 index, const Box &aabb)
-        : aabb(aabb), first(first), last(last), id(index) {}
+      INLINE Elem(int32 first, int32 last, uint32 index, const Box &aabb) :
+        aabb(aabb), first(first), last(last), id(index) {}
       Box aabb;
       int32 first, last;
       uint32 id;
@@ -196,8 +181,7 @@ namespace pf
   /*! A partition of the current given sub-array */
   struct Partition
   {
-    INLINE void init(int32 first_, int32 last_, uint32 d)
-    {
+    INLINE void init(int32 first_, int32 last_, uint32 d) {
       aabbs[ON_LEFT] = aabbs[ON_RIGHT] = Box(empty);
       first[ON_RIGHT] = first[ON_LEFT] = first_;
       last[ON_RIGHT] = last[ON_LEFT] = last_;
@@ -311,6 +295,7 @@ namespace pf
         if (part.cost < best.cost) best = part;
         doSweep<2>(*this, part, node.first, node.last);
         if (part.cost < best.cost) best = part;
+
         // The best partition is actually *no* partition: we make a leaf
         if (best.first[ON_LEFT] == -1) {
           doMakeLeaf(*this, node);
@@ -375,8 +360,7 @@ namespace pf
     tree.nodeNum = c.currID + 1;
     const size_t nodeSize = sizeof(BVH2Node) * tree.nodeNum;
     tree.node = (BVH2Node*) PF_ALIGNED_MALLOC(nodeSize, CACHE_LINE);
-    std::memcpy(tree.node, c.root, nodeSize);
-    PF_ALIGNED_FREE(c.root);
+    std::memcpy(tree.node, &c.root[0], nodeSize);
     PF_MSG_V("BVH2: " << tree.nodeNum << " nodes");
     uint32 leafNum = 0;
     for (size_t nodeID = 0; nodeID < tree.nodeNum; ++nodeID)

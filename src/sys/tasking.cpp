@@ -87,7 +87,7 @@ namespace pf
       volatile int32 x[TaskPriority::NUM];
       volatile __m128i v;
     } head, tail;
-    ALIGNED_CLASS;
+    ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! For work stealing:
@@ -175,7 +175,7 @@ namespace pf
     volatile TaskThreadState state; //!< SLEEPING or RUNNING?
     uint32 victim;                  //!< Next thread to steal from
     uint32 toWakeUp;                //!< Next guy to wake up
-    ALIGNED_CLASS
+    ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! Handle the scheduling of all tasks. We basically implement here a

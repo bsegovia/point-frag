@@ -113,7 +113,11 @@ namespace pf
   /*! default template instantiations */
   typedef BBox<vec2<float> > BBox2f;
   typedef BBox<vec3<float> > BBox3f;
-  typedef BBox<ssef> Box;
+  struct Box : BBox<ssef> {
+    INLINE Box(void) {}
+    INLINE Box(EmptyTy) : BBox<ssef>(empty) {}
+    ALIGNED_CLASS(sizeof(ssef))
+  };
 }
 
 #endif
