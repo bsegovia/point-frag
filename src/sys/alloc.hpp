@@ -93,7 +93,7 @@ namespace pf
   {
   public:
     GrowingPool(void) : current(PF_NEW(GrowingPoolElem, 1)) {}
-    ~GrowingPool(void) { assert(current); PF_DELETE(current); }
+    ~GrowingPool(void) { PF_ASSERT(current); PF_DELETE(current); }
     T *allocate(void) {
       if (UNLIKELY(current->allocated == current->maxElemNum)) {
         GrowingPoolElem *elem = PF_NEW(GrowingPoolElem, 2 * current->maxElemNum);
@@ -116,7 +116,7 @@ namespace pf
         this->allocated = 0;
       }
       ~GrowingPoolElem(void) {
-        assert(this->data);
+        PF_ASSERT(this->data);
         PF_DELETE_ARRAY(this->data);
         if (this->next) PF_DELETE(this->next);
       }

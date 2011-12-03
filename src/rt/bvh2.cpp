@@ -175,12 +175,12 @@ namespace pf
     };
     /*! Push a new element on the stack */
     INLINE void push(int a, int b, uint32 id, const Box &aabb) {
-      assert(n < MAX_DEPTH-1);
+      PF_ASSERT(n < MAX_DEPTH-1);
       data[n++] = Stack::Elem(a, b, id, aabb);
     }
     /*! Pop an element from the stack */
     INLINE Elem pop(void) {
-      assert(n > 0);
+      PF_ASSERT(n > 0);
       return data[--n];
     }
     /*! Indicates if there is anything on the stack */
@@ -214,7 +214,7 @@ namespace pf
   template <uint32 axis>
   static void doSweep(BVH2Builder &c, Partition &part, int first, int last)
   {
-    assert(first >= 0 && last < c.n);
+    PF_ASSERT(first >= 0 && last < c.n);
     part.init(first, last, axis);
 
     // Compute sequence (from right to left) of the bounding boxes
@@ -388,12 +388,12 @@ namespace pf
     PF_MSG_V("BVH2: Copying primitive soup");
     tree.primNum = primNum;
     tree.prim = PF_NEW_ARRAY(T, primNum);
-    assert(tree.prim);
+    PF_ASSERT(tree.prim);
     std::memcpy(tree.prim, t, sizeof(T) * primNum);
 
     PF_MSG_V("BVH2: Copying primitive IDs");
     tree.primID = PF_NEW_ARRAY(uint32, tree.primNum);
-    assert(tree.primID != NULL);
+    PF_ASSERT(tree.primID != NULL);
     std::memcpy(tree.primID, &c.primID[0], tree.primNum * sizeof(uint32));
     PF_MSG_V("BVH2: Time to build " << getSeconds() - start << " sec");
   }

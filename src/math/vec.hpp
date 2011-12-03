@@ -37,8 +37,8 @@ namespace pf
     INLINE vec2(OneTy) : x(one), y(one) {}
     INLINE vec2(PosInfTy) : x(pos_inf), y(pos_inf) {}
     INLINE vec2(NegInfTy) : x(neg_inf), y(neg_inf) {}
-    INLINE const T& operator [](size_t axis) const {assert(axis < 2); return (&x)[axis];}
-    INLINE       T& operator [](size_t axis)       {assert(axis < 2); return (&x)[axis];}
+    INLINE const T& operator [](size_t axis) const {PF_ASSERT(axis < 2); return (&x)[axis];}
+    INLINE       T& operator [](size_t axis)       {PF_ASSERT(axis < 2); return (&x)[axis];}
   };
 
   DECL V2 OP+ (V2ARG a)  {return V2(+a.x, +a.y);}
@@ -104,8 +104,8 @@ namespace pf
     INLINE vec3 (OneTy)    : x(one), y(one), z(one) {}
     INLINE vec3 (PosInfTy) : x(pos_inf), y(pos_inf), z(pos_inf) {}
     INLINE vec3 (NegInfTy) : x(neg_inf), y(neg_inf), z(neg_inf) {}
-    INLINE const T& OP [](size_t axis) const {assert(axis < 3); return (&x)[axis];}
-    INLINE       T& OP [](size_t axis)       {assert(axis < 3); return (&x)[axis];}
+    INLINE const T& OP [](size_t axis) const {PF_ASSERT(axis < 3); return (&x)[axis];}
+    INLINE       T& OP [](size_t axis)       {PF_ASSERT(axis < 3); return (&x)[axis];}
   };
 
   DECL V3 abs (V3ARG a) {return V3(abs(a.x), abs(a.y), abs(a.z));}
@@ -178,8 +178,8 @@ namespace pf
     INLINE vec4 (OneTy)    : x(one),  y(one),  z(one),  w(one) {}
     INLINE vec4 (PosInfTy) : x(pos_inf), y(pos_inf), z(pos_inf), w(pos_inf) {}
     INLINE vec4 (NegInfTy) : x(neg_inf), y(neg_inf), z(neg_inf), w(neg_inf) {}
-    INLINE const T& operator [](size_t axis) const {assert(axis < 4); return (&x)[axis];}
-    INLINE       T& operator [](size_t axis)       {assert(axis < 4); return (&x)[axis];}
+    INLINE const T& operator [](size_t axis) const {PF_ASSERT(axis < 4); return (&x)[axis];}
+    INLINE       T& operator [](size_t axis)       {PF_ASSERT(axis < 4); return (&x)[axis];}
   };
 
   DECL V4 OP+ (V4ARG a) {return V4(+a.x, +a.y, +a.z, +a.w);}

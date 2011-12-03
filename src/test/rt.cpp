@@ -50,7 +50,7 @@ namespace pf
   public:
     FileStream(void) {
       file = fopen("log_rt.txt", "w");
-      assert(file);
+      PF_ASSERT(file);
     }
     virtual ~FileStream(void) {fclose(file);}
     virtual LoggerStream& operator<< (const std::string &str) {

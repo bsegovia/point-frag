@@ -34,7 +34,7 @@ namespace pf
                                  int mmW, int mmH,
                                  int channelNum)
   {
-    assert(src && w && h && mmW && mmH && channelNum);
+    PF_ASSERT(src && w && h && mmW && mmH && channelNum);
     unsigned char *dst = (unsigned char*) PF_MALLOC(mmW*mmH*channelNum);
     for (int y = 0; y < mmH; ++y) {
       for (int x = 0; x < mmW; ++x) {
@@ -61,7 +61,7 @@ namespace pf
 
   static void mirror(unsigned char *img, int w, int h, int channelNum)
   {
-    assert(img != NULL);
+    PF_ASSERT(img != NULL);
     for (int y = 0; y < h / 2; ++y)
       for (int x = 0; x < w; ++x) {
         const int offset = channelNum * (y*w + x);
@@ -282,7 +282,7 @@ namespace pf
     INLINE TaskTextureLoadOGL(TextureLoadData *data, TextureStreamer &streamer) :
       TaskMain("TaskTextureLoadOGL"), data(data), streamer(streamer)
     {
-      assert(data != NULL &&
+      PF_ASSERT(data != NULL &&
              data->w != NULL && data->h != NULL &&
              data->texels != NULL);
       this->setPriority(TaskPriority::HIGH);
@@ -302,7 +302,7 @@ namespace pf
       PF_MSG_V("TextureStreamer: texture: " << request.name << " not found");
       PF_DELETE(data);
       Lock<MutexSys> lock(streamer.mutex);
-      assert(streamer.renderer.defaultTex);
+      PF_ASSERT(streamer.renderer.defaultTex);
       streamer.texMap[request.name] = TextureState(*streamer.renderer.defaultTex);
     }
     // We need to load it in OGL now
@@ -325,7 +325,7 @@ namespace pf
   public:
     TaskTextureLoadProxy(Ref<Task> loadingTask) :
       Task("TaskTextureLoadProxy"), loadingTask(loadingTask)
-    { assert(this->loadingTask); }
+    { PF_ASSERT(this->loadingTask); }
     virtual Task *run(void) {
       loadingTask->waitForCompletion();
       return NULL;
@@ -383,7 +383,7 @@ namespace pf
     // Update the map to say we are done with this texture. We can now use it
     Lock<MutexSys> lock(streamer.mutex);
     auto it = streamer.texMap.find(request.name);
-    assert(it != streamer.texMap.end());
+    PF_ASSERT(it != streamer.texMap.end());
     it->second.loadingTask = NULL;
     it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;

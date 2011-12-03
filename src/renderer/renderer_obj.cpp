@@ -48,7 +48,7 @@ namespace pf
     /*! Update the renderer obj with the fully loaded textures */
     virtual Task* run(void) {
       const TextureState state = streamer.getTextureState(name);
-      assert(state.value == TextureState::COMPLETE);
+      PF_ASSERT(state.value == TextureState::COMPLETE);
       Lock<MutexSys> lock(obj.mutex);
       for (size_t matID = 0; matID < obj.matNum; ++matID)
         if (obj.mat[matID].name_Kd == name)
@@ -169,7 +169,7 @@ namespace pf
     const uint32 firstSegment = segments.size();
     uint32 *IDs = bvh.primID + first;
     std::sort(IDs, IDs+n, TriangeIDSorter(obj.tri));
-    assert(n > 0);
+    PF_ASSERT(n > 0);
 
     // Allocate the segments and build them
     uint32 segmentID = firstSegment;
@@ -236,7 +236,7 @@ namespace pf
     GLuint *indices = PF_NEW_ARRAY(GLuint, obj.triNum * 3);
     for (size_t from = 0, to = 0; from < obj.triNum; ++from, to += 3) {
       const uint32 triID = bvh->primID[from];
-      assert(triID < obj.triNum);
+      PF_ASSERT(triID < obj.triNum);
       indices[to+0] = obj.tri[triID].v[0];
       indices[to+1] = obj.tri[triID].v[1];
       indices[to+2] = obj.tri[triID].v[2];
@@ -261,7 +261,7 @@ namespace pf
       this->matNum = obj.grpNum;
       for (size_t i = 0; i < this->matNum; ++i) {
         const int32 matID = obj.grp[i].m;
-        assert(matID >= 0); // We ensure that in the loader
+        PF_ASSERT(matID >= 0); // We ensure that in the loader
         matRemap[matID] = i;
         Material &material = this->mat[i];
         material.map_Kd = renderer.defaultTex;

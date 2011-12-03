@@ -53,7 +53,7 @@ namespace pf
 
   std::string loadFile(std::ifstream &stream)
   {
-    assert(stream.is_open());
+    PF_ASSERT(stream.is_open());
     std::string line;
     std::stringstream text;
     while (std::getline(stream, line))

@@ -192,7 +192,7 @@ namespace pf
       for (int32 tileY = tileMin.y; tileY <= tileMax.y; ++tileY) {
         uint32 tileID = leftID;
         for (int32 tileX = tileMin.x; tileX <= tileMax.x; ++tileX, ++tileID) {
-          assert(tileID < hiz->tileNum);
+          PF_ASSERT(tileID < hiz->tileNum);
           const HiZ::Tile &tile = hiz->tiles[tileID];
           if (zmin > tile.zmax)
             continue;

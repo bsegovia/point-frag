@@ -140,7 +140,7 @@ namespace pf
   {
     this->waitForDestruction->scheduled();
     this->waitForDestruction->waitForCompletion();
-    assert(this->textureNum == 0 &&
+    PF_ASSERT(this->textureNum == 0 &&
            this->vertexArrayNum == 0 &&
            this->bufferNum == 0 &&
            this->frameBufferNum == 0);

@@ -512,7 +512,7 @@ namespace pf
     void *succ = list, *pred = NULL;
     uintptr_t totalSize = 0;
     while (this->currSize[chunkID] > chunkSize) {
-      assert(succ);
+      PF_ASSERT(succ);
       pred = succ;
       succ = *(void**) succ;
       this->currSize[chunkID] -= elemSize;
@@ -532,7 +532,7 @@ namespace pf
 
   void TaskStorage::popGlobal(uint32 chunkID) {
     void *list = NULL;
-    assert(this->chunk[chunkID] == NULL);
+    PF_ASSERT(this->chunk[chunkID] == NULL);
     if (allocator->global[chunkID] == NULL) return;
 
     // Limit the contention time
@@ -718,7 +718,7 @@ namespace pf
       // sets can be run concurrently by several threads).
 #ifndef NDEBUG
       const uint8 state = __load_acquire(&task->state);
-      assert(state == TaskState::READY || state == TaskState::RUNNING);
+      PF_ASSERT(state == TaskState::READY || state == TaskState::RUNNING);
 #endif /* NDEBUG */
       __store_release(&task->state, uint8(TaskState::RUNNING));
       nextToRun = task->run();
@@ -746,7 +746,7 @@ namespace pf
 
       // Handle the tasks directly passed by the user
       if (nextToRun) {
-        assert(nextToRun->state == TaskState::NEW);
+        PF_ASSERT(nextToRun->state == TaskState::NEW);
 
         // Careful with affinities: we can run the task on one specific thread
         const uint32 affinity = nextToRun->getAffinity();

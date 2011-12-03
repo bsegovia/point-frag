@@ -70,10 +70,10 @@ namespace pf
                     vy.x,vy.y,vy.z,
                     vz.x,vz.y,vz.z);
     }
-    INLINE mat3x3 inverse() const {return rcp(det())*adjoint();}
-    INLINE T det() const {return dot(vx,cross(vy,vz));}
+    INLINE mat3x3 inverse(void) const {return rcp(det())*adjoint();}
+    INLINE T det(void)          const {return dot(vx,cross(vy,vz));}
 
-    /* Static methods */
+    /*! Static methods */
     static INLINE mat3x3 scale(V3 &s) {
       return mat3x3(s.x,0,0, 0,s.y,0, 0,0,s.z);
     }
@@ -87,22 +87,22 @@ namespace pf
  };
 
   /*! External operators */
-  DECL M33 OP- (M33 a) {return M33(-a.vx,-a.vy,-a.vz);}
-  DECL M33 OP+ (M33 a) {return M33(+a.vx,+a.vy,+a.vz);}
-  DECL M33 rcp (M33 a) {return a.inverse();}
-  DECL M33 OP+ (M33 a, M33 b) {return M33(a.vx+b.vx,a.vy+b.vy,a.vz+b.vz);}
-  DECL M33 OP- (M33 a, M33 b) {return M33(a.vx-b.vx,a.vy-b.vy,a.vz-b.vz);}
-  DECL M33 OP* (M33 a, M33 b) {return M33(a*b.vx, a*b.vy, a*b.vz);}
-  DECL M33 OP/ (M33 a, M33 b) {return a * rcp(b);}
-  DECL V3  OP* (M33 a, V3 b) {return b.x*a.vx + b.y*a.vy + b.z*a.vz;}
-  DECL M33 OP* (T a, M33 b) {return M33(a*b.vx, a*b.vy, a*b.vz);}
-  DECL M33 OP/ (M33 a, T b) {return a * rcp(b);}
-  DECL M33& OP/= (M33& a, T b) {return a = a / b;}
-  DECL M33& OP*= (M33& a, T b) {return a = a * b;}
+  DECL M33 OP- (M33 a)           {return M33(-a.vx,-a.vy,-a.vz);}
+  DECL M33 OP+ (M33 a)           {return M33(+a.vx,+a.vy,+a.vz);}
+  DECL M33 rcp (M33 a)           {return a.inverse();}
+  DECL M33 OP+ (M33 a, M33 b)    {return M33(a.vx+b.vx,a.vy+b.vy,a.vz+b.vz);}
+  DECL M33 OP- (M33 a, M33 b)    {return M33(a.vx-b.vx,a.vy-b.vy,a.vz-b.vz);}
+  DECL M33 OP* (M33 a, M33 b)    {return M33(a*b.vx, a*b.vy, a*b.vz);}
+  DECL M33 OP/ (M33 a, M33 b)    {return a * rcp(b);}
+  DECL V3  OP* (M33 a, V3 b)     {return b.x*a.vx + b.y*a.vy + b.z*a.vz;}
+  DECL M33 OP* (T a, M33 b)      {return M33(a*b.vx, a*b.vy, a*b.vz);}
+  DECL M33 OP/ (M33 a, T b)      {return a * rcp(b);}
+  DECL M33& OP/= (M33& a, T b)   {return a = a / b;}
+  DECL M33& OP*= (M33& a, T b)   {return a = a * b;}
   DECL M33& OP*= (M33& a, M33 b) {return a = a * b;}
   DECL M33& OP/= (M33& a, M33 b) {return a = a / b;}
-  DECL bool OP== (M33 a, M33 b) {return (a.vx==b.vx) && (a.vy == b.vy) && (a.vz == b.vz);}
-  DECL bool OP!= (M33 a, M33 b) {return (a.vx!=b.vx) || (a.vy != b.vy) || (a.vz != b.vz);}
+  DECL bool OP== (M33 a, M33 b)  {return (a.vx==b.vx) && (a.vy == b.vy) && (a.vz == b.vz);}
+  DECL bool OP!= (M33 a, M33 b)  {return (a.vx!=b.vx) || (a.vy != b.vy) || (a.vz != b.vz);}
 
   /*! External functions */
   DECL V3 xfmPoint (M33 s, V3 a) {return a.x*s.vx + a.y*s.vy + a.z*s.vz;}
@@ -194,9 +194,7 @@ namespace pf
       c[3] = V4(zero, zero, zero, one);
     }
     INLINE mat4x4(ZeroTy) {c[0] = c[1] = c[2] = c[3] = zero;}
-    INLINE mat4x4(const M44 &m) {
-      c[0] = m.c[0]; c[1] = m.c[1]; c[2] = m.c[2]; c[3] = m.c[3];
-    }
+    INLINE mat4x4(const M44 &m) { c[0] = m.c[0]; c[1] = m.c[1]; c[2] = m.c[2]; c[3] = m.c[3]; }
     INLINE mat4x4(T s) {
       c[0] = V4(s, zero, zero, zero);
       c[1] = V4(zero, s, zero, zero);
@@ -663,7 +661,7 @@ namespace pf
      detail::tvec4<U> const & viewport
     )
     {
-      assert(delta.x > T(0) && delta.y > T(0));
+      PF_ASSERT(delta.x > T(0) && delta.y > T(0));
       detail::mat4x4<T> Result(1.0f);
 
       if(!(delta.x > T(0) && delta.y > T(0))) 

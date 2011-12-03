@@ -61,8 +61,8 @@ namespace pf
     /// Properties
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE bool   operator [](const size_t index) const { assert(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
-    INLINE int32& operator [](const size_t index) { assert(index < 4); return this->v[index]; }
+    INLINE bool   operator [](const size_t index) const { PF_ASSERT(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
+    INLINE int32& operator [](const size_t index) { PF_ASSERT(index < 4); return this->v[index]; }
   };
 
   INLINE const sseb operator !(const sseb& a) { return _mm_xor_ps(a, sseb(True)); }

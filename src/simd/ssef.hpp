@@ -47,8 +47,8 @@ namespace pf
     INLINE ssef(NegInfTy) : m128(_mm_set1_ps(neg_inf)) {}
     INLINE ssef(StepTy)   : m128(_mm_set_ps(3.0f, 2.0f, 1.0f, 0.0f)) {}
 
-    INLINE const float& operator[] (size_t index) const { assert(index < 4); return this->v[index]; }
-    INLINE float&       operator[] (size_t index) { assert(index < 4); return this->v[index]; }
+    INLINE const float& operator[] (size_t index) const { PF_ASSERT(index < 4); return this->v[index]; }
+    INLINE float&       operator[] (size_t index) { PF_ASSERT(index < 4); return this->v[index]; }
 
     /*! All swizzle functions */
     template<size_t i0, size_t i1, size_t i2, size_t i3>

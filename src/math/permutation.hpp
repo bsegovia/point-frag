@@ -60,7 +60,7 @@ namespace pf
 
     /*! Returns the i'th element of the permutation. */
     INLINE int operator[](int i) const {
-      assert(i >= 0 && i < elts);
+      PF_ASSERT(i >= 0 && i < elts);
       return perm[i];
     }
 

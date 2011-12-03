@@ -57,8 +57,8 @@ namespace pf
     /// Properties
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE bool   operator []( const size_t index ) const { assert(index < 8); return (_mm256_movemask_ps(m256) >> index) & 1; }
-    INLINE int32& operator []( const size_t index )       { assert(index < 8); return v[index]; }
+    INLINE bool   operator []( const size_t index ) const { PF_ASSERT(index < 8); return (_mm256_movemask_ps(m256) >> index) & 1; }
+    INLINE int32& operator []( const size_t index )       { PF_ASSERT(index < 8); return v[index]; }
   };
 
   ////////////////////////////////////////////////////////////////////////////////

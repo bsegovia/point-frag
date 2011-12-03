@@ -155,7 +155,7 @@ namespace pf
 #if PF_DEBUG_MEMORY
     if (ptr) MemDebuggerRemoveAlloc(ptr);
 #endif /* PF_DEBUG_MEMORY */
-    assert(size);
+    PF_ASSERT(size);
     return std::realloc(ptr, size);
   }
 
@@ -234,7 +234,7 @@ namespace pf
   }
 
   void alignedFree(void* ptr) {
-    assert(ptr);
+    PF_ASSERT(ptr);
     free(((void**)ptr)[-1]);
   }
 }

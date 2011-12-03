@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
   }
 
 #ifndef NDEBUG
-  for (uint32_t i = 0; i < n; ++i) assert(mortonX[i] != -1 && mortonY[i] != -1);
+  for (uint32_t i = 0; i < n; ++i) PF_ASSERT(mortonX[i] != -1 && mortonY[i] != -1);
 #endif /* NDEBUG */
 
   std::cout << "const int32 ALIGNED(16) RTCameraPacketGen::mortonX[] = {" << std::endl;

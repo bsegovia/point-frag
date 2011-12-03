@@ -51,6 +51,7 @@ USAGE:
    at the end of the line.)
 */
 
+#include "sys/platform.hpp"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -74,7 +75,7 @@ static void writefv(FILE *f, const char *fmt, va_list v)
                      b[2]=(unsigned char)(x>>16); b[3]=(unsigned char)(x>>24);
                      fwrite(b,4,1,f); break; }
          default:
-            assert(0);
+            PF_ASSERT(0);
             return;
       }
    }
@@ -179,7 +180,7 @@ static void *stbi__sbgrowf(void **arr, int increment, int itemsize)
 {
    int m = *arr ? 2*stbi__sbm(*arr)+increment : increment+1;
    void *p = realloc(*arr ? stbi__sbraw(*arr) : 0, itemsize * m + sizeof(int)*2);
-   assert(p);
+   PF_ASSERT(p);
    if (p) {
       if (!*arr) ((int *) p)[1] = 0;
       *arr = (void *) ((int *) p + 2);
@@ -300,7 +301,7 @@ unsigned char * stbi_zlib_compress(unsigned char *data, int data_len, int *out_l
 
       if (bestloc) {
          int d = data+i - bestloc; // distance back
-         assert(d <= 32767 && best <= 258);
+         PF_ASSERT(d <= 32767 && best <= 258);
          for (j=0; best > lengthc[j+1]-1; ++j);
          stbi__zlib_huff(j+257);
          if (lengtheb[j]) stbi__zlib_add(best - lengthc[j], lengtheb[j]);
@@ -462,7 +463,7 @@ unsigned char *stbi_write_png_to_mem(unsigned char *pixels, int stride_bytes, in
    stbi__wptag(o, "IEND");
    stbi__wpcrc(&o,0);
 
-   assert(o == out + *out_len);
+   PF_ASSERT(o == out + *out_len);
 
    return out;
 }

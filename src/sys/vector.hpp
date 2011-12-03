@@ -18,7 +18,7 @@
 #define __PF_VECTOR_H__
 
 #include <stdio.h>
-#include <assert.h>
+#include <PF_ASSERT.h>
 
 #include "sys/platform.hpp"
 #include "math/random.hpp"
@@ -78,14 +78,14 @@ namespace pf
       }
 
       INLINE T& operator[](size_t i) {
-        assert(t);
-        assert(i < m_size);
+        PF_ASSERT(t);
+        PF_ASSERT(i < m_size);
         return t[i];
       };
 
       INLINE const T& operator[](size_t i) const {
-        assert(t);
-        assert(i < m_size);
+        PF_ASSERT(t);
+        PF_ASSERT(i < m_size);
         return t[i];
       };
 
@@ -94,14 +94,14 @@ namespace pf
         if (new_sz < m_size) {
           if (exact) {
             T *old_t = t;
-            assert(new_sz > 0);
+            PF_ASSERT(new_sz > 0);
             t = (T*)alignedMalloc(new_sz*sizeof(T),64);
             for (size_t i=0;i<new_sz;i++) t[i] = old_t[i];
             alloced = new_sz;
             if (old_t) alignedFree(old_t);
           }
         } else {
-          assert(new_sz);
+          PF_ASSERT(new_sz);
           reserve(new_sz,exact);
         }
         m_size = new_sz;
@@ -109,7 +109,7 @@ namespace pf
 
       void reserve(size_t sz, bool exact = false)
       {
-        assert(sz > 0);
+        PF_ASSERT(sz > 0);
         if (sz <= alloced) return;
 
         size_t newAlloced = alloced;
@@ -119,7 +119,7 @@ namespace pf
             newAlloced = (1 < (newAlloced * 2)) ? newAlloced * 2 : 1;
 
         T* old_t = t;
-        assert(newAlloced > 0);
+        PF_ASSERT(newAlloced > 0);
         t = (T*)alignedMalloc(newAlloced*sizeof(T),64);
         alloced = newAlloced;
 

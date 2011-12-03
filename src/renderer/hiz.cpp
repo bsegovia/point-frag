@@ -78,7 +78,7 @@ namespace pf
         intersector->traverse(pckt, hit);
         ssef zmin(inf), zmax(neg_inf);
         const uint32 tileID = tileX + tileY * zBuffer->tileXNum;
-        assert(tileID < zBuffer->tileNum);
+        PF_ASSERT(tileID < zBuffer->tileNum);
         HiZ::Tile &tile = zBuffer->tiles[tileID];
         for (uint32 chunkID = 0; chunkID < HiZ::Tile::chunkNum; ++chunkID) {
           //const ssef t = hit.t[chunkID];
@@ -127,7 +127,7 @@ namespace pf
       const uint32 offset = offsetX + Tile::width * offsetY;
       const uint32 imageOffset = (x + y * this->width) * 4;
       const float z = min(zptr[offset] * 32.f, 255.f);
-      assert(imageOffset < 4*this->pixelNum);
+      PF_ASSERT(imageOffset < 4*this->pixelNum);
       rgba[imageOffset + 0] = uint8(z);
       rgba[imageOffset + 1] = uint8(z);
       rgba[imageOffset + 2] = uint8(z);

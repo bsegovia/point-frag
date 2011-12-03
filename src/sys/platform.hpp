@@ -197,6 +197,8 @@
 #define _DO_JOIN(X, Y) _DO_JOIN2(X, Y)
 #define _DO_JOIN2(X, Y) X##Y
 
+/*! Run-time assertion */
+#define PF_ASSERT assert
 /*! Compile-time assertion */
 #define STATIC_ASSERT(value)                                     \
   struct JOIN(__,JOIN(__,__LINE__)) { int x[(value) ? 1 : -1]; }
@@ -212,13 +214,13 @@ namespace pf
 do {                                                 \
   std::cerr << MSG << std::endl;                     \
   pf::Win32Fatal(MSG);                               \
-  assert(0); exit(-1);                               \
+  PF_ASSERT(0); exit(-1);                               \
 } while (0)
 #else
 #define FATAL(MSG)                                   \
 do {                                                 \
   std::cerr << MSG << std::endl;                     \
-  assert(0); _exit(-1);                              \
+  PF_ASSERT(0); _exit(-1);                              \
 } while (0)
 #endif /* __WIN32__ */
 

@@ -29,7 +29,6 @@
 
 #if defined (__MSVC__)
 #define strtok_r(a,b,c) strtok_s(a,b,c)
-#else
 /* $Id: strtok_r.c,v 1.1 2003/12/03 15:22:23 chris_reid Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Hgskolan
@@ -64,12 +63,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-/* $KTH: strtok_r.c,v 1.5 1999/12/02 16:58:53 joda Exp $" */
-#endif
-
-#ifndef HAVE_STRTOK_R
+#elif defined(__WIN32__) && defined(__GNUC__)
 
 char *
 strtok_r(char *s1, const char *s2, char **lasts)
@@ -91,8 +85,7 @@ strtok_r(char *s1, const char *s2, char **lasts)
  return ret;
 }
 
-#endif /* HAVE_STRTOK_R */
-#endif
+#endif /* __MSVC__ */
 
 namespace pf
 {
@@ -546,7 +539,7 @@ namespace pf
           tris[i].m = matID;
 
       // Then, their group
-      assert(matGrp[0].m == -1);
+      PF_ASSERT(matGrp[0].m == -1);
       matGrp[0].m = matID;
     }
 
@@ -613,7 +606,7 @@ namespace pf
     }
     for (size_t i = 0; i < loader.materialList.size(); ++i) {
       const ObjLoaderMat &from = *loader.materialList[i];
-      assert(loader.materialList[i] != NULL);
+      PF_ASSERT(loader.materialList[i] != NULL);
       Material &to = mat[i];
       COPY_FIELD(name);
       COPY_FIELD(map_Ka);

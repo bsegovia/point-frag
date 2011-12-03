@@ -28,7 +28,7 @@
 #define _MM_FROUND_CUR_DIRECTION     0x04
 
 INLINE __m128 _mm_blendv_ps( __m128 value, __m128 input, __m128 mask ) { return _mm_or_ps(_mm_and_ps(mask, input), _mm_andnot_ps(mask, value)); }
-INLINE __m128 _mm_blend_ps( __m128 value, __m128 input, const int mask ) { assert(mask < 0x10); return _mm_blendv_ps(value, input, _mm_lookupmask_ps[mask]); }
+INLINE __m128 _mm_blend_ps( __m128 value, __m128 input, const int mask ) { PF_ASSERT(mask < 0x10); return _mm_blendv_ps(value, input, _mm_lookupmask_ps[mask]); }
 INLINE __m128i _mm_blendv_epi8( __m128i value, __m128i input, __m128i mask ) { return _mm_or_si128(_mm_and_si128(mask, input), _mm_andnot_si128(mask, value)); }
 INLINE __m128i _mm_mullo_epi32( __m128i value, __m128i input ) {
   __m128i rvalue;
@@ -48,18 +48,18 @@ INLINE int _mm_extract_epi32( __m128i input, const int index ) {
   case 1: return _mm_cvtsi128_si32(_mm_shuffle_epi32(input, _MM_SHUFFLE(1, 1, 1, 1)));
   case 2: return _mm_cvtsi128_si32(_mm_shuffle_epi32(input, _MM_SHUFFLE(2, 2, 2, 2)));
   case 3: return _mm_cvtsi128_si32(_mm_shuffle_epi32(input, _MM_SHUFFLE(3, 3, 3, 3)));
-  default: assert(false); return 0;
+  default: PF_ASSERT(false); return 0;
   }
 }
 asas
-INLINE __m128i _mm_insert_epi32( __m128i value, int input, const int index ) { assert(index >= 0 && index < 4); ((int*)&value)[index] = input; return value; }
+INLINE __m128i _mm_insert_epi32( __m128i value, int input, const int index ) { PF_ASSERT(index >= 0 && index < 4); ((int*)&value)[index] = input; return value; }
 
 INLINE int _mm_extract_ps( __m128 input, const int index ) {
   int32* ptr = (int32*)&input; return ptr[index];
 }
 
 INLINE __m128 _mm_insert_ps( __m128 value, __m128 input, const int index )
-{ assert(index < 0x100); ((float*)&value)[(index >> 4)&0x3] = ((float*)&input)[index >> 6]; return _mm_andnot_ps(_mm_lookupmask_ps[index&0xf], value); }
+{ PF_ASSERT(index < 0x100); ((float*)&value)[(index >> 4)&0x3] = ((float*)&input)[index >> 6]; return _mm_andnot_ps(_mm_lookupmask_ps[index&0xf], value); }
 
 INLINE __m128 _mm_round_ps( __m128 value, const int flags )
 {
@@ -74,8 +74,8 @@ INLINE __m128 _mm_round_ps( __m128 value, const int flags )
 }
 
 #ifdef _M_X64
-INLINE __m128i _mm_insert_epi64( __m128i value, __int64 input, const int index ) { assert(size_t(index) < 4); ((__int64*)&value)[index] = input; return value; }
-INLINE __int64 _mm_extract_epi64( __m128i input, const int index ) { assert(size_t(index) < 2); return index == 0 ? _mm_cvtsi128_si64x(input) : _mm_cvtsi128_si64x(_mm_unpackhi_epi64(input, input)); }
+INLINE __m128i _mm_insert_epi64( __m128i value, __int64 input, const int index ) { PF_ASSERT(size_t(index) < 4); ((__int64*)&value)[index] = input; return value; }
+INLINE __int64 _mm_extract_epi64( __m128i input, const int index ) { PF_ASSERT(size_t(index) < 2); return index == 0 ? _mm_cvtsi128_si64x(input) : _mm_cvtsi128_si64x(_mm_unpackhi_epi64(input, input)); }
 #endif
 
 #endif

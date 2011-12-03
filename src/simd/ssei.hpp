@@ -60,8 +60,8 @@ namespace pf
     /// Properties
     ////////////////////////////////////////////////////////////////////////////////
 
-    INLINE const int32& operator [](const size_t index) const { assert(index < 4); return v[index]; }
-    INLINE       int32& operator [](const size_t index)       { assert(index < 4); return v[index]; }
+    INLINE const int32& operator [](const size_t index) const { PF_ASSERT(index < 4); return v[index]; }
+    INLINE       int32& operator [](const size_t index)       { PF_ASSERT(index < 4); return v[index]; }
   };
 
   ////////////////////////////////////////////////////////////////////////////////
