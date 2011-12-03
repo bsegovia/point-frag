@@ -13,29 +13,29 @@ namespace pf
 {
   namespace internal
   {
-  struct rb_tree_base
-  {
-    typedef int  size_type;
-    enum color_e
+    struct rb_tree_base
     {
-      red,
-      black
+      typedef int  size_type;
+      enum color_e
+      {
+        red,
+        black
+      };
     };
-  };
-  template<typename TKey>
-  struct rb_tree_key_wrapper
-  {
-    TKey  key;
-    rb_tree_key_wrapper() {}
-    rb_tree_key_wrapper(const TKey& key_): key(key_) {}
-    const TKey& get_key() const { return key; }
-  };
-  template<typename TKey>
-  struct rb_tree_traits
-  {
-    typedef  TKey  key_type;
-    typedef rb_tree_key_wrapper<TKey>  value_type;
-  };
+    template<typename TKey>
+    struct rb_tree_key_wrapper
+    {
+      TKey  key;
+      rb_tree_key_wrapper() {}
+      rb_tree_key_wrapper(const TKey& key_): key(key_) {}
+      const TKey& get_key() const { return key; }
+    };
+    template<typename TKey>
+    struct rb_tree_traits
+    {
+      typedef  TKey  key_type;
+      typedef rb_tree_key_wrapper<TKey>  value_type;
+    };
 
   } // internal
 
@@ -368,7 +368,7 @@ namespace pf
             sibling = iter->parent->right;
           }
           if (sibling->left->color == black &&
-            sibling->right->color == black)
+              sibling->right->color == black)
           {
             sibling->color = red;
             iter = iter->parent;
@@ -425,21 +425,18 @@ namespace pf
       iter->color = black;
     }
 
-    void validate() const
-    {
-#ifndef NDEBUG
-      PF_ASSERT(m_root->color == black);
-      validate_node(m_root);
-#endif
+    void validate() const {
+      // PF_ASSERT(m_root->color == black);
+      // validate_node(m_root);
     }
     void validate_node(node* n) const
     {
       // - we're child of our parent.
       PF_ASSERT(n->parent == &ms_sentinel ||
-        n->parent->left == n || n->parent->right == n);
+                n->parent->left == n ||
+                n->parent->right == n);
       // - both children of red node are black
-      if (n->color == red)
-      {
+      if (n->color == red) {
         PF_ASSERT(n->left->color == black);
         PF_ASSERT(n->right->color == black);
       }
@@ -462,11 +459,8 @@ namespace pf
       // n's right child replaces n
       rightChild->parent = n->parent;
       if (n->parent == &ms_sentinel)
-      {
         m_root = rightChild;
-      }
-      else
-      {
+      else {
         if (n == n->parent->left)
           n->parent->left = rightChild;
         else
@@ -484,11 +478,8 @@ namespace pf
 
       leftChild->parent = n->parent;
       if (n->parent == &ms_sentinel)
-      {
         m_root = leftChild;
-      }
-      else
-      {
+      else {
         // Substitute us in the parent list with left child.
         if (n == n->parent->left)
           n->parent->left = leftChild;
@@ -498,22 +489,19 @@ namespace pf
       leftChild->right = n;
       n->parent = leftChild;
     }
-    node* alloc_node()
-    {
+    node* alloc_node() {
       node* mem = (node*)m_allocator.allocate(sizeof(node));
       return new (mem) node();
     }
     void free_node(node* n, bool recursive)
     {
-      if (recursive)
-      {
+      if (recursive) {
         if (n->left != &ms_sentinel)
           free_node(n->left, true);
         if (n->right != &ms_sentinel)
           free_node(n->right, true);
       }
-      if (n != &ms_sentinel)
-      {
+      if (n != &ms_sentinel) {
         n->~node();
         m_allocator.deallocate(n, sizeof(node));
       }

@@ -23,12 +23,16 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
-#include <map>
-#include <vector>
-#include <algorithm>
+//#include <map>
+//#include <vector>
+//#include <algorithm>
+#include "stl/map.hpp"
+#include "stl/vector.hpp"
+#include "stl/algorithm.hpp"
 
 #if defined (__MSVC__)
 #define strtok_r(a,b,c) strtok_s(a,b,c)
+#elif defined(__WIN32__) && defined(__GNUC__)
 /* $Id: strtok_r.c,v 1.1 2003/12/03 15:22:23 chris_reid Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Hgskolan
@@ -62,8 +66,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#elif defined(__WIN32__) && defined(__GNUC__)
 
 char *
 strtok_r(char *s1, const char *s2, char **lasts)
@@ -120,11 +122,11 @@ namespace pf
       for (int i = 0; i < MAX_VERT_NUM; i++)
         indices[i] = this->getListIndex(current_max, indices[i]);
     }
-    std::vector<ObjLoaderVec*>  vertexList;      //!< All positions parsed
-    std::vector<ObjLoaderVec*>  normalList;      //!< All normals parsed
-    std::vector<ObjLoaderVec*>  textureList;     //!< All textures parsed
-    std::vector<ObjLoaderFace*> faceList;        //!< All faces parsed
-    std::vector<ObjLoaderMat*>  materialList;    //!< All materials parsed
+    vector<ObjLoaderVec*>  vertexList;   //!< All positions parsed
+    vector<ObjLoaderVec*>  normalList;   //!< All normals parsed
+    vector<ObjLoaderVec*>  textureList;  //!< All textures parsed
+    vector<ObjLoaderFace*> faceList;     //!< All faces parsed
+    vector<ObjLoaderMat*>  materialList; //!< All materials parsed
     GrowingPool<ObjLoaderFace>  faceAllocator;   //!< Speeds up face allocation
     GrowingPool<ObjLoaderVec>   vectorAllocator; //!< Speeds up vector allocation
     GrowingPool<ObjLoaderMat>   matAllocator;    //!< Speeds up material allocation
@@ -427,22 +429,9 @@ namespace pf
 
   Obj::Obj(void) { std::memset(this, 0, sizeof(Obj)); }
 
-  INLINE uint32 str_hash(const char *key) {
-    uint32 h = 5381;
-    for (size_t i = 0, k; (k = key[i]); i++) h = ((h<<5)+h)^k; // bernstein k=33 xor
-    return h;
-  }
-
-  template <typename T>
-  INLINE uint32 hash(const T &elem) {
-    const char *key = (const char *) &elem;
-    uint32 h = 5381;
-    for (size_t i = 0; i < sizeof(T); i++) h = ((h<<5)+h)^key[i];
-    return h;
-  }
-
   /*! Sort vertices faces */
   struct VertexKey {
+    INLINE VertexKey(void) {}
     INLINE VertexKey(int p_, int n_, int t_) : p(p_), n(n_), t(t_) {}
     bool operator == (const VertexKey &other) const {
       return (p == other.p) && (n == other.n) && (t == other.t);
@@ -462,8 +451,8 @@ namespace pf
   bool Obj::load(const FileName &fileName)
   {
     ObjLoader loader;
-    std::map<VertexKey, int> map;
-    std::vector<Poly> polys;
+    map<VertexKey, int> map;
+    vector<Poly> polys;
     if (loader.loadObj(fileName.c_str()) == 0) return false;
 
     int vert_n = 0;
@@ -497,7 +486,7 @@ namespace pf
     if (polys.size() == 0) return true;
 
     // Create triangles now
-    std::vector<Triangle> tris;
+    vector<Triangle> tris;
     for (auto poly = polys.begin(); poly != polys.end(); ++poly) {
       if (poly->n == 3) {
         const Triangle tri(vec3i(poly->v[0], poly->v[1], poly->v[2]), poly->mat);
@@ -511,8 +500,8 @@ namespace pf
     }
 
     // Sort them by material and save the material group
-    std::sort(tris.begin(), tris.end(), cmp);
-    std::vector<MatGroup> matGrp;
+    quick_sort(tris.begin(), tris.end(), cmp);
+    vector<MatGroup> matGrp;
     int curr = tris[0].m;
     matGrp.push_back(MatGroup(0,0,curr));
     for (size_t i = 0; i < tris.size(); ++i) {
@@ -545,7 +534,7 @@ namespace pf
 
     // Create all the vertices and store them
     const size_t vertNum = map.size();
-    std::vector<Vertex> verts;
+    vector<Vertex> verts;
     verts.resize(vertNum);
     bool allPositionSet = true, allNormalSet = true, allTexCoordSet = true;
     for (auto it = map.begin(); it != map.end(); ++it) {

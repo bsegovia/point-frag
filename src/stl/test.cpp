@@ -20,6 +20,7 @@
 #include "intrusive_slist.hpp"
 #include "iterator.hpp"
 #include "list.hpp"
+#include "map.hpp"
 #include "pair.hpp"
 #include "radix_sorter.hpp"
 #include "rb_tree.hpp"
@@ -49,6 +50,7 @@ int p(rb_tree<int> &s) {return 3;}
 int p(set<int> &s) {return 3;}
 int p(slist<int> &s) {return 3;}
 int p(vector<int> &s) {return 3;}
+int p(map<int, char> &s) {return 3;}
 void q()
 {
   int x[13];

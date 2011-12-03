@@ -220,9 +220,10 @@ public:
   {
     if (m_end < m_capacityEnd)
       pf::copy_construct(m_end++, v);
-    else
+    else {
       grow();
       pf::copy_construct(m_end++, v);
+    }
     TStorage::record_high_watermark();
   }
   // @note: extension. Use instead of push_back(T()) or resize(size() + 1).

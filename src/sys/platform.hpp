@@ -198,7 +198,14 @@
 #define _DO_JOIN2(X, Y) X##Y
 
 /*! Run-time assertion */
-#define PF_ASSERT assert
+#ifndef NDEBUG
+#define PF_ASSERT(EXPR) do {            \
+  if (UNLIKELY(!(EXPR))) assert(EXPR);  \
+} while (0)
+#else
+#define PF_ASSERT(EXPR) do { } while (0)
+#endif
+
 /*! Compile-time assertion */
 #define STATIC_ASSERT(value)                                     \
   struct JOIN(__,JOIN(__,__LINE__)) { int x[(value) ? 1 : -1]; }

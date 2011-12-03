@@ -23,7 +23,7 @@ namespace pf
     explicit stack_allocator(const char* name = "STACK") :
       m_name(name),
       m_bufferTop(0)
-    { }
+    {}
 
     void* allocate(size_t bytes, int /*flags*/ = 0)
     {
@@ -35,7 +35,6 @@ namespace pf
     void deallocate(void* ptr, size_t /*bytes*/)
     {
       PF_ASSERT(ptr == 0 || (ptr >= &m_buffer[0] && ptr < &m_buffer[TBytes]));
-      // sizeof(ptr);
     }
 
     const char* get_name() const  { return m_name; }

@@ -37,6 +37,14 @@ namespace pf
       return a;
     }
   };
+
+  template <typename T>
+  INLINE uint32 hash_any(const T &elem) {
+    const char *key = (const char *) &elem;
+    uint32 h = 5381;
+    for (size_t i = 0; i < sizeof(T); i++) h = ((h<<5)+h)^key[i];
+    return h;
+  }
 } /* namespace pf */
 
 #endif /* __PF_HASH_HPP__ */
