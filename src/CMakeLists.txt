@@ -17,12 +17,6 @@ set (SRC
   sys/string.cpp
   sys/logging.cpp
   sys/default_path.cpp
-  stl/allocator.cpp
-  stl/intrusive_list.cpp
-  stl/intrusive_slist.cpp
-  stl/list.cpp
-  stl/slist.cpp
-  stl/test.cpp
   simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image_write.cpp
