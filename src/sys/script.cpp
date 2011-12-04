@@ -33,7 +33,7 @@ namespace pf
     virtual void runFile(const char *path, ScriptStatus &status);
   private:
     /*! Report the error after the execution */
-    void report(int ret, ScriptStatus &status);
+    bool report(int ret, ScriptStatus &status);
     /*! Complete lua state is stored here */
     lua_State *L;
   };
@@ -60,7 +60,10 @@ namespace pf
         continue;
       else {
         ScriptStatus status;
-        luaL_loadstring(L, initsrc.c_str());
+        this->report(luaL_loadstring(L, initsrc.c_str()), status);
+        if (status.success == false)
+          FATAL(std::string("Lua initialization failed: ") + status.msg);
+        break;
         this->report(lua_pcall(L,0,0,0), status);
         if (status.success == false)
           FATAL(std::string("Lua initialization failed: ") + status.msg);
@@ -72,7 +75,7 @@ namespace pf
 
   LuaScriptSystem::~LuaScriptSystem(void) { lua_close(L); }
 
-  void LuaScriptSystem::report(int ret, ScriptStatus &status)
+  bool LuaScriptSystem::report(int ret, ScriptStatus &status)
   {
     if (ret && !lua_isnil(L, -1)) {
       const char *msg = lua_tostring(L, -1);
@@ -80,8 +83,11 @@ namespace pf
       lua_pop(L, 1);
       status.msg = msg;
       status.success = false;
-    } else
+      return false;
+    } else {
       status.success = true;
+      return true;
+    }
   }
 
   void LuaScriptSystem::run(const char *str, ScriptStatus &status)
@@ -90,7 +96,8 @@ namespace pf
       status.success = false;
       status.msg = "NULL string";
     } else {
-      luaL_loadstring(L, str);
+      if (!this->report(luaL_loadstring(L, str), status))
+        return;
       lua_getfield(L, LUA_GLOBALSINDEX, "pf");
       IF_DEBUG(int ret =) lua_setfenv(L, -2);
       assert(ret == 1);

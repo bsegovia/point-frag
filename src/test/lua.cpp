@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
   using namespace pf;
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   ScriptStatus status;
-  scriptSystem->run("local x = 0", status);
+  scriptSystem->run("ppal x = 0", status);
   PF_DELETE(scriptSystem);
 }
 
