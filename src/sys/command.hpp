@@ -59,15 +59,15 @@ namespace pf
     std::string str; //!< Empty if not a string
     union {
       float f;
-      int32_t i;
+      int32 i;
     };
     union {
       float fmin;
-      int32_t imin;
+      int32 imin;
     };
     union {
       float fmax;
-      int32_t imax;
+      int32 imax;
     };
     size_t index;
     const char *name;
@@ -149,16 +149,16 @@ namespace pf
 static const ConCommand ccom_##NAME(#NAME, ARGS, RET);
 
 /*! Declare a variable (integer or float) */
-#define _VAR(NAME, MIN, CURR, MAX, DESC, FIELD, STR, CHAR)    \
+#define _VAR(NAME,MIN,CURR,MAX,DESC,TYPE,FIELD,STR,CHAR)      \
 /* Build the ConVar here. That appends it in ConVarSystem */  \
 static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC); \
 /* This is our accessor (read-only) */                        \
-static INLINE int32 NAME(const ConVarSystem *sys) {           \
+static INLINE TYPE NAME(const ConVarSystem *sys) {            \
   PF_ASSERT(sys != ConVarSystem::global);                     \
   return sys->get(cvar_##NAME.index).FIELD;                   \
 }                                                             \
 /* C function used by luaJIT when the variable is written */  \
-PF_SCRIPT void cvarSet_##NAME(int32_t x) {                    \
+PF_SCRIPT void cvarSet_##NAME(TYPE x) {                       \
   assert(ConVarSystem::global);                               \
   ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
   if (x >= cvar.FIELD##min && x <= cvar.FIELD##max)           \
@@ -166,7 +166,7 @@ PF_SCRIPT void cvarSet_##NAME(int32_t x) {                    \
   ConVarSystem::global->setModified();                        \
 }                                                             \
 /* C function used by luaJIT when the variable is read */     \
-PF_SCRIPT int32_t cvarGet_##NAME() {                          \
+PF_SCRIPT TYPE cvarGet_##NAME() {                             \
   assert(ConVarSystem::global);                               \
   ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
   return cvar.FIELD;                                          \
@@ -177,11 +177,11 @@ COMMAND(cvarGet_##NAME, "", CHAR)
 
 /*! Declare a integer variable */
 #define VARI(NAME, MIN, CURR, MAX, DESC)                      \
-  _VAR(NAME, MIN, CURR, MAX, DESC, i, "i", 'i')
+  _VAR(NAME, MIN, CURR, MAX, DESC, int32, i, "i", 'i')
 
 /*! Declare a float variable */
 #define VARF(NAME, MIN, CURR, MAX, DESC)                      \
-  _VAR(NAME, MIN, CURR, MAX, DESC, f, "f", 'f')
+  _VAR(NAME, MIN, CURR, MAX, DESC, float, f, "f", 'f')
 
 #endif /* __PF_COMMAND_HPP__ */
 

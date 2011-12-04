@@ -44,6 +44,7 @@ set (SRC
   rt/ray_packet.cpp
   rt/rt_camera.cpp)
 include_directories (.)
+include_directories (${LUAJIT_INCLUDE_DIR})
 
 if (UNIX)
   set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY} pthread)

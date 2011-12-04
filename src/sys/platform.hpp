@@ -235,8 +235,8 @@ do {                                                 \
     #define PF_EXPORT_SYMBOL __attribute__ ((dllexport))
     #define PF_IMPORT_SYMBOL __attribute__ ((dllimport))
   #else
-    #define PF_IMPORT_SYMBOL __declspec(dllexport)
-    #define PF_EXPORT_SYMBOL __declspec(dllimport)
+    #define PF_IMPORT_SYMBOL __declspec(dllimport)
+    #define PF_EXPORT_SYMBOL __declspec(dllexport)
   #endif /* __GNUC__ */
 #else
   #define PF_EXPORT_SYMBOL __attribute__ ((visibility ("default")))

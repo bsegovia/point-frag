@@ -8,7 +8,7 @@ if (WIN32)
              ${PROJECT_SOURCE_DIR}/extern/luajit/include
              doc "The directory where lua.hpp and other lua headers reside")
   find_library (LUAJIT_LIBRARY
-                NAMES luajit-5.1
+                NAMES lua51
                 PATHS
                 ${PROJECT_SOURCE_DIR}/extern/luajit/lib
                 DOC "The LuaJIT library")
@@ -30,4 +30,3 @@ else (LUAJIT_INCLUDE_DIR)
 endif (LUAJIT_INCLUDE_DIR)
 
 mark_as_advanced (LUAJIT_FOUND)
-
