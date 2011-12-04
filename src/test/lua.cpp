@@ -15,13 +15,18 @@
 // ======================================================================== //
 
 #include "sys/script.hpp"
+#include "sys/command.hpp"
+
+using namespace pf;
+//VARI(hop, 1, 2, 3, NULL);
+//PF_SCRIPT int hop0 = 0;
+  VARI(c0oucou, 0, 2, 3, "coucou");
 
 int main(int argc, char *argv[])
 {
-  using namespace pf;
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   ScriptStatus status;
-  scriptSystem->run("ppal x = 0", status);
+  scriptSystem->run("local x = 0", status);
   PF_DELETE(scriptSystem);
 }
 

@@ -19,6 +19,7 @@ set (SRC
   sys/logging.cpp
   sys/default_path.cpp
   sys/script.cpp
+  sys/command.cpp
   simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image_write.cpp
@@ -46,17 +47,16 @@ include_directories (.)
 add_library (pf ${SRC})
 if (UNIX)
   target_link_libraries(pf ${GLUT_LIBRARY} pthread)
-  #target_link_libraries(pf pthread GL X11 Xrandr Xext Xxf86vm Xi)
 else (UNIX)
   target_link_libraries(pf ${GLUT_LIBRARY} opengl32)
-  #target_link_libraries(pf opengl32 winmm)
 endif (UNIX)
 
 add_executable (game game/game.cpp)
 target_link_libraries (game pf)
 
-add_executable (rt test/rt.cpp)
-target_link_libraries (rt pf)
+add_executable (test_rt test/rt.cpp)
+target_link_libraries (test_rt pf)
 
-add_executable (lua test/lua.cpp)
-target_link_libraries (lua pf ${LUAJIT_LIBRARY})
+add_executable (test_lua test/lua.cpp)
+target_link_libraries (test_lua pf ${GLUT_LIBRARY} ${LUAJIT_LIBRARY})
+

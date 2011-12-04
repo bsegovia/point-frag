@@ -59,11 +59,11 @@ namespace pf
       if (initsrc.size() == 0)
         continue;
       else {
+        printf(initsrc.c_str());
         ScriptStatus status;
         this->report(luaL_loadstring(L, initsrc.c_str()), status);
         if (status.success == false)
           FATAL(std::string("Lua initialization failed: ") + status.msg);
-        break;
         this->report(lua_pcall(L,0,0,0), status);
         if (status.success == false)
           FATAL(std::string("Lua initialization failed: ") + status.msg);

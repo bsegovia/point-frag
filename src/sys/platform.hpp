@@ -228,6 +228,22 @@ do {                                                 \
 #define ALIGN(X,A) (((X) % (A)) ? ((X) + (A) - ((X) % (A))) : (X))
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Visibility parameters (DLL export and so on)
+////////////////////////////////////////////////////////////////////////////////
+#if defined __WIN32__
+  #if defined __GNUC__
+    #define PF_EXPORT_SYMBOL __attribute__ ((dllexport))
+    #define PF_IMPORT_SYMBOL __attribute__ ((dllimport))
+  #else
+    #define PF_IMPORT_SYMBOL __declspec(dllexport)
+    #define PF_EXPORT_SYMBOL __declspec(dllimport)
+  #endif /* __GNUC__ */
+#else
+  #define PF_EXPORT_SYMBOL __attribute__ ((visibility ("default")))
+  #define PF_IMPORT_SYMBOL
+#endif /* __WIN32__ */
+
+////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
 

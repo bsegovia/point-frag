@@ -1,4 +1,4 @@
--- we extensively use FFI for all the 
+-- we extensively use FFI for all the console stuff
 local ffi = require "ffi"
 pf = {
   cv = { },
@@ -21,4 +21,5 @@ setmetatable(pf.cv, {
       return ffi.C[str](value)
     end
   end})
+
 

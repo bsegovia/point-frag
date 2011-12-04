@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifndef __PF_SCRIPT_HPP__
+#define __PF_SCRIPT_HPP__
+
 #include "platform.hpp"
 #include <string>
 
@@ -41,4 +44,6 @@ namespace pf
   ScriptSystem *LuaScriptSystemCreate(void);
 
 } /* namespace pf */
+
+#endif /* __PF_SCRIPT_HPP__ */
 
