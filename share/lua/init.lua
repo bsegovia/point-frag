@@ -6,7 +6,7 @@ pf = {
 
 setmetatable(pf.cv, {
   __index = function (table, key)
-    local str = "cvar_get_" .. key
+    local str = "cvarGet_" .. key
     if ffi.C[str] == nil then
       error("cvar " .. key .. " unknown")
     else
@@ -14,7 +14,7 @@ setmetatable(pf.cv, {
     end
   end,
   __newindex = function (table, key, value)
-    local str = "cvar_set_" .. key
+    local str = "cvarSet_" .. key
     if ffi.C[str] == nil then
       error("cvar " .. key .. " unknown")
     else

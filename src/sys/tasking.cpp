@@ -325,18 +325,8 @@ namespace pf
   /// Implementation of the internal classes of the tasking system
   ///////////////////////////////////////////////////////////////////////////
 
-  // Well, regarding the implementation of the two task queues (work stealing
-  // queues and FIFO affinity queues), this code is not really portable and
-  // somehow x86 specific. There is no fence and there is no lock when the
-  // thread is modifying the head (for WS queues) and the tail (for FIFO
-  // affinity queue). At least, a fast ABP lock free queue
-  // is clearly the way to go anyway for the works stealing part. Other than
-  // that, this code can be ported to other platforms but some fences should be
-  // added around volatile reads/writes. The thing is that x86s use a very
-  // strong memory model. As a reminder:
-  // - Loads are not reordered with other loads
-  // - Stores are not reordered with other stores
-  // - Stores are not reordered with older loads
+  // A fast ABP lock free queue is clearly the way to go anyway for the works
+  // stealing part.
   template<int elemNum>
   bool TaskWorkStealingQueue<elemNum>::insert(Task &task) {
     const uint32 prio = task.getPriority();

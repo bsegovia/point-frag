@@ -65,6 +65,7 @@ namespace pf
     }
 
     INLINE operator bool(void) const { return ptr != NULL; }
+    INLINE operator Type*(void) const { return ptr; }
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Properties
@@ -92,5 +93,5 @@ namespace pf
   template<typename Type> INLINE  bool operator!= ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
 }
 
-#endif
+#endif /* __PF_REF_HPP__ */
 

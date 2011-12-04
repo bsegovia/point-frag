@@ -44,19 +44,30 @@ set (SRC
   rt/ray_packet.cpp
   rt/rt_camera.cpp)
 include_directories (.)
-add_library (pf ${SRC})
+
 if (UNIX)
-  target_link_libraries(pf ${GLUT_LIBRARY} pthread)
+  set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY} pthread)
 else (UNIX)
-  target_link_libraries(pf ${GLUT_LIBRARY} opengl32)
+  set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY})
 endif (UNIX)
 
-add_executable (game game/game.cpp)
-target_link_libraries (game pf)
+# dirty but otherwise, static variables are optimized out while using static
+# libraries. Dynamic libraries work but the code does not support it right now
+set (COMPILE_TEST_LUA false CACHE bool "Compile or not test_lua")
+if (COMPILE_TEST_LUA)
+  add_executable (test_lua ${SRC} test/lua.cpp)
+  target_link_libraries (test_lua ${EXEC_DEPENDENCIES})
+endif ()
 
-add_executable (test_rt test/rt.cpp)
-target_link_libraries (test_rt pf)
+set (COMPILE_TEST_RT false CACHE bool "Compile or not test_rt")
+if (COMPILE_TEST_RT)
+  add_executable (test_rt ${SRC} test/rt.cpp)
+  target_link_libraries (test_rt ${EXEC_DEPENDENCIES})
+endif ()
 
-add_executable (test_lua test/lua.cpp)
-target_link_libraries (test_lua pf ${GLUT_LIBRARY} ${LUAJIT_LIBRARY})
+set (COMPILE_GAME true CACHE bool "Compile or not game")
+if (COMPILE_GAME)
+  add_executable (game ${SRC} game/game.cpp)
+  target_link_libraries (game ${EXEC_DEPENDENCIES})
+endif ()
 

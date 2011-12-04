@@ -29,7 +29,12 @@ namespace pf
     bool success;    //!< Indicate if the script properly run
   };
 
-  /*! Bare metal script system interface. We will use LuaJIT for that */
+  /*! Bare metal script system interface. We will use LuaJIT for that. We have
+   *  two ways to run code:
+   *  - sandboxed: a safe private environment "pf" we created is used as
+   *    global environment
+   *  - non protected: the code justs run in the *real* global environment
+   */
   class ScriptSystem
   {
   public:
@@ -38,6 +43,10 @@ namespace pf
     virtual void run(const char *str, ScriptStatus &status) = 0;
     /*! Open the file and run it */
     virtual void runFile(const char *path, ScriptStatus &status) = 0;
+    /*! Execute the given string in the *non* sand boxed environment */
+    virtual void runNonProtected(const char *str, ScriptStatus &status) = 0;
+    /*! Open the file and run it */
+    virtual void runFileNonProtected(const char *path, ScriptStatus &status) = 0;
   };
 
   /*! Instantiate a Lua state basically */

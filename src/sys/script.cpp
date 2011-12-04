@@ -31,6 +31,10 @@ namespace pf
     virtual void run(const char *str, ScriptStatus &status);
     /*! Implements the interface */
     virtual void runFile(const char *path, ScriptStatus &status);
+    /*! Implements the interface */
+    virtual void runNonProtected(const char *str, ScriptStatus &status);
+    /*! Implements the interface */
+    virtual void runFileNonProtected(const char *path, ScriptStatus &status);
   private:
     /*! Report the error after the execution */
     bool report(int ret, ScriptStatus &status);
@@ -43,13 +47,13 @@ namespace pf
   // Code mostly taken from luajit interpreter
   LuaScriptSystem::LuaScriptSystem(void)
   {
-    L = lua_open();    // create lua state
+    L = lua_open();           // create lua state
     FATAL_IF (L == NULL, "unable to create the lua state");
-    lua_gc(L, LUA_GCSTOP, 0);     // stop collector during initialization
-    luaL_openlibs(L);             // open libraries
+    lua_gc(L, LUA_GCSTOP, 0); // stop collector during initialization
+    luaL_openlibs(L);         // open libraries
     lua_gc(L, LUA_GCRESTART, -1);
 
-    // Look for the initialization script that build the pf table
+    // Look for the initialization script that builds the pf table
     const FileName luainit("lua/init.lua");
     size_t i = 0;
     for (; i < defaultPathNum; ++i) {
@@ -59,7 +63,6 @@ namespace pf
       if (initsrc.size() == 0)
         continue;
       else {
-        printf(initsrc.c_str());
         ScriptStatus status;
         this->report(luaL_loadstring(L, initsrc.c_str()), status);
         if (status.success == false)
@@ -105,6 +108,18 @@ namespace pf
     }
   }
 
+  void LuaScriptSystem::runNonProtected(const char *str, ScriptStatus &status)
+  {
+    if (str == NULL) {
+      status.success = false;
+      status.msg = "NULL string";
+    } else {
+      if (!this->report(luaL_loadstring(L, str), status))
+        return;
+      this->report(lua_pcall(L,0,0,0), status);
+    }
+  }
+
   void LuaScriptSystem::runFile(const char *path, ScriptStatus &status) 
   {
     const std::string source = loadFile(path);
@@ -113,6 +128,16 @@ namespace pf
       status.msg = "Unable to open " + std::string(path);
     } else
       this->run(source.c_str(), status);
+  }
+
+  void LuaScriptSystem::runFileNonProtected(const char *path, ScriptStatus &status) 
+  {
+    const std::string source = loadFile(path);
+    if (source.size() == 0) {
+      status.success = false;
+      status.msg = "Unable to open " + std::string(path);
+    } else
+      this->runNonProtected(source.c_str(), status);
   }
 
   ScriptSystem *LuaScriptSystemCreate(void) { return PF_NEW(LuaScriptSystem); }

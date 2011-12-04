@@ -23,19 +23,31 @@
 
 #include <string>
 
+/*! This file implement a command / console variable system for point frag.
+ *  With LuaJIT, this task is rather easy. LuaJIT with its FFI is indeed able
+ *  to parse the binary and to extract the symbols. The only thing we need to
+ *  do is to declare the prototype of the functions and variable for LuaJIT
+ *
+ *  To do that job, we simply use some C++ pre-main stuff. Global variables are
+ *  declared for both commands and variables. Their constructors registers
+ *  what we need in global variable. When the command system is initialized,
+ *  we upload all the information to LuaJIT. Pretty straightforward!
+ */
 namespace pf
 {
+  // Need to start the command system
+  class ScriptSystem;
 
-  /*! A CVar value either holds an integer, a float or a string value */
-  struct CVar
+  /*! A ConVar value either holds an integer, a float or a string value */
+  struct ConVar
   {
-    /*! Register a integer CVar */
-    CVar(const char *name, int32 min, int32 curr, int32 max, const char *desc = NULL);
-    /*! Register a float CVar */
-    CVar(const char *name, float min, float curr, float max, const char *desc = NULL);
-    /*! Register a string CVar */
-    CVar(const char *name, const std::string &str, const char *desc = NULL);
-    /*! Describes the CVar value */
+    /*! Register a integer ConVar */
+    ConVar(const char *name, int32 min, int32 curr, int32 max, const char *desc = NULL);
+    /*! Register a float ConVar */
+    ConVar(const char *name, float min, float curr, float max, const char *desc = NULL);
+    /*! Register a string ConVar */
+    ConVar(const char *name, const std::string &str, const char *desc = NULL);
+    /*! Describes the ConVar value */
     enum Type
     {
       CVAR_FLOAT   = 0,
@@ -69,28 +81,61 @@ namespace pf
    *  the new value at the beginning of the frame and then this value remains
    *  unchanged)
    */
-  class CVarSystem : public RefCount
+  class ConVarSystem : public RefCount
   {
   public:
-    /*! Build a new CVar system */
-    CVarSystem(void);
+    /*! Build a new ConVar system */
+    ConVarSystem(void);
     /*! Release it */
-    ~CVarSystem(void);
-    /*! Get CVar at index "index" */
-    CVar &get(size_t index);
-    /*! Get CVar at index "index" */
-    const CVar &get(size_t index) const;
+    ~ConVarSystem(void);
+    /*! Duplicate the consoble variable system */
+    ConVarSystem *clone(void) const;
+    /*! Get ConVar at index "index" */
+    ConVar &get(size_t index);
+    /*! Get ConVar at index "index" */
+    const ConVar &get(size_t index) const;
+    /*! Says if a change happened in one of the variables */
+    INLINE bool isModified(void) const { return this->modified; }
     /*! The script will notify that one variable has been changed */
-    INLINE void setModified(void)   { this->modified = true;  }
+    INLINE void setModified(void)      { this->modified = true;  }
     /*! Once the script is processed, set the cvar system as unmodified */
-    INLINE void setUnmodified(void) { this->modified = false; }
-    /*! CVarSystem instance built at pre-main */
-    static Ref<CVarSystem> global;
+    INLINE void setUnmodified(void)    { this->modified = false; }
+    /*! ConVarSystem instance built at pre-main */
+    static ConVarSystem *global;
   private:
-    friend struct CVar; //!< We can access fields from the CVar
-    vector<CVar> var;   //!< All the variables
+    friend struct ConVar; //!< We can access fields from the ConVar
+    vector<ConVar> var;   //!< All the variables
     bool modified;      //!< Modified means that a variable changed 
   };
+
+  /*! With LuaJIT, this is going to be super simple. LuaJIT is able to get a
+   * symbol from a executable and DLL. We just need to provide the function
+   * prototype. We take this idea from Cube 2 and we just use a string for
+   * that. This structure just makes the book keeping when a macro declares
+   * the exported function
+   */
+  struct ConCommand
+  {
+    ConCommand(const char *name, const char *argument, char ret = 0);
+    /*! Just the function name */
+    const char *name;
+    /*! Command arguments. For example "if", means a function with two
+     *  arguments, the first is an integer and the other is a float
+     */
+    const char *argument;
+    /* Command returned type. ret == 0 means no value is returned */
+    char ret;
+    /*! Stores all the commands declared in the code */
+    static vector<ConCommand> *cmds;
+  };
+
+  /*! Initialize the console system. This includes the console variables which
+   *  are exported to the LuaJIT state
+   */
+  void ConsoleSystemStart(ScriptSystem &scriptSystem);
+
+  /*! Release all the resources (including the global ConVarSystem) */
+  void ConsoleSystemEnd(void);
 
 } /* namespace pf */
 
@@ -99,28 +144,44 @@ namespace pf
  */
 #define PF_SCRIPT extern "C" PF_EXPORT_SYMBOL
 
-/*! Declare a integer variable */
-#define VARI(NAME, MIN, CURR, MAX, DESC)                      \
-/* Build the CVar here. That appends it in the CVarSystem */  \
-static const CVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC);   \
+/* Declare a command by its name, its arguments and returned value types */
+#define COMMAND(NAME, ARGS, RET)                              \
+static const ConCommand ccom_##NAME(#NAME, ARGS, RET);
+
+/*! Declare a variable (integer or float) */
+#define _VAR(NAME, MIN, CURR, MAX, DESC, FIELD, STR, CHAR)    \
+/* Build the ConVar here. That appends it in ConVarSystem */  \
+static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC); \
 /* This is our accessor (read-only) */                        \
-static INLINE int32 NAME(const CVarSystem &sys) {             \
-  return sys.get(cvar_##NAME.index).i;                        \
+static INLINE int32 NAME(const ConVarSystem *sys) {           \
+  PF_ASSERT(sys != ConVarSystem::global);                     \
+  return sys->get(cvar_##NAME.index).FIELD;                   \
 }                                                             \
 /* C function used by luaJIT when the variable is written */  \
 PF_SCRIPT void cvarSet_##NAME(int32_t x) {                    \
-  assert(CVarSystem::global);                                 \
-  CVar &cvar = CVarSystem::global->get(cvar_##NAME.index);    \
-  if (x >= cvar.imin && x <= cvar.imax)                       \
-    cvar.i = x;                                               \
-  CVarSystem::global->setModified();                          \
+  assert(ConVarSystem::global);                               \
+  ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
+  if (x >= cvar.FIELD##min && x <= cvar.FIELD##max)           \
+    cvar.FIELD = x;                                           \
+  ConVarSystem::global->setModified();                        \
 }                                                             \
 /* C function used by luaJIT when the variable is read */     \
 PF_SCRIPT int32_t cvarGet_##NAME() {                          \
-  assert(CVarSystem::global);                                 \
-  CVar &cvar = CVarSystem::global->get(cvar_##NAME.index);    \
-  return cvar.i;                                              \
-}
+  assert(ConVarSystem::global);                               \
+  ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
+  return cvar.FIELD;                                          \
+}                                                             \
+/* Export both functions to LuaJIT */                         \
+COMMAND(cvarSet_##NAME, STR, 0)                               \
+COMMAND(cvarGet_##NAME, "", CHAR)
+
+/*! Declare a integer variable */
+#define VARI(NAME, MIN, CURR, MAX, DESC)                      \
+  _VAR(NAME, MIN, CURR, MAX, DESC, i, "i", 'i')
+
+/*! Declare a float variable */
+#define VARF(NAME, MIN, CURR, MAX, DESC)                      \
+  _VAR(NAME, MIN, CURR, MAX, DESC, f, "f", 'f')
 
 #endif /* __PF_COMMAND_HPP__ */
 
