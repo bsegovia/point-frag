@@ -25,7 +25,6 @@
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
 #include "sys/array.hpp"
-#include "sys/fixed_array.hpp"
 #include "sys/vector.hpp"
 
 #include <algorithm>
@@ -37,7 +36,7 @@
 
 namespace pf
 {
-  /*! Computes half surface area of box. */
+  /*! Computes half surface area of box */
   INLINE float halfArea(const Box& box) {
     const ssef d = size(box);
     const ssef a = d*shuffle<1,2,0,3>(d);

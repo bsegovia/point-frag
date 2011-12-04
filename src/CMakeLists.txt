@@ -1,4 +1,5 @@
 include (FindGLUT)
+include (FindLuaJIT)
 include_directories (${GLUT_INCLUDE_PATH})
 set (SRC
   game/camera.cpp
@@ -17,6 +18,7 @@ set (SRC
   sys/string.cpp
   sys/logging.cpp
   sys/default_path.cpp
+  sys/script.cpp
   simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image_write.cpp
@@ -55,3 +57,6 @@ target_link_libraries (game pf)
 
 add_executable (rt test/rt.cpp)
 target_link_libraries (rt pf)
+
+add_executable (lua test/lua.cpp)
+target_link_libraries (lua pf ${LUAJIT_LIBRARY})
