@@ -34,6 +34,7 @@ set (SRC
   image/squish/squish.cpp
   models/obj.cpp
   renderer/ogl.cpp
+  renderer/font.cpp
   renderer/hiz.cpp
   renderer/texture.cpp
   renderer/renderer.cpp
@@ -64,6 +65,12 @@ set (COMPILE_TEST_RT false CACHE bool "Compile or not test_rt")
 if (COMPILE_TEST_RT)
   add_executable (test_rt ${SRC} test/rt.cpp)
   target_link_libraries (test_rt ${EXEC_DEPENDENCIES})
+endif ()
+
+set (COMPILE_TEST_FONT false CACHE bool "Compile or not test_rt")
+if (COMPILE_TEST_FONT)
+  add_executable (test_font ${SRC} test/font.cpp)
+  target_link_libraries (test_font ${EXEC_DEPENDENCIES})
 endif ()
 
 set (COMPILE_GAME true CACHE bool "Compile or not game")

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2011 Intel Corporation                                    //
+// Copyright (C) 2011 Benjamin Segovia                                      //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,52 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sys/string.hpp"
 #include "sys/filename.hpp"
+#include "sys/vector.hpp"
+#include "sys/logging.hpp"
+#include "font.hpp"
 
-#include <cstdio>
-#include <cctype>
+#include <sstream>
 #include <istream>
 #include <fstream>
-#include <algorithm>
+#include <cstring>
 
-namespace std
-{
-  char to_lower(char c) { return char(tolower(int(c))); }
-  char to_upper(char c) { return char(toupper(int(c))); }
-  string strlwr(const string& s) {
-    string dst(s);
-    std::transform(dst.begin(), dst.end(), dst.begin(), to_lower);
-    return dst;
-  }
-  string strupr(const string& s) {
-    string dst(s);
-    std::transform(dst.begin(), dst.end(), dst.begin(), to_upper);
-    return dst;
-  }
-}
 namespace pf
 {
 
-  std::string loadFile(const FileName &path)
-  {
-    std::ifstream stream(path, std::istream::in);
-    if (stream.is_open() == false)
-      return std::string();
-    std::string str = loadFile(stream);
-    stream.close();
-    return str;
+  Font::Page::Page(void) { this->ID = 0; }
+  Font::Char::Char(void) { std::memset(this, 0, sizeof(Char)); }
+  Font::Common::Common(void) { std::memset(this, 0, sizeof(Common)); }
+  Font::Kerning::Kerning(void) { std::memset(this, 0, sizeof(Kerning)); }
+  Font::Info::Info(void) {
+    for (size_t i = 0; i < 4; ++i) this->padding[i] = 0;
+    for (size_t i = 0; i < 2; ++i) this->spacing[i] = 0;
+    this->size = 0;
+    this->bold = 0;
+    this->italic = 0;
+    this->unicode = 0;
+    this->smooth = 0;
+    this->stretchH = 0;
+    this->aa = 0;
+    this->outline = 0;
   }
 
-  std::string loadFile(std::ifstream &stream)
+  bool Font::load(const FileName &fileName)
   {
-    PF_ASSERT(stream.is_open());
-    std::string line;
-    std::stringstream text;
-    while (std::getline(stream, line))
-      text << "\n" << line;
-    stream.close();
-    return text.str();
+    return false;
   }
-}
+} /* namespace pf */
 
