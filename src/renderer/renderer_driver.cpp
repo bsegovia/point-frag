@@ -141,10 +141,10 @@ namespace pf
   };
   void RendererDriver::initPlain(void) {
     this->plain.program = buildProgram(plainVert, NULL, plainFrag);
-    R_CALL (BindAttribLocation, this->diffuse.program, ATTR_POSITION, "p");
-    R_CALL (BindFragDataLocation, this->diffuse.program, 0, "c");
-    R_CALL (LinkProgram, this->diffuse.program);
-    R_CALL (validateProgram, this->diffuse.program);
+    R_CALL (BindAttribLocation, this->plain.program, ATTR_POSITION, "p");
+    R_CALL (BindFragDataLocation, this->plain.program, 0, "c");
+    R_CALL (LinkProgram, this->plain.program);
+    R_CALL (validateProgram, this->plain.program);
     R_CALL (GenBuffers, 1, &this->plain.arrayBuffer);
     R_CALL (GenVertexArrays, 1, &this->plain.vertexArray);
     R_CALL (BindVertexArray, this->plain.vertexArray);

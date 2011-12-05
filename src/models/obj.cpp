@@ -19,6 +19,7 @@
 #include "sys/alloc.hpp"
 #include "sys/logging.hpp"
 #include "sys/vector.hpp"
+#include "sys/string.hpp"
 
 #include <cstring>
 #include <cstdlib>
@@ -68,7 +69,7 @@ namespace pf
     GrowingPool<ObjLoaderFace>  faceAllocator;   //!< Speeds up face allocation
     GrowingPool<ObjLoaderVec>   vectorAllocator; //!< Speeds up vector allocation
     GrowingPool<ObjLoaderMat>   matAllocator;    //!< Speeds up material allocation
-    char *objSaved, *mtlSaved;                   //!< for strtok_r
+    char *objSaved, *mtlSaved;                   //!< for tokenize
     static const char *whiteSpace;               //!< White space characters
     static const int FILENAME_SZ = 1024;
     static const int MAT_NAME_SZ = 1024;
@@ -117,16 +118,6 @@ namespace pf
   };
 #undef DECL_FAST_ALLOC
 
-  static bool INLINE strequal(const char *s1, const char *s2) {
-    if (strcmp(s1, s2) == 0) return true;
-    return false;
-  }
-
-  static bool INLINE contains(const char *haystack, const char *needle) {
-    if (strstr(haystack, needle) == NULL) return false;
-    return true;
-  }
-
   void ObjLoaderMat::setDefault(void) {
     this->map_Ka[0] = this->map_Kd[0] = this->map_D[0] = this->map_Bump[0] = '\0';
     this->amb[0]  = this->amb[1]  = this->amb[2]  = 0.2;
@@ -144,7 +135,7 @@ namespace pf
     char *temp_str = NULL, *token = NULL;
     int vertexNum = 0;
 
-    while ((token = strtok_r(NULL, whiteSpace, saved)) != NULL) {
+    while ((token = tokenize(NULL, whiteSpace, saved)) != NULL) {
       if (face.textureID != NULL) face.textureID[vertexNum] = 0;
       if (face.normalID != NULL)  face.normalID[vertexNum] = 0;
       face.vertexID[vertexNum] = atoi(token);
@@ -185,7 +176,7 @@ namespace pf
     ObjLoaderVec *v = new (*this) ObjLoaderVec;
     v->e[0] = v->e[1] = v->e[2] = 0.;
     for (int i = 0; i < 3; ++i) {
-      const char * str = strtok_r(NULL, whiteSpace, &this->objSaved);
+      const char * str = tokenize(NULL, whiteSpace, &this->objSaved);
       if (str == NULL)
         break;
       v->e[i] = atof(str);
@@ -226,7 +217,7 @@ namespace pf
     // Parse it
     while (fgets(currLine, LINE_SZ, mtlFile)) {
       char **saved = &this->mtlSaved;
-      tok = strtok_r(currLine, " \t\n\r", saved);
+      tok = tokenize(currLine, " \t\n\r", saved);
       lineNumber++;
 
       // skip comments
@@ -237,57 +228,57 @@ namespace pf
         material_open = 1;
         currMat = new (*this) ObjLoaderMat;
         currMat->setDefault();
-        strncpy(currMat->name, strtok_r(NULL, whiteSpace, saved), MAT_NAME_SZ);
+        strncpy(currMat->name, tokenize(NULL, whiteSpace, saved), MAT_NAME_SZ);
         materialList.push_back(currMat);
       }
       // ambient
       else if (strequal(tok, "Ka") && material_open) {
-        currMat->amb[0] = atof(strtok_r(NULL, " \t", saved));
-        currMat->amb[1] = atof(strtok_r(NULL, " \t", saved));
-        currMat->amb[2] = atof(strtok_r(NULL, " \t", saved));
+        currMat->amb[0] = atof(tokenize(NULL, " \t", saved));
+        currMat->amb[1] = atof(tokenize(NULL, " \t", saved));
+        currMat->amb[2] = atof(tokenize(NULL, " \t", saved));
       }
       // diff
       else if (strequal(tok, "Kd") && material_open) {
-        currMat->diff[0] = atof(strtok_r(NULL, " \t", saved));
-        currMat->diff[1] = atof(strtok_r(NULL, " \t", saved));
-        currMat->diff[2] = atof(strtok_r(NULL, " \t", saved));
+        currMat->diff[0] = atof(tokenize(NULL, " \t", saved));
+        currMat->diff[1] = atof(tokenize(NULL, " \t", saved));
+        currMat->diff[2] = atof(tokenize(NULL, " \t", saved));
       }
       // specular
       else if (strequal(tok, "Ks") && material_open) {
-        currMat->spec[0] = atof(strtok_r(NULL, " \t", saved));
-        currMat->spec[1] = atof(strtok_r(NULL, " \t", saved));
-        currMat->spec[2] = atof(strtok_r(NULL, " \t", saved));
+        currMat->spec[0] = atof(tokenize(NULL, " \t", saved));
+        currMat->spec[1] = atof(tokenize(NULL, " \t", saved));
+        currMat->spec[2] = atof(tokenize(NULL, " \t", saved));
       }
       // shiny
       else if (strequal(tok, "Ns") && material_open)
-        currMat->shiny = atof(strtok_r(NULL, " \t", saved));
+        currMat->shiny = atof(tokenize(NULL, " \t", saved));
       // map_Km
       else if (strequal(tok, "Km") && material_open)
-        currMat->km = atof(strtok_r(NULL, " \t", saved));
+        currMat->km = atof(tokenize(NULL, " \t", saved));
       // transparent
       else if (strequal(tok, "d") && material_open)
-        currMat->trans = atof(strtok_r(NULL, " \t", saved));
+        currMat->trans = atof(tokenize(NULL, " \t", saved));
       // reflection
       else if (strequal(tok, "r") && material_open)
-        currMat->reflect = atof(strtok_r(NULL, " \t", saved));
+        currMat->reflect = atof(tokenize(NULL, " \t", saved));
       // glossy
       else if (strequal(tok, "sharpness") && material_open)
-        currMat->glossy = atof(strtok_r(NULL, " \t", saved));
+        currMat->glossy = atof(tokenize(NULL, " \t", saved));
       // refract index
       else if (strequal(tok, "Ni") && material_open)
-        currMat->refract_index = atof(strtok_r(NULL, " \t", saved));
+        currMat->refract_index = atof(tokenize(NULL, " \t", saved));
       // map_Ka
       else if (strequal(tok, "map_Ka") && material_open)
-        strncpy(currMat->map_Ka, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+        strncpy(currMat->map_Ka, tokenize(NULL, " \"\t\r\n", saved), FILENAME_SZ);
       // map_Kd
       else if (strequal(tok, "map_Kd") && material_open)
-        strncpy(currMat->map_Kd, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+        strncpy(currMat->map_Kd, tokenize(NULL, " \"\t\r\n", saved), FILENAME_SZ);
       // map_D
       else if (strequal(tok, "map_D") && material_open)
-        strncpy(currMat->map_D, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+        strncpy(currMat->map_D, tokenize(NULL, " \"\t\r\n", saved), FILENAME_SZ);
       // map_Bump
       else if (strequal(tok, "map_Bump") && material_open)
-        strncpy(currMat->map_Bump, strtok_r(NULL, " \"\t\r\n", saved), FILENAME_SZ);
+        strncpy(currMat->map_Bump, tokenize(NULL, " \"\t\r\n", saved), FILENAME_SZ);
       // illumination type
       else if (strequal(tok, "illum") && material_open) { }
       else
@@ -319,7 +310,7 @@ namespace pf
     // parser loop
     while (fgets(currLine, LINE_SZ, objFile)) {
       char **saved = &this->objSaved;
-      tok = strtok_r(currLine, " \t\n\r", saved);
+      tok = tokenize(currLine, " \t\n\r", saved);
       lineNumber++;
 
       // skip comments
@@ -339,9 +330,9 @@ namespace pf
         faceList.push_back(face);
       }
       else if (strequal(tok, "usemtl"))   // usemtl
-        currMaterial = this->findMaterial(strtok_r(NULL, whiteSpace, saved));
+        currMaterial = this->findMaterial(tokenize(NULL, whiteSpace, saved));
       else if (strequal(tok, "mtllib")) { //  mtllib
-        const char *mtlFileName = strtok_r(NULL, whiteSpace, saved);
+        const char *mtlFileName = tokenize(NULL, whiteSpace, saved);
         if (this->loadMtl(mtlFileName, fileName) == 0) {
           PF_ERROR_V("ObjLoader: Error loading " << mtlFileName);
           return false;
@@ -585,6 +576,3 @@ namespace pf
   }
 }
 
-#if defined (__WIN32__)
-#undef strtok_r
-#endif

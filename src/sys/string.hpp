@@ -36,6 +36,12 @@ namespace std
 }
 namespace pf
 {
+  /*! Compare two strings */
+  bool strequal(const char *s1, const char *s2);
+  /*! Say if needle is in haystack */
+  bool contains(const char *haystack, const char *needle);
+  /*! Tokenize a string (like strtok_r does) */
+  char* tokenize(char *s1, const char *s2, char **lasts);
   /*! Load a file from its path and copies it into a string */
   std::string loadFile(const FileName &path);
   /*! Load a file from a stream and copies it into a string */
