@@ -114,14 +114,14 @@ namespace pf
 
     // Allocate nodes and leaves for the BVH2
     nodeNum = 2 * primNum + 1;
-    root.init(nodeNum);
+    root.resize(nodeNum);
 
     // Allocate the data for the compiler
-    for (int i = 0; i < 3; ++i) IDs[i].init(primNum);
-    tmpIDs.init(primNum);
-    pos.init(primNum);
-    aabbs.init(primNum);
-    rlAABBs.init(primNum);
+    for (int i = 0; i < 3; ++i) IDs[i].resize(primNum);
+    tmpIDs.resize(primNum);
+    pos.resize(primNum);
+    aabbs.resize(primNum);
+    rlAABBs.resize(primNum);
     n = primNum;
 
     // Compute centroids and bounding boxes

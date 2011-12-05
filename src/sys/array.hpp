@@ -32,13 +32,16 @@ namespace pf
     /*! Create an empty array */
     INLINE array(void) : elem(NULL), elemNum(0) {}
     /*! Allocate an array with elemNum allocated elements */
-    INLINE array(size_t elemNum) : elem(NULL), elemNum(0) { this->init(elemNum); }
+    INLINE array(size_t elemNum) : elem(NULL), elemNum(0) { this->resize(elemNum); }
     /*! Delete the allocated elements */
     INLINE ~array(void) { PF_SAFE_DELETE_ARRAY(elem); }
     /*! Free the already allocated elements and allocate a new array */
-    INLINE void init(size_t elemNum_) {
+    INLINE void resize(size_t elemNum_) {
       PF_SAFE_DELETE_ARRAY(elem);
-      this->elem = PF_NEW_ARRAY(T, elemNum_);
+      if (elemNum_)
+        this->elem = PF_NEW_ARRAY(T, elemNum_);
+      else
+        this->elem = NULL;
       this->elemNum = elemNum_;
     }
     /*! Steal the pointer. The array becomes emtpy */
@@ -54,12 +57,12 @@ namespace pf
     INLINE T *end(void) { return this->elem + elemNum; }
     /*! Get element at position index (with a bound check) */
     INLINE T &operator[] (size_t index) {
-      PF_ASSERT(index < elemNum);
+      PF_ASSERT(elem && index < elemNum);
       return elem[index];
     }
     /*! Get element at position index (with bound check) */
     INLINE const T &operator[] (size_t index) const {
-      PF_ASSERT(index < elemNum);
+      PF_ASSERT(elem && index < elemNum);
       return elem[index];
     }
     /*! Return the number of elements */

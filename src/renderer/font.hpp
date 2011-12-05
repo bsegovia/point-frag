@@ -18,7 +18,7 @@
 #define __PF_FONT_HPP__
 
 #include "sys/platform.hpp"
-#include "sys/vector.hpp"
+#include "sys/array.hpp"
 #include "sys/filename.hpp"
 
 namespace pf
@@ -35,7 +35,7 @@ namespace pf
     struct Info
     {
       Info(void);
-      std::string name;    //!< This is the name of the true type font
+      std::string face;    //!< This is the name of the true type font
       std::string charset; //!< The name of the OEM charset used (when not unicode)
       int16 size;          //!< The size of the true type font.
       int16 bold;          //!< 1 if bold
@@ -56,11 +56,11 @@ namespace pf
       /*! 0 if channel holds glyph data, 1 if it holds outline, 2 if it holds
        *  glyph and outline, 3 if its set to zero, and 4 if its set to one.
        */
-      int16 alpha, red, green, blue;
+      int16 alphaChnl, redChnl, greenChnl, blueChnl;
       int16 lineHeight; //!< Distance in pixels between each line of text
       int16 base;       //!< Number of pixels from top of the line to base of characters
-      int16 width;      //!< Texture width
-      int16 height;     //!< Texture height
+      int16 scaleW;     //!< Texture width
+      int16 scaleH;     //!< Texture height
       int16 pages;      //!< Number of texture pages included in the font
       int16 packed;     //!< Set to 1 if the monochrome characters have been packed
     };
@@ -69,7 +69,7 @@ namespace pf
     struct Page
     {
       Page(void);
-      int16 ID;         //!< Page ID
+      int16 id;         //!< Page ID
       std::string file; //!< Texture file name
     };
 
@@ -79,11 +79,11 @@ namespace pf
     struct Char
     {
       Char(void);
-      int32 ID;       //!< Character ID
+      int32 id;       //!< Character ID
       int16 x;        //!< x origin
       int16 y;        //!< y origin
-      int16 w;        //!< Width
-      int16 h;        //!< Height
+      int16 width;    //!< Width
+      int16 height;   //!< Height
       int16 xoffset;  //!< How the position should be offset in screen
       int16 yoffset;  //!< How the position should be offset in screen
       int16 xadvance; //!< How much the current position should be advanced in the screen
@@ -105,9 +105,9 @@ namespace pf
 
     Info info;
     Common common;
-    vector<Char> chars;
-    vector<Page> pages;
-    vector<Kerning> kernings;
+    array<Char> chars;
+    array<Page> pages;
+    array<Kerning> kernings;
   };
 
 } /* namespace pf */
