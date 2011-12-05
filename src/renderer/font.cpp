@@ -26,7 +26,6 @@
 
 namespace pf
 {
-
   Font::Page::Page(void) { this->id = 0; }
   Font::Char::Char(void) { std::memset(this, 0, sizeof(Char)); }
   Font::Common::Common(void) { std::memset(this, 0, sizeof(Common)); }
@@ -189,6 +188,7 @@ namespace pf
     isLoaded = true;
 
   exit:
+    if (fontFile) fclose(fontFile);
     return isLoaded;
   error:
     this->chars.resize(0);
