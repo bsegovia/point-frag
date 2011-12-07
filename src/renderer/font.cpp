@@ -152,7 +152,6 @@ namespace pf
         }
         tchars.push_back(ch);
       }
-
       // kerning gives data about how to offset characters for nice display
       else if (strequal(tok, "kerning")) {
         Kerning kerning;

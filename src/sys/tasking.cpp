@@ -45,6 +45,7 @@ namespace pf
   class Task;          // Basically an asynchronous function with dependencies
   class TaskSet;       // Idem but can be run N times
   class TaskAllocator; // Dedicated to allocate tasks and task sets
+  class TaskScheduler; // Owns the complete system
 
   /*! Structure used to issue ready-to-process tasks */
   template <int elemNum>
@@ -81,7 +82,8 @@ namespace pf
 
   protected:
     Task * volatile tasks[TaskPriority::NUM][elemNum]; //!< All tasks currently stored
-    MutexActive mutex;                        //!< Not lock-free right now
+    typedef MutexActive MutexType;                     //!< Not lock-free right now
+    MutexType mutex;
     union {
       INLINE volatile int32& operator[] (int32 prio) { return x[prio]; }
       volatile int32 x[TaskPriority::NUM];
@@ -155,26 +157,37 @@ namespace pf
   };
 
   /*! Per thread state required to run the tasking system */
-  class CACHE_LINE_ALIGNED TaskThread {
+  class CACHE_LINE_ALIGNED TaskThread
+  {
   public:
     TaskThread(void);
+    ~TaskThread(void);
     /*! Tell the thread it has to return */
     INLINE void die(void);
-    /*! Resume the thread execution */
-    INLINE void wakeUp(void);
+    /*! Resume the thread execution. In the case that we have to steal a task
+     *  from somewhere, we also provide the threadID that wakes up. Therefore,
+     *  we know where to get the task to steal. If the ID is negative, we do not
+     *  change the current victim to steal from.
+     */
+    INLINE void wakeUp(int32 threadThatWakesMeUp = -1);
     /*! Check without locking the state before waking up the threads */
-    INLINE void tryWakeUp(void);
+    INLINE void tryWakeUp(int32 threadThatWakesMeUp = -1);
     /*! Yield the thread using a condition variable */
     INLINE void sleep(void);
     enum { queueSize = 512 };                //!< Number of task per queue
     TaskWorkStealingQueue<queueSize> wsQueue;//!< Per thread work stealing queue
     TaskAffinityQueue<queueSize> afQueue;    //!< Per thread affinity queue
-    thread_t thread;                //!< All threads currently running
+    thread_t thread;                //!< System thread handle
+    TaskScheduler *scheduler;       //!< It owns us
     ConditionSys cond;              //!< Condition variable for state
     MutexSys mutex;                 //!< Protects condition variable
     volatile TaskThreadState state; //!< SLEEPING or RUNNING?
+    size_t threadID;                //!< Our ID in the tasking system
     uint32 victim;                  //!< Next thread to steal from
     uint32 toWakeUp;                //!< Next guy to wake up
+#if PF_TASK_STATICTICS
+    Atomic sleepNum;
+#endif /* PF_TASK_STATICTICS */
     ALIGNED_CLASS(CACHE_LINE);
   };
 
@@ -183,13 +196,12 @@ namespace pf
    *  up task in depth first order. Each thread can also steal other tasks
    *  in breadth first order when his own queue is empty
    */
-  class TaskScheduler {
+  class CACHE_LINE_ALIGNED TaskScheduler
+  {
   public:
-
     /*! If threadNum == 0, use the maximum number of threads */
     TaskScheduler(int threadNum_ = -1);
     ~TaskScheduler(void);
-
     /*! Call by the main thread to enter the tasking system */
     void go(void);
     /*! Interrupt all threads */
@@ -198,9 +210,7 @@ namespace pf
         this->taskThread[i].die();
     }
     /*! Interrupt main thread only */
-    INLINE void stopMain(void) {
-      this->taskThread[PF_TASK_MAIN_THREAD].die();
-    }
+    INLINE void stopMain(void) { this->taskThread[PF_TASK_MAIN_THREAD].die(); }
     /*! Number of threads running in the scheduler (not including main) */
     INLINE uint32 getWorkerNum(void) { return uint32(this->workerNum); }
     /*! ID of the calling thread in the tasking system */
@@ -209,6 +219,10 @@ namespace pf
     INLINE Task* getTask(void);
     /*! Run the task and recursively handle the tasks to start and to end */
     void runTask(Task *task);
+    /*! Lock the scheduler. The locking thread is the only to run */
+    void lock(void);
+    /*! Unlock the scheduler */
+    void unlock(void);
     /*! Data provided to each thread */
     struct ThreadStartup {
       ThreadStartup(size_t tid, TaskScheduler &scheduler_) :
@@ -218,21 +232,25 @@ namespace pf
     };
 
   private:
-
     /*! Function run by each thread */
     static void threadFunction(ThreadStartup *thread);
     /*! Schedule a task which is now ready to execute */
     INLINE void schedule(Task &task);
     /*! Try to push a task in the queue. Returns false if queues are full */
     INLINE bool trySchedule(Task &task);
-
     friend class Task;            //!< Tasks ...
     friend class TaskSet;         // ... task sets ...
     friend class TaskAllocator;   // ... task allocator use the tasking system
+    friend class TaskThread;      //!< Update the sleeping bitfield
     static THREAD uint32 threadID;//!< ThreadID for each thread
     TaskThread *taskThread;       //!< Per thread state
     size_t workerNum;             //!< Total number of threads running
     size_t queueNum;              //!< Number of queues (should be workerNum+1)
+    volatile size_t sleeping;     //!< Bitfields that gives the sleeping threads
+    volatile size_t sleepingNum;  //!< Number of threads sleeping
+    MutexActive sleepMutex;       //!< Protect the sleeping field
+    CACHE_LINE_ALIGNED volatile int32 locked; //!< To globally lock the tasking system
+    ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! Allocator per thread */
@@ -304,7 +322,8 @@ namespace pf
    *  allocator is really a growing pool. We *never* give back the chunk of
    *  memory taken from std::malloc (except when the allocator is destroyed)
    */
-  class TaskAllocator {
+  class TaskAllocator
+  {
   public:
     /*! Constructor. Here this is the total number of threads using the pool (ie
      *  number of worker threads + main thread)
@@ -325,39 +344,42 @@ namespace pf
   /// Implementation of the internal classes of the tasking system
   ///////////////////////////////////////////////////////////////////////////
 
-  // A fast ABP lock free queue is clearly the way to go anyway for the works
-  // stealing part.
+  // Insertion is only done by the owner of the queues. So, the owner is the
+  // only one that modifies the head (since this is the only one that inserts).
+  // With proper store_releases, we therefore do not need any lock
   template<int elemNum>
   bool TaskWorkStealingQueue<elemNum>::insert(Task &task) {
     const uint32 prio = task.getPriority();
     if (UNLIKELY(this->head[prio] - this->tail[prio] == elemNum))
       return false;
     __store_release(&task.state, uint8(TaskState::READY));
-    PF_COMPILER_READ_WRITE_BARRIER;
-    this->tasks[prio][this->head[prio] % elemNum] = &task;
-    PF_COMPILER_READ_WRITE_BARRIER;
-    this->head[prio]++;
+    __store_release(&this->tasks[prio][this->head[prio] % elemNum], &task);
+    const int32 nextHead = this->head[prio] + 1;
+    __store_release(&this->head[prio], nextHead);
     IF_TASK_STATISTICS(statInsertNum++);
     return true;
   }
 
+  // get is competing with steal: we use a lock
   template<int elemNum>
   Task* TaskWorkStealingQueue<elemNum>::get(void) {
     if (this->getActiveMask() == 0) return NULL;
-    Lock<MutexActive> lock(this->mutex);
+    Lock<typename TaskQueue<elemNum>::MutexType> lock(this->mutex);
     const int mask = this->getActiveMask();
     if (mask == 0) return NULL;
     const uint32 prio = __bsf(mask);
-    const int32 index = --this->head[prio];
+    const int32 index = this->head[prio] - 1;
+    __store_release(&this->head[prio], index);
     Task* task = this->tasks[prio][index % elemNum];
     IF_TASK_STATISTICS(statGetNum++);
     return task;
   }
 
+  // Idem
   template<int elemNum>
   Task* TaskWorkStealingQueue<elemNum>::steal(void) {
     if (this->getActiveMask() == 0) return NULL;
-    Lock<MutexActive> lock(this->mutex);
+    Lock<typename TaskQueue<elemNum>::MutexType> lock(this->mutex);
     const int mask = this->getActiveMask();
     if (mask == 0) return NULL;
     const uint32 prio = __bsf(mask);
@@ -368,31 +390,33 @@ namespace pf
     return stolen;
   }
 
+  // insertion is done by all threads. We use a mutex
   template<int elemNum>
   bool TaskAffinityQueue<elemNum>::insert(Task &task) {
     const uint32 prio = task.getPriority();
-    // No double check here (I mean, before and after the lock. We just take the
-    // optimistic approach ie we suppose the queue is never full)
-    Lock<MutexActive> lock(this->mutex);
+    if (UNLIKELY(this->head[prio] - this->tail[prio] == elemNum))
+      return false;
+    Lock<typename TaskQueue<elemNum>::MutexType> lock(this->mutex);
     if (UNLIKELY(this->head[prio] - this->tail[prio] == elemNum))
       return false;
     __store_release(&task.state, uint8(TaskState::READY));
-    PF_COMPILER_READ_WRITE_BARRIER;
-    this->tasks[prio][this->head[prio] % elemNum] = &task;
-    PF_COMPILER_READ_WRITE_BARRIER;
-    this->head[prio]++;
+    __store_release(&this->tasks[prio][this->head[prio] % elemNum], &task);
+    const int32 nextHead = this->head[prio] + 1;
+    __store_release(&this->head[prio], nextHead);
     IF_TASK_STATISTICS(statInsertNum++);
     return true;
   }
 
+  // get is only done by the owner that therefore owns the tail. We use proper
+  // store_release / load_acquire to avoid locks
   template<int elemNum>
   Task* TaskAffinityQueue<elemNum>::get(void) {
     if (this->getActiveMask() == 0) return NULL;
-    Lock<MutexActive> lock(this->mutex);
     const int mask = this->getActiveMask();
     const uint32 prio = __bsf(mask);
-    Task* task = this->tasks[prio][this->tail[prio] % elemNum];
-    this->tail[prio]++;
+    Task* task = __load_acquire(&this->tasks[prio][this->tail[prio] % elemNum]);
+    const int32 nextTail = this->tail[prio] + 1;
+    __store_release(&this->tail[prio], nextTail);
     IF_TASK_STATISTICS(statGetNum++);
     return task;
   }
@@ -463,31 +487,58 @@ namespace pf
     this->chunk[chunkID] = pred;
   }
 
-  TaskThread::TaskThread(void) : state(TASK_THREAD_STATE_RUNNING), victim(0), toWakeUp(0) {}
+  TaskThread::TaskThread(void) :
+    state(TASK_THREAD_STATE_RUNNING), victim(0), toWakeUp(0)
+#if PF_TASK_STATICTICS
+    , sleepNum(0u)
+#endif /* PF_TASK_STATICTICS */
+  {}
+
+  TaskThread::~TaskThread(void) {
+#if PF_TASK_STATICTICS
+    std::cout << "Thread " << threadID << " sleepNum: " << sleepNum << std::endl;
+#endif /* PF_TASK_STATICTICS */
+  }
 
   void TaskThread::sleep(void) {
     Lock<MutexSys> lock(mutex);
+
     // Double check that we did not get anything to run in the mean time
     if (afQueue.getActiveMask() || wsQueue.getActiveMask()) return;
     if (state == TASK_THREAD_STATE_DEAD) return;
     state = TASK_THREAD_STATE_SLEEPING;
+
+    // Indicate that we are now sleeping
+    scheduler->sleepMutex.lock();
+    scheduler->sleeping |= (size_t(1u) << this->threadID);
+    scheduler->sleepingNum++;
+    scheduler->sleepMutex.unlock();
+    IF_TASK_STATISTICS(this->sleepNum++);
     while (state == TASK_THREAD_STATE_SLEEPING)
       cond.wait(mutex);
+
+    // We are not sleeping anymore
+    scheduler->sleepMutex.lock();
+    scheduler->sleepingNum--;
+    scheduler->sleeping &= ~(size_t(1u) << this->threadID);
+    scheduler->sleepMutex.unlock();
   }
 
-  void TaskThread::wakeUp(void) {
+  void TaskThread::wakeUp(int32 threadThatWakesMeUp) {
     Lock<MutexSys> lock(mutex);
     if (state == TASK_THREAD_STATE_SLEEPING) {
+      if (threadThatWakesMeUp >= 0)
+        victim = threadThatWakesMeUp;
       state = TASK_THREAD_STATE_RUNNING;
       cond.broadcast();
     }
   }
 
-  void TaskThread::tryWakeUp(void) {
+  void TaskThread::tryWakeUp(int32 threadThatWakesMeUp) {
     if (state != TASK_THREAD_STATE_SLEEPING) return;
-    this->wakeUp();
+    this->wakeUp(threadThatWakesMeUp);
   }
-  
+
   void TaskThread::die(void) {
     Lock<MutexSys> lock(mutex);
     state = TASK_THREAD_STATE_DEAD;
@@ -502,7 +553,7 @@ namespace pf
     void *succ = list, *pred = NULL;
     uintptr_t totalSize = 0;
     while (this->currSize[chunkID] > chunkSize) {
-      PF_ASSERT(succ);
+      assert(succ);
       pred = succ;
       succ = *(void**) succ;
       this->currSize[chunkID] -= elemSize;
@@ -522,7 +573,7 @@ namespace pf
 
   void TaskStorage::popGlobal(uint32 chunkID) {
     void *list = NULL;
-    PF_ASSERT(this->chunk[chunkID] == NULL);
+    assert(this->chunk[chunkID] == NULL);
     if (allocator->global[chunkID] == NULL) return;
 
     // Limit the contention time
@@ -577,13 +628,16 @@ namespace pf
   template <typename T> INLINE T _min(T x, T y) {return x<y?x:y;}
   template <typename T> INLINE T _max(T x, T y) {return x>y?x:y;}
 
-  void TaskScheduler::threadFunction(TaskScheduler::ThreadStartup *thread)
+  void TaskScheduler::threadFunction(TaskScheduler::ThreadStartup *threadData)
   {
-    threadID = uint32(thread->tid);
-    TaskScheduler *This = &thread->scheduler;
+    threadID = uint32(threadData->tid);
+    TaskScheduler *This = &threadData->scheduler;
     TaskThread &myself = This->taskThread[threadID];
     const int maxInactivityNum = (This->getWorkerNum()+1) * PF_TASK_TRIES_BEFORE_YIELD;
     int inactivityNum = 0;
+
+    // We do not need it anymore
+    PF_DELETE(threadData);
 
     // flush to zero and no denormals
     _mm_setcsr(_mm_getcsr() | (1<<15) | (1<<6));
@@ -602,11 +656,13 @@ namespace pf
         inactivityNum = 0;
         myself.sleep();
       }
+      if (UNLIKELY(This->locked))
+        myself.sleep();
     }
-    PF_DELETE(thread);
   }
- 
-  TaskScheduler::TaskScheduler(int workerNum_) : taskThread(NULL)
+
+  TaskScheduler::TaskScheduler(int workerNum_) :
+    taskThread(NULL), sleeping(0u), sleepingNum(0), locked(0)
   {
     if (workerNum_ < 0) workerNum_ = getNumberOfLogicalThreads() - 1;
     this->workerNum = workerNum_;
@@ -615,14 +671,18 @@ namespace pf
     this->queueNum = workerNum+1;
     this->taskThread = PF_NEW_ARRAY(TaskThread, queueNum);
     this->taskThread[PF_TASK_MAIN_THREAD].thread = NULL;
+    this->taskThread[PF_TASK_MAIN_THREAD].scheduler = this;
+    this->taskThread[PF_TASK_MAIN_THREAD].threadID = 0;
 
     // Only if we have dedicated worker threads
     if (workerNum > 0) {
       const size_t stackSize = 4*MB;
       for (size_t i = 0; i < workerNum; ++i) {
         const int affinity = int(i+1);
-        ThreadStartup *thread = PF_NEW(ThreadStartup,i+1,*this);
-        this->taskThread[i+1].thread = createThread((pf::thread_func) threadFunction, thread, stackSize, affinity);
+        ThreadStartup *threadData = PF_NEW(ThreadStartup,i+1,*this);
+        this->taskThread[i+1].scheduler = this;
+        this->taskThread[i+1].thread = createThread((pf::thread_func) threadFunction, threadData, stackSize, affinity);
+        this->taskThread[i+1].threadID = i+1;
       }
     }
   }
@@ -633,16 +693,19 @@ namespace pf
     bool success;
     if (affinity >= this->queueNum) {
       success = myself.wsQueue.insert(task);
-      // We wake up two threads (exponential propagation).
+      // Wake up one sleeping thread (if any)
       if (success) {
-        this->taskThread[myself.toWakeUp].tryWakeUp();
-        myself.toWakeUp = (myself.toWakeUp + 1) % queueNum;
-        this->taskThread[myself.toWakeUp].tryWakeUp();
-        myself.toWakeUp = (myself.toWakeUp + 1) % queueNum;
+        // no race condition...
+        const size_t nonVolatileSleeping = this->sleeping;
+        if (UNLIKELY(nonVolatileSleeping)) {
+          const size_t sleepingID = __bsf(nonVolatileSleeping);
+          assert(sleepingID < this->queueNum);
+          this->taskThread[sleepingID].tryWakeUp(threadID);
+        }
       }
     } else {
       success = this->taskThread[affinity].afQueue.insert(task);
-      // We have to wake up this thread if not running
+      // We really have to wake up this thread if not running
       if (success) this->taskThread[affinity].wakeUp();
     }
     return success;
@@ -657,13 +720,42 @@ namespace pf
     }
   }
 
+  void TaskScheduler::lock(void) {
+    // If somebody locks the system, we sleep
+    while (atomic_cmpxchg(&this->locked, 1, 0) != 0) {
+      TaskThread &myself = this->taskThread[threadID];
+      myself.sleep();
+    }
+
+    // Everyone goes to sleep except us. Busy waiting is just simpler and
+    // locking is anyway super expensive. So, let's do it like this
+    while (this->sleepingNum != this->queueNum - 1) _mm_pause();
+
+    // Now we are alone in this world
+  }
+
+  void TaskScheduler::unlock(void) {
+    // OK. Once again, we do it brutally. We just wake up everybody even the
+    // threads that were sleeping before the lock was taken. Expensive but
+    // simpler and locking is anyway expensive
+    __store_release(&this->locked, 0);
+    for (size_t i = 0; i < this->queueNum; ++i) {
+      TaskThread &thread = this->taskThread[i];
+      thread.wakeUp();
+    }
+  }
+
   TaskScheduler::~TaskScheduler(void) {
     for (size_t i = 0; i < workerNum; ++i)
       join(taskThread[i+1].thread); // thread[0] is main
 #if PF_TASK_STATICTICS
     for (size_t i = 0; i < queueNum; ++i) {
-      std::cout << "Task Queue " << i << " ";
+      std::cout << "Work Stealing Task Queue " << i << " ";
       taskThread[i].wsQueue.printStats();
+    }
+    for (size_t i = 0; i < queueNum; ++i) {
+      std::cout << "Affinity Task Queue " << i << " ";
+      taskThread[i].afQueue.printStats();
     }
 #endif /* PF_TASK_STATICTICS */
     PF_SAFE_DELETE_ARRAY(taskThread);
@@ -693,9 +785,9 @@ namespace pf
     }
     if (task == NULL) {
       // Case 2: try to steal some task from another thread
-      const unsigned long index = this->taskThread[this->threadID].victim % queueNum;
+      const uint32 victimID = this->taskThread[this->threadID].victim % queueNum;
       this->taskThread[this->threadID].victim++;
-      return this->taskThread[index].wsQueue.steal();
+      return this->taskThread[victimID].wsQueue.steal();
     }
     return task;
   }
@@ -708,7 +800,7 @@ namespace pf
       // sets can be run concurrently by several threads).
 #ifndef NDEBUG
       const uint8 state = __load_acquire(&task->state);
-      PF_ASSERT(state == TaskState::READY || state == TaskState::RUNNING);
+      assert(state == TaskState::READY || state == TaskState::RUNNING);
 #endif /* NDEBUG */
       __store_release(&task->state, uint8(TaskState::RUNNING));
       nextToRun = task->run();
@@ -736,7 +828,7 @@ namespace pf
 
       // Handle the tasks directly passed by the user
       if (nextToRun) {
-        PF_ASSERT(nextToRun->state == TaskState::NEW);
+        assert(nextToRun->state == TaskState::NEW);
 
         // Careful with affinities: we can run the task on one specific thread
         const uint32 affinity = nextToRun->getAffinity();
@@ -753,7 +845,9 @@ namespace pf
   }
 
   void TaskScheduler::go(void) {
-    ThreadStartup *thread = PF_NEW(ThreadStartup, 0, *this);
+    ThreadStartup *thread = PF_NEW(ThreadStartup, PF_TASK_MAIN_THREAD, *this);
+    // Resurrect the main thread if required
+    this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_RUNNING;
     threadFunction(thread);
   }
 
@@ -795,12 +889,7 @@ namespace pf
         this->toEnd--;
         this->refDec();
       }
-      while ((curr = --this->elemNum) >= 0) {
-        this->run(curr);
-        TaskThread &myself = scheduler->taskThread[scheduler->threadID];
-        scheduler->taskThread[myself.toWakeUp].tryWakeUp();
-        myself.toWakeUp = (myself.toWakeUp + 1) % scheduler->queueNum;
-      }
+      while ((curr = --this->elemNum) >= 0) this->run(curr);
     } else if (this->elemNum > 1) {
       this->toEnd++;
       this->refInc(); // One more reference in the scheduler
@@ -819,6 +908,8 @@ namespace pf
   }
 
   void TaskingSystemStart(int32 workerNum) {
+    static const uint32 bitsPerByte = 8;
+    FATAL_IF (workerNum >= int32(sizeof(size_t)*bitsPerByte), "Too many workers are required");
     FATAL_IF (scheduler != NULL, "scheduler is already running");
     // flush to zero and no denormals
     _mm_setcsr(_mm_getcsr() | (1<<15) | (1<<6));

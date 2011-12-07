@@ -306,8 +306,6 @@ private:
 #include "sys/constants.hpp"
 #include "sys/alloc.hpp"
 
-extern "C" char* strtok_r(char *s1, const char *s2, char **lasts);
-
 namespace pf
 {
   /*! selects */

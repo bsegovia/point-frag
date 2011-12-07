@@ -105,7 +105,7 @@ namespace pf
 
   std::string loadFile(const FileName &path)
   {
-    std::ifstream stream(path, std::istream::in);
+    std::ifstream stream(path.c_str(), std::istream::in);
     if (stream.is_open() == false)
       return std::string();
     std::string str = loadFile(stream);
