@@ -80,14 +80,6 @@ namespace pf
     if (this->handle != 0) R_CALL (DeleteTextures, 1, &this->handle);
   }
 
-  /*! Does nothing but can be used for synchronization */
-  class TaskDummy2 : public Task
-  {
-  public:
-    TaskDummy2(void) : Task("TaskDummy2") {}
-    virtual Task *run(void) { return NULL; }
-  };
-
   TextureState::TextureState(int value, Task &loadingTask, Task &proxyTask) :
     loadingTask(&loadingTask), proxyTask(&proxyTask), value(value)
   { }
@@ -442,7 +434,7 @@ namespace pf
       return NULL;
     else {
       PF_MSG(request.name);
-      Ref<Task> loadingTask = PF_NEW(TaskDummy2);
+      Ref<Task> loadingTask = PF_NEW(TaskDummy);
       Ref<Task> newProxy = PF_NEW(TaskTextureLoadProxy, texState.proxyTask);
       texState.proxyTask->starts(loadingTask);
       texState.proxyTask = newProxy;
