@@ -18,6 +18,7 @@
 #include "renderer/renderer.hpp"
 #include "renderer/renderer_driver.hpp"
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 #include "sys/logging.hpp"
 #include "image/stb_image.hpp"
 #include "image/squish/squish.h"
@@ -79,12 +80,20 @@ namespace pf
     if (this->handle != 0) R_CALL (DeleteTextures, 1, &this->handle);
   }
 
+  /*! Does nothing but can be used for synchronization */
+  class TaskDummy2 : public Task
+  {
+  public:
+    TaskDummy2(void) : Task("TaskDummy2") {}
+    virtual Task *run(void) { return NULL; }
+  };
+
+  TextureState::TextureState(int value, Task &loadingTask, Task &proxyTask) :
+    loadingTask(&loadingTask), proxyTask(&proxyTask), value(value)
+  { }
+
   TextureState TextureStreamer::getTextureState(const std::string &name) {
     Lock<MutexSys> lock(mutex);
-    return this->getTextureStateUnlocked(name);
-  }
-
-  TextureState TextureStreamer::getTextureStateUnlocked(const std::string &name) {
     auto it = texMap.find(name);
     if (it == texMap.end())
       return TextureState();
@@ -299,10 +308,14 @@ namespace pf
 
     // We were not able to find the texture. So we use a default one
     if (data->isValid() == false) {
+      debugbreak();
       PF_MSG_V("TextureStreamer: texture: " << request.name << " not found");
       PF_DELETE(data);
       Lock<MutexSys> lock(streamer.mutex);
       PF_ASSERT(streamer.renderer.defaultTex);
+      PF_ASSERT(streamer.texMap.find(request.name) != streamer.texMap.end());
+      // Kick out the proxy task
+      streamer.texMap[request.name].proxyTask->scheduled();
       streamer.texMap[request.name] = TextureState(*streamer.renderer.defaultTex);
     }
     // We need to load it in OGL now
@@ -324,10 +337,9 @@ namespace pf
   {
   public:
     TaskTextureLoadProxy(Ref<Task> loadingTask) :
-      Task("TaskTextureLoadProxy"), loadingTask(loadingTask)
-    { PF_ASSERT(this->loadingTask); }
+      Task("TaskTextureLoadProxy"), loadingTask(loadingTask) {}
     virtual Task *run(void) {
-      loadingTask->waitForCompletion();
+      loadingTask->scheduled();
       return NULL;
     }
     Ref<Task> loadingTask;
@@ -384,15 +396,17 @@ namespace pf
     Lock<MutexSys> lock(streamer.mutex);
     auto it = streamer.texMap.find(request.name);
     PF_ASSERT(it != streamer.texMap.end());
-    it->second.loadingTask = NULL;
-    it->second.tex = tex;
     it->second.value = TextureState::COMPLETE;
+    Ref<Task> proxyTask = it->second.proxyTask;
+    it->second.loadingTask = NULL;
+    it->second.proxyTask = NULL;
+    it->second.tex = tex;
     PF_MSG_V("TextureStreamer: OGL uploading time: " <<
              request.name << ", " << getSeconds() - t << "s");
 
     // The data is not needed anymore
     PF_DELETE(this->data);
-
+    proxyTask->scheduled();
     return NULL;
   }
 #undef OGL_NAME
@@ -410,21 +424,30 @@ namespace pf
   Ref<Task> TextureStreamer::createLoadTask(const TextureRequest &request)
   {
     Lock<MutexSys> lock(mutex);
+    auto it = texMap.find(request.name);
 
-    // Somebody already issued a load for it
-    TextureState texState = this->getTextureStateUnlocked(request.name);
-    if (texState.value == TextureState::LOADING ||
-        texState.value == TextureState::COMPLETE) {
-      if (texState.loadingTask == false)
-        return NULL;
-      else
-        return PF_NEW(TaskTextureLoadProxy, texState.loadingTask);
+    // Create the task that does the real job
+    if (it == texMap.end()) {
+      Task *loadingTask = PF_NEW(TaskTextureLoad, request, *this);
+      Task *proxyTask = PF_NEW(TaskDummy);
+      this->texMap[request.name] = TextureState(TextureState::LOADING, *loadingTask, *proxyTask);
+      return loadingTask;
     }
 
-    // Create the task and indicate everybody else that texture is loading
-    Task *loadingTask = PF_NEW(TaskTextureLoad, request, *this);
-    this->texMap[request.name] = TextureState(TextureState::LOADING, loadingTask);
-    return loadingTask;
+    // Create continuation tasks
+    TextureState &texState = it->second;
+    PF_ASSERT(texState.value == TextureState::LOADING ||
+              texState.value == TextureState::COMPLETE);
+    if (texState.loadingTask == false)
+      return NULL;
+    else {
+      PF_MSG(request.name);
+      Ref<Task> loadingTask = PF_NEW(TaskDummy2);
+      Ref<Task> newProxy = PF_NEW(TaskTextureLoadProxy, texState.proxyTask);
+      texState.proxyTask->starts(loadingTask);
+      texState.proxyTask = newProxy;
+      return loadingTask;
+    }
   }
 
 } /* namespace pf */

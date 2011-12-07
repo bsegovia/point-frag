@@ -343,6 +343,7 @@ namespace pf
   template <typename T>
   void buildBVH2(const T *t, uint32 primNum, BVH2<T> &tree, const BVH2BuildOption &option)
   {
+    PF_ASSERT(t != NULL && primNum != 0);
     PF_MSG_V("BVH2: compiling BVH2");
     PF_MSG_V("BVH2: " << primNum << " primitives");
     BVH2Builder c;

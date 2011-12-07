@@ -16,6 +16,7 @@
 
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 #include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
@@ -160,10 +161,13 @@ namespace pf
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
     std::memset(rgba, 0, sizeof(uint32) * w * h);
     const double t = getSeconds();
-    Ref<Task> rayTask = PF_NEW(TaskRayTrace<singleRay>, *intersector,
+    Task *rayTask = PF_NEW(TaskRayTrace<singleRay>, *intersector,
       cam, c, rgba, w, h/RayPacket::height);
+    Task *returnToMain = PF_NEW(TaskInterruptMain);
+    rayTask->starts(returnToMain);
     rayTask->scheduled();
-    rayTask->waitForCompletion();
+    returnToMain->scheduled();
+    TaskingSystemEnter();
     const double dt = getSeconds() - t;
     PF_MSG_V(dt * 1000. << " msec - " << CAMW * CAMH / dt << " rays/s");
     if (singleRay)

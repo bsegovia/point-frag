@@ -74,7 +74,7 @@ namespace pf
 #include "GL/ogl150.hxx"
 #include "GL/ogl200.hxx"
 #include "GL/ogl300.hxx"
-//#include "GL/ogl310.hxx"  
+//#include "GL/ogl310.hxx"
 //#include "GL/ogl320.hxx"
 
 #undef DECL_GL_PROC
@@ -141,9 +141,9 @@ namespace pf
     this->waitForDestruction->scheduled();
     this->waitForDestruction->waitForCompletion();
     PF_ASSERT(this->textureNum == 0 &&
-           this->vertexArrayNum == 0 &&
-           this->bufferNum == 0 &&
-           this->frameBufferNum == 0);
+              this->vertexArrayNum == 0 &&
+              this->bufferNum == 0 &&
+              this->frameBufferNum == 0);
   }
 
 #undef OGL_NAME

@@ -56,7 +56,7 @@
  * task). The basic idea here is to overcome typical issues with tasking system:
  * How do you handle asynchronous/non-blocking IO? You may want to reschedule a
  * task if the IO takes too long. But in that case, how can you be sure that the
- * scheduler is not going to run the task you just pushed? Our idea (to assert
+ * scheduler is not going to run the task you just pushed? Our idea (to PF_ASSERT
  * in later tests) is to offer the ability to run *something* already ready to
  * hide the IO latency from the task itself. At least, you can keep the HW
  * thread busy if you want to.
@@ -161,7 +161,7 @@ namespace pf
     };
   };
 
-  /*! Describe the current state of a task. This asserts the correctness of the
+  /*! Describe the current state of a task. This PF_ASSERTs the correctness of the
    * operations (like Task::starts or Task::ends which only operates on tasks
    * with specific states)
    */
@@ -292,18 +292,20 @@ namespace pf
   }
 
   INLINE void Task::starts(Task *other) {
+    PF_ASSERT(this->toBeStarted == false);
     if (UNLIKELY(other == NULL)) return;
-    assert(other->state == TaskState::NEW);
+    PF_ASSERT(other->state == TaskState::NEW);
     if (UNLIKELY(this->toBeStarted)) return; // already a task to start
     other->toStart++;
     this->toBeStarted = other;
   }
 
   INLINE void Task::ends(Task *other) {
+    PF_ASSERT(this->toBeEnded == false);
     if (UNLIKELY(other == NULL)) return;
 #ifndef NDEBUG
     const uint32 state = other->state;
-    assert(state == TaskState::NEW ||
+    PF_ASSERT(state == TaskState::NEW ||
            state == TaskState::SCHEDULED ||
            state == TaskState::RUNNING);
 #endif /* NDEBUG */
@@ -313,12 +315,12 @@ namespace pf
   }
 
   INLINE void Task::setPriority(uint8 prio) {
-    assert(this->state == TaskState::NEW);
+    PF_ASSERT(this->state == TaskState::NEW);
     this->priority = prio;
   }
 
   INLINE void Task::setAffinity(uint16 affi) {
-    assert(this->state == TaskState::NEW);
+    PF_ASSERT(this->state == TaskState::NEW);
     this->affinity = affi;
   }
 

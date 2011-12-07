@@ -95,18 +95,17 @@ namespace pf
   struct TextureState
   {
     INLINE TextureState(void) : value(NOT_HERE) {}
-    INLINE TextureState(int value, Task *task) :
-      loadingTask(task), value(value) {}
     INLINE TextureState(Texture2D &tex) : tex(&tex), value(COMPLETE) {}
+    TextureState(int value, Task &loadingTask, Task &proxyTask);
     Ref<Texture2D> tex;    //!< Texture itself
-    Ref<Task> loadingTask; //!< Pointer to the task that issued the load
+    Ref<Task> loadingTask; //!< Task that issued the load
+    Ref<Task> proxyTask;   //!< Task that depends on the loading task (for sync)
     int value;             //!< Current loading state
     enum
     {
       NOT_HERE  = 0, //!< Unknown not in the streamer at all
       LOADING   = 1, //!< Somebody started to load it
       COMPLETE  = 2, //!< It is here!
-      NOT_FOUND = 3, //!< The resource was not found
       INVALID_STATE = 0xffffffff
     };
   };
@@ -135,8 +134,6 @@ namespace pf
     std::tr1::unordered_map<std::string, TextureState> texMap;
     /*! Serialize the streamer access */
     MutexSys mutex;
-    /*! Unlocked for internal use */
-    TextureState getTextureStateUnlocked(const std::string &name);
     friend class TaskTextureLoad;    //!< Load the textures from the disk
     friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
     Renderer &renderer;              //!< Owner of the streamer
