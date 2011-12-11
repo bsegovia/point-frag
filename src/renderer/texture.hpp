@@ -115,7 +115,7 @@ namespace pf
    *  loading many textures possibly at the same time from many threads.
    *  It also stores the textures themselves
    */
-  class TextureStreamer
+  class TextureStreamer : public NonCopyable
   {
   public:
     TextureStreamer(Renderer &renderer);

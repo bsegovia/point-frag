@@ -11,6 +11,7 @@ set (SRC
   sys/thread.cpp
   sys/alloc.cpp
   sys/tasking.cpp
+  sys/tasking_utility.cpp
   sys/sysinfo.cpp
   sys/mutex.cpp
   sys/condition.cpp

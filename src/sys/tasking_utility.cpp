@@ -14,31 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "renderer.hpp"
-#include "renderer_driver.hpp"
-#include "texture.hpp"
+#include "tasking_utility.hpp"
 
 namespace pf
 {
-  Renderer::Renderer(void)
-  {
-    this->driver = PF_NEW(RendererDriver);
-    this->streamer = PF_NEW(TextureStreamer, *this);
-    const TextureRequest req("Maps/default.tga", PF_TEX_FORMAT_PLAIN, GL_NEAREST, GL_NEAREST);
-    Ref<Task> loadingTask = this->streamer->createLoadTask(req);
-    loadingTask->scheduled();
-    TaskingSystemWait(loadingTask);
-    const TextureState state = this->streamer->getTextureState("Maps/default.tga");
-    this->defaultTex = state.tex;
-    FATAL_IF (defaultTex == false  || defaultTex->isValid() == false,
-              "Default \"default.tga\" texture not found");
+  TaskInterruptMain::TaskInterruptMain(void) : Task("TaskInterruptMain") {}
+  Task *TaskInterruptMain::run(void) {
+    TaskingSystemInterruptMain();
+    return NULL;
   }
 
-  Renderer::~Renderer(void)
-  {
-    this->defaultTex = NULL;
-    PF_DELETE(this->streamer);
-    PF_DELETE(this->driver);
-  }
+  TaskDummy::TaskDummy(void) : Task("TaskDummy") {}
+  Task *TaskDummy::run(void) { return NULL; }
+
 } /* namespace pf */
 

@@ -103,7 +103,6 @@ namespace pf
     task->intersector = intersector;
     task->taskXNum = this->width  / TaskRayTraceHiZ::width;
     task->taskYNum = this->height / TaskRayTraceHiZ::height;
-    task->scheduled();
     return task.cast<Task>();
   }
 

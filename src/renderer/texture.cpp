@@ -408,8 +408,7 @@ namespace pf
     // Properly for all outstanding tasks
     for (auto it = texMap.begin(); it != texMap.end(); ++it) {
       TextureState &state = it->second;
-      if (state.loadingTask)
-        state.loadingTask->waitForCompletion();
+      TaskingSystemWait(state.loadingTask);
     }
   }
 

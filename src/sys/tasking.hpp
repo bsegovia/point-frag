@@ -178,7 +178,7 @@ namespace pf
   };
 
   /*! Interface for all tasks handled by the tasking system */
-  class Task : public RefCount
+  class Task : public RefCount, public NonCopyable
   {
   public:
     /*! It can complete one task and can be continued by one other task */
@@ -200,8 +200,6 @@ namespace pf
     INLINE void setAffinity(uint16 affi);
     INLINE uint8 getPriority(void) const;
     INLINE uint16 getAffinity(void) const;
-    /*! The scheduler will run tasks as long as this task is not done */
-    void waitForCompletion(void);
 
 #if PF_TASK_USE_DEDICATED_ALLOCATOR
     /*! Tasks use a scalable fixed size allocator */
@@ -239,25 +237,25 @@ namespace pf
     Atomic elemNum;          //!< Number of outstanding elements
   };
 
-  /*! A task that runs on the main thread */
-  class TaskMain : public Task
-  {
-  public:
-    INLINE TaskMain(const char *name) : Task(name) {
-      this->setAffinity(PF_TASK_MAIN_THREAD);
-    }
-  };
-
   /*! Mandatory before creating and running any task. If workerNum < 0, the
-   *  number of hardware threads minus 1 is chosen (MAIN THREAD)
+   *  number of hardware threads minus 1 is chosen (MAIN THREAD outside a Task)
    */
   void TaskingSystemStart(int workerNum = -1);
 
-  /*! Make the main thread enter the tasking system (MAIN THREAD) */
+  /*! Make the main thread enter the tasking system (MAIN THREAD outside a Task) */
   void TaskingSystemEnd(void);
 
-  /*! Make the main thread enter the tasking system (MAIN THREAD) */
+  /*! Make the main thread enter the tasking system (MAIN THREAD outside a Task) */
   void TaskingSystemEnter(void);
+
+  /*! Wait for a task to complete (MAIN THREAD outside a Task) */
+  void TaskingSystemWait(Ref<Task> task);
+
+  /*! Wait until all pending tasks have been executed. When the function
+   *  returns, we are sure that nothing can be run anymore (MAIN THREAD outside a
+   *  Task)
+   */
+  void TaskingSystemEmptyQueues(void);
 
   /*! Signal the *main* thread only to stop (THREAD SAFE) */
   void TaskingSystemInterruptMain(void);
@@ -270,11 +268,6 @@ namespace pf
 
   /*! Return the ID of the calling thread (between 0 and threadNum) */
   uint32 TaskingSystemGetThreadID(void);
-
-  /*! Run any task (in READY state) in the system. Can be used from a task::run
-   *  to overlap some IO for example. Return true if anything was executed
-   */
-  bool TaskingSystemRunAnyTask(void);
 
   ///////////////////////////////////////////////////////////////////////////
   /// Implementation of the inlined functions

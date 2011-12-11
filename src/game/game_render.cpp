@@ -27,6 +27,7 @@
 #include "renderer/renderer_segment.hpp"
 #include "image/stb_image.hpp"
 #include "sys/logging.hpp"
+#include "sys/tasking_utility.hpp"
 
 // To do HIZ culling
 #include "rt/rt_camera.hpp"
@@ -212,112 +213,131 @@ namespace pf
   // XXX Debug code to see the actual effect of culling. Press 'l' to save the
   // displayed boxes and 'k' to display these boxes later. There will be a leak
   // here since the last allocated cullSegment will not be allocated.
-  static RendererSegment *cullSegment = NULL;
-  static uint32 cullNum = 0;
+  static array<uint32> *savedVisible = NULL;
+  uint32 savedNum = 0;
+
+  /*! Contains the data we need to perform the culling */
+  struct HiZCullState
+  {
+    HiZCullState(Ref<RendererObj> &renderObj,
+                 Ref<InputEvent> &event,
+                 Ref<FPSCamera> &fpsCam) :
+      renderObj(renderObj), event(event), visible(renderObj->segmentNum),
+      cam(fpsCam->org, fpsCam->up, fpsCam->view, fpsCam->fov, fpsCam->ratio)
+    {}
+    Ref<RendererObj> renderObj; //!< Renderer object we are going to cull
+    Ref<InputEvent> event;      //!< Allows us to access updated keys
+    array<uint32> visible;      //!< List of visible objects we update
+    RTCamera cam;               //!< For frustum culling and HiZ culling
+    uint32 visibleNum;          //!< Total number of visible objects
+  };
 
   /*! Perform the HiZ culling (Frustum + Z) on the given segments */
-  static void HiZCull(RendererObj &renderObj,
-                      const FPSCamera &fpsCam,
-                      const InputEvent &event)
+  static Task *HiZCull(HiZCullState *state)
   {
     // Compute the HiZ buffer
     Ref<HiZ> hiz = PF_NEW(HiZ, 256, 128);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
-    const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
-    Ref<Task> task = hiz->rayTrace(cam, intersector);
-    task->waitForCompletion();
+    Ref<Task> hizTask = hiz->rayTrace(state->cam, intersector);
 
-    // Now cull the segments
-    PerspectiveFrustum fr(cam, hiz);
-    RendererSegment *segments = PF_NEW_ARRAY(RendererSegment, renderObj.segmentNum);
-    uint32 curr = 0;
-    for (uint32 i = 0; i < renderObj.segmentNum; ++i)
-      if (fr.isVisible(renderObj.segments[i]))
-        segments[curr++] = renderObj.segments[i];
-
-    // XXX next is debug code
-    if (event.getKey('l')) {
-      if (cullSegment) PF_DELETE_ARRAY(cullSegment);
-      cullSegment = PF_NEW_ARRAY(RendererSegment, curr);
-      std::memcpy(cullSegment, segments, curr * sizeof(RendererSegment));
-      cullNum = curr;
-    }
-
-    if (event.getKey('k') && cullSegment) {
-      PF_DELETE_ARRAY(segments);
-      segments = PF_NEW_ARRAY(RendererSegment, cullNum);
-      std::memcpy(segments, cullSegment, cullNum * sizeof(RendererSegment));
-      curr = cullNum;
-    }
-
-    if (event.getKey('p'))
+    // Then cull the segments
+    Ref<Task> cullTask = spawnTask(TASK_HERE, [=]
     {
-      // Output the complete HiZ
-      uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * hiz->width * hiz->height);
-      hiz->greyRGBA(&rgba);
-      stbi_write_tga("hiz.tga", hiz->width, hiz->height, 4, rgba);
-      PF_DELETE_ARRAY(rgba);
+      PerspectiveFrustum fr(state->cam, hiz);
+      state->visibleNum = 0;
+      for (uint32 i = 0; i < renderObj->segmentNum; ++i)
+        if (fr.isVisible(renderObj->segments[i]))
+          state->visible[state->visibleNum++] = i;
 
-      // Output the minimum z values
-      rgba = PF_NEW_ARRAY(uint8, 4 * hiz->tileXNum * hiz->tileYNum);
-      hiz->greyMinRGBA(&rgba);
-      stbi_write_tga("hiz_min.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+      // XXX Saved the currently visible boxes
+      if (state->event->getKey('l')) {
+        if (savedVisible == NULL)
+          savedVisible = PF_NEW(array<uint32>, renderObj->segmentNum);
+        savedNum = state->visibleNum;
+        for (uint32 i = 0; i < savedNum; ++i)
+          (*savedVisible)[i] = state->visible[i];
+      }
 
-      // Output the maximum z values
-      hiz->greyMaxRGBA(&rgba);
-      stbi_write_tga("hiz_max.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
-      PF_DELETE_ARRAY(rgba);
-    }
+      // XXX Restored the previously visible boxes
+      if (state->event->getKey('k') && savedVisible) {
+        for (uint32 i = 0; i < savedNum; ++i)
+          state->visible[i] = (*savedVisible)[i];
+        state->visibleNum = savedNum;
+      }
 
-    renderObj.segments = segments;
-    renderObj.segmentNum = curr;
+      // XXX Output the HiZ buffer
+      if (state->event->getKey('p')) {
+        // Output the complete HiZ
+        uint8 *rgba = PF_NEW_ARRAY(uint8, 4 * hiz->width * hiz->height);
+        hiz->greyRGBA(&rgba);
+        stbi_write_tga("hiz.tga", hiz->width, hiz->height, 4, rgba);
+        PF_DELETE_ARRAY(rgba);
+
+        // Output the minimum z values
+        rgba = PF_NEW_ARRAY(uint8, 4 * hiz->tileXNum * hiz->tileYNum);
+        hiz->greyMinRGBA(&rgba);
+        stbi_write_tga("hiz_min.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+
+        // Output the maximum z values
+        hiz->greyMaxRGBA(&rgba);
+        stbi_write_tga("hiz_max.tga",  hiz->tileXNum, hiz->tileYNum, 4, rgba);
+        PF_DELETE_ARRAY(rgba);
+      }
+    });
+
+    hizTask->starts(cullTask);
+    hizTask->scheduled();
+    return cullTask;
   }
 
   Task* TaskGameRender::run(void)
   {
+    auto state = PF_NEW(HiZCullState, renderObj, event, cam);
+    Task *cull = HiZCull(state);
+
     // Transform matrix for the current point of view
-    const mat4x4f MVP = cam->getMatrix();
-    Renderer *renderer = &renderObj->renderer;
+    Task *display = spawnTask(TASK_HERE, [=]
+    {
+      const mat4x4f MVP = cam->getMatrix();
+      Renderer *renderer = &state->renderObj->renderer;
 
-    // Set the display viewport
-    R_CALL (Viewport, 0, 0, event->w, event->h);
-    R_CALL (Enable, GL_DEPTH_TEST);
-    R_CALL (Enable, GL_CULL_FACE);
-    R_CALL (CullFace, GL_BACK);
-    R_CALL (DepthFunc, GL_LEQUAL);
+      // Set the display viewport
+      R_CALL (Viewport, 0, 0, event->w, event->h);
+      R_CALL (Enable, GL_DEPTH_TEST);
+      R_CALL (Enable, GL_CULL_FACE);
+      R_CALL (CullFace, GL_BACK);
+      R_CALL (DepthFunc, GL_LEQUAL);
 
-    // Clear color buffer with black
-    R_CALL (ClearColor, 0.0f, 0.0f, 0.0f, 1.0f);
-    R_CALL (ClearDepth, 1.0f);
-    R_CALL (Clear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      // Clear color buffer with black
+      R_CALL (ClearColor, 0.0f, 0.0f, 0.0f, 1.0f);
+      R_CALL (ClearDepth, 1.0f);
+      R_CALL (Clear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Display the objects with their textures
-    R_CALL (UseProgram, renderer->driver->diffuse.program);
-    R_CALL (UniformMatrix4fv, renderer->driver->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
+      // Display the objects with their textures
+      R_CALL (UseProgram, renderer->driver->diffuse.program);
+      R_CALL (UniformMatrix4fv, renderer->driver->diffuse.uMVP, 1, GL_FALSE, &MVP[0][0]);
+      renderObj->display(state->visible, state->visibleNum);
+      R_CALL (UseProgram, 0);
 
-    // XXX A bit ugly. We saved the boxes since we are going to override the
-    // array in the culling functions
-    RendererSegment *saved  = renderObj->segments;
-    const uint32 savedNum = renderObj->segmentNum;
-    HiZCull(*renderObj, *cam, *event);
-    renderObj->display();
-    R_CALL (UseProgram, 0);
+      // Display all the bounding boxes
+      R_CALL (setMVP, MVP);
+      BBox3f *bbox = PF_NEW_ARRAY(BBox3f, state->visibleNum);
+      for (size_t i = 0; i < state->visibleNum; ++i) {
+        const uint32 segmentID = state->visible[i];
+        bbox[i] = renderObj->segments[segmentID].bbox;
+      }
+      R_CALL (displayBBox, bbox, state->visibleNum);
+      PF_SAFE_DELETE_ARRAY(bbox);
+      R_CALL(swapBuffers);
 
-    // Display all the bounding boxes
-    R_CALL (setMVP, MVP);
-    BBox3f *bbox = PF_NEW_ARRAY(BBox3f, renderObj->segmentNum);
-    for (size_t i = 0; i < renderObj->segmentNum; ++i)
-      bbox[i] = renderObj->segments[i].bbox;
-    R_CALL (displayBBox, bbox, renderObj->segmentNum);
-    PF_SAFE_DELETE_ARRAY(bbox);
-    R_CALL(swapBuffers);
+      PF_DELETE(state);
+    });
 
-    // XXX Reset back the initial segments
-    PF_DELETE_ARRAY(renderObj->segments);
-    renderObj->segments = saved;
-    renderObj->segmentNum = savedNum;
-
-    return NULL;
+    cull->starts(display);
+    display->ends(this);
+    display->setAffinity(PF_TASK_MAIN_THREAD);
+    display->scheduled();
+    return cull;
   }
 
 #undef OGL_NAME

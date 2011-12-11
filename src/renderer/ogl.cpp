@@ -139,7 +139,7 @@ namespace pf
   OGL::~OGL(void)
   {
     this->waitForDestruction->scheduled();
-    this->waitForDestruction->waitForCompletion();
+    TaskingSystemWait(this->waitForDestruction);
     PF_ASSERT(this->textureNum == 0 &&
               this->vertexArrayNum == 0 &&
               this->bufferNum == 0 &&

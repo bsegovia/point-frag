@@ -80,10 +80,10 @@ namespace pf
     logger = NULL;
   }
 
-  //static const FileName objName("f000.obj");
+  static const FileName objName("f000.obj");
   //static const FileName objName("small.obj");
   //static const FileName objName("Arabic_City.obj");
-  static const FileName objName("arabic_city_II.obj");
+  //static const FileName objName("arabic_city_II.obj");
   //static const FileName objName("conference.obj");
   //static const FileName objName("sibenik.obj");
   //static const FileName objName("sponza.obj");
@@ -155,9 +155,14 @@ int main(int argc, char **argv)
   frameTask->scheduled();
   TaskingSystemEnter();
 
+  // We must be sure that all pending tasks are done
+  TaskingSystemEmptyQueues();
+
+  // Beyond this point, the worker threads are not doing anything
   GameEnd();
   LoggerEnd();
   TaskingSystemEnd();
   MemDebuggerDumpAlloc();
   return 0;
 }
+

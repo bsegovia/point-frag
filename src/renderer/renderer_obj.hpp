@@ -20,6 +20,7 @@
 #include "renderer/texture.hpp"
 #include "math/bbox.hpp"
 #include "rt/bvh2.hpp"
+#include "sys/array.hpp"
 #include "GL/gl3.h"
 
 namespace pf
@@ -29,7 +30,7 @@ namespace pf
   struct RendererSegment; // To make a partition of the objects to display
 
   /*! Entity used for rendering of OBJ models */
-  class RendererObj : public RefCount
+  class RendererObj : public RefCount, public NonCopyable
   {
   public:
 
@@ -63,20 +64,19 @@ namespace pf
     ~RendererObj(void);
     /*! Valid means it is OGL uploaded */
     INLINE bool isValid(void) { return this->segmentNum > 0; }
-    /*! Display it using the renderer */
-    void display(void);
+    /*! We provide the indices of the visible segments */
+    void display(const array<uint32> &visible, uint32 visibleNum);
     /*! Index of the first and last triangle index */
     struct Group { GLuint first, last; };
-    Renderer &renderer;           //!< A RendererObj belongs to a renderer
-    Material *mat;                //!< All the material of the object
-    RendererSegment *segments;    //!< All the sub-meshes to display
+    Renderer &renderer;              //!< A RendererObj belongs to a renderer
+    array<Material> mat;             //!< All the material of the object
+    array<RendererSegment> segments; //!< All the sub-meshes to display
     uint32 matNum;                //!< Number of materials
     uint32 segmentNum;            //!< Number of segments
     GLuint vertexArray;           //!< Vertex declaration
     GLuint arrayBuffer;           //!< Vertex data (positions, normals...)
     GLuint elementBuffer;         //!< Indices
     GLuint topology;              //!< Mostly triangle or triangle strip
-    Ref<Task> texLoading;         //!< XXX To load the textures
     MutexSys mutex;               //!< XXX just to play with async load
     friend class Renderer;
   };

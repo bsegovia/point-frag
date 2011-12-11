@@ -41,23 +41,23 @@ namespace pf
   public:
     /*! Update the renderer object textures */
     TaskUpdateObjTexture(TextureStreamer &streamer,
-                         RendererObj &obj,
+                         Ref<RendererObj> renderObj,
                          const std::string &name) :
-      Task("TaskUpdateObjTexture"), streamer(streamer), obj(obj), name(name) {}
+      Task("TaskUpdateObjTexture"), streamer(streamer), renderObj(renderObj), name(name) {}
 
     /*! Update the renderer obj with the fully loaded textures */
     virtual Task* run(void) {
       const TextureState state = streamer.getTextureState(name);
       PF_ASSERT(state.value == TextureState::COMPLETE);
-      Lock<MutexSys> lock(obj.mutex);
-      for (size_t matID = 0; matID < obj.matNum; ++matID)
-        if (obj.mat[matID].name_Kd == name)
-          obj.mat[matID].map_Kd = state.tex;
+      Lock<MutexSys> lock(renderObj->mutex);
+      for (size_t matID = 0; matID < renderObj->matNum; ++matID)
+        if (renderObj->mat[matID].name_Kd == name)
+          renderObj->mat[matID].map_Kd = state.tex;
       return NULL;
     }
   private:
     TextureStreamer &streamer;  //!< Where to get the handle
-    RendererObj &obj;           //!< The object to upate
+    Ref<RendererObj> renderObj; //!< The object to upate
     std::string name;           //!< Name of the texture to get
   };
 
@@ -67,9 +67,9 @@ namespace pf
   public:
     /*! The loads are triggered asynchronously */
     TaskLoadObjTexture(TextureStreamer &streamer,
-                       RendererObj &rendererObj,
+                       Ref<RendererObj> renderObj,
                        const Obj &obj) :
-      Task("TaskLoadObjTexture"), streamer(streamer), rendererObj(rendererObj)
+      Task("TaskLoadObjTexture"), streamer(streamer), renderObj(renderObj)
     {
       this->setPriority(TaskPriority::HIGH);
       if (obj.matNum) {
@@ -98,7 +98,7 @@ namespace pf
         //const TextureRequest req(texName[i], PF_TEX_FORMAT_PLAIN);
         Ref<Task> loading = streamer.createLoadTask(req);
         if (loading) {
-          Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, rendererObj, texName[i]);
+          Ref<Task> updateObj = PF_NEW(TaskUpdateObjTexture, streamer, renderObj, texName[i]);
           loading->starts(updateObj);
           updateObj->ends(this);
           updateObj->scheduled();
@@ -108,10 +108,10 @@ namespace pf
       return NULL;
     }
   private:
-    TextureStreamer &streamer; //!< The streamer that handles the loads
-    RendererObj &rendererObj;  //!< The renderer object to update
-    std::string *texName;      //!< All the textures to load
-    size_t texNum;             //!< The number of texture to load
+    TextureStreamer &streamer;  //!< The streamer that handles the loads
+    Ref<RendererObj> renderObj; //!< The renderer object to update
+    std::string *texName;       //!< All the textures to load
+    size_t texNum;              //!< The number of texture to load
   };
 
   /*! Compute half of the node area */
@@ -228,7 +228,7 @@ namespace pf
     // Now we allocate the segments in the OBJ
     PF_MSG_V("RendererObj: " << segments.size() << " segments are created");
     renderObj.segmentNum = segments.size();
-    renderObj.segments = PF_NEW_ARRAY(RendererSegment, renderObj.segmentNum);
+    renderObj.segments.resize(renderObj.segmentNum);
     for (size_t segmentID = 0; segmentID < renderObj.segmentNum; ++segmentID)
       renderObj.segments[segmentID] = segments[segmentID];
 
@@ -246,7 +246,7 @@ namespace pf
   }
 
   RendererObj::RendererObj(Renderer &renderer, const Obj &obj) :
-    renderer(renderer), mat(NULL), segments(NULL), matNum(0), segmentNum(0),
+    renderer(renderer), matNum(0), segmentNum(0),
     vertexArray(0), arrayBuffer(0), elementBuffer(0)
   {
     TextureStreamer &streamer = *renderer.streamer;
@@ -257,7 +257,7 @@ namespace pf
       // Map each material group to the texture name. Since we also remove the
       // possibly unused materials, we remap their IDs
       uint32 *matRemap = PF_NEW_ARRAY(uint32, obj.matNum);
-      this->mat = PF_NEW_ARRAY(Material, obj.grpNum);
+      this->mat.resize(obj.grpNum);
       this->matNum = obj.grpNum;
       for (size_t i = 0; i < this->matNum; ++i) {
         const int32 matID = obj.grp[i].m;
@@ -269,8 +269,7 @@ namespace pf
       }
 
       // Start to load the textures
-      this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, *this, obj);
-      this->texLoading->scheduled();
+      PF_NEW(TaskLoadObjTexture, streamer, this, obj)->scheduled();
 
       // Right now we only create one segments per material
       PF_MSG_V("RendererObj: creating geometry segments");
@@ -309,20 +308,18 @@ namespace pf
   }
 
   RendererObj::~RendererObj(void) {
-    if (this->texLoading)    this->texLoading->waitForCompletion();
     if (this->vertexArray)   R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
     if (this->arrayBuffer)   R_CALL (DeleteBuffers, 1, &this->arrayBuffer);
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
-    PF_SAFE_DELETE_ARRAY(this->segments);
-    PF_SAFE_DELETE_ARRAY(this->mat);
   }
 
-  void RendererObj::display(void) {
+  void RendererObj::display(const array<uint32> &visible, uint32 visibleNum) {
     Lock<MutexSys> lock(mutex);
     R_CALL (BindVertexArray, vertexArray);
     R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);
-    for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID) {
+    for (size_t visibleID = 0; visibleID < visibleNum; ++visibleID) {
+      const uint32 segmentID = visible[visibleID];
       const RendererSegment &segment = segments[segmentID];
       const Material &material = mat[segment.matID];
       const uintptr_t offset = segment.first * sizeof(int[3]);

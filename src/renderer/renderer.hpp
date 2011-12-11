@@ -29,7 +29,7 @@ namespace pf
    *  component. It contains all the graphics objects, performs the culling,
    *  manage the occlusion queuries ...
    */
-  class Renderer
+  class Renderer : public NonCopyable
   {
   public:
     Renderer(void);

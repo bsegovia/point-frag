@@ -25,7 +25,7 @@ namespace pf
 {
 
   /*! OBJ - an obj file (vertices are processed and merged) */
-  struct Obj
+  struct Obj : public NonCopyable
   {
     /*! OBJ triangle - indexes vertices and material */
     struct Triangle

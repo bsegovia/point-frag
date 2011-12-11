@@ -17,28 +17,57 @@
 #ifndef __PF_TASKING_UTILITY_HPP__
 #define __PF_TASKING_UTILITY_HPP__
 
+#include "tasking.hpp"
+
 namespace pf
 {
   /*! Make the main thread return to the top-level function */
   class TaskInterruptMain : public Task
   {
   public:
-    TaskInterruptMain(void) : Task("TaskInterruptMain") {}
-    virtual Task *run(void) {
-      TaskingSystemInterruptMain();
-      return NULL;
-    }
+    TaskInterruptMain(void);
+    virtual Task *run(void);
   };
 
   /*! Does nothing but can be used for synchronization */
   class TaskDummy : public Task
   {
   public:
-    TaskDummy(void) : Task("TaskDummy") {}
-    virtual Task *run(void) { return NULL; }
+    TaskDummy(void);
+    virtual Task *run(void);
   };
 
+  /*! A task that runs on the main thread */
+  class TaskMain : public Task
+  {
+  public:
+    INLINE TaskMain(const char *name) : Task(name) {
+      this->setAffinity(PF_TASK_MAIN_THREAD);
+    }
+  };
+
+  /*! Encapsulates functor (and anonymous lambda) */
+  template <typename T>
+  class TaskFunctor : public Task
+  {
+  public:
+    INLINE TaskFunctor(const T &functor, const char *name = NULL) :
+      Task(name), functor(functor) {}
+    virtual Task *run(void) { functor(); return NULL; }
+  private:
+    T functor;
+  };
+
+  /*! Spawn a task from a functor */
+  template <typename T>
+  Task *spawnTask(const char *name, const T &functor) {
+    return PF_NEW(TaskFunctor<T>, functor, name);
+  }
+
 } /* namespace pf */
+
+/*! To give a name to an anonymous task */
+#define TASK_HERE (STRING(__LINE__) "@" __FILE__)
 
 #endif /* __PF_TASKING_UTILITY_HPP__ */
 

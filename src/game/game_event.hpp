@@ -18,11 +18,12 @@
 #define __PF_GAME_EVENT_HPP__
 
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 
 namespace pf
 {
   /*! Contains the fields processed by the event handler */
-  class InputEvent : public RefCount
+  class InputEvent : public RefCount, public NonCopyable
   {
   public:
     InputEvent(const InputEvent &previous);

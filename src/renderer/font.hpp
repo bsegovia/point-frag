@@ -26,7 +26,7 @@ namespace pf
   /*! Bitmap font mostly as exported by Bitmap font generator that may be
    *  found here: http://www.angelcode.com/products/bmfont/
    */
-  struct Font
+  struct Font : public NonCopyable
   {
     /*! Load the font data from file */
     bool load(const FileName &fileName);

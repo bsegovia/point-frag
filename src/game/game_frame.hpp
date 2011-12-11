@@ -25,7 +25,7 @@ namespace pf
   class InputEvent;
 
   /*! Stores the data required for the frame */
-  class GameFrame : public RefCount
+  class GameFrame : public RefCount, public NonCopyable
   {
   public:
     /*! Used to create the next frame */

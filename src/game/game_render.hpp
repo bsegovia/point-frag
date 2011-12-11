@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 
 namespace pf
 {

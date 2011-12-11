@@ -33,7 +33,7 @@ namespace pf
   class Task;
 
   /*! We load all OGL functions explicitly */
-  struct OGL
+  struct OGL : public NonCopyable
   {
     OGL(void);
     virtual ~OGL(void);
@@ -127,11 +127,13 @@ namespace pf
 #ifndef NDEBUG
   #define R_CALL(NAME, ...)                                                    \
     do {                                                                       \
+      PF_ASSERT(TaskingSystemGetThreadID() == PF_TASK_MAIN_THREAD);            \
       OGL_NAME->NAME(__VA_ARGS__);                                             \
       FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed"); \
     } while (0)
   #define R_CALLR(RET, NAME, ...)                                              \
     do {                                                                       \
+      PF_ASSERT(TaskingSystemGetThreadID() == PF_TASK_MAIN_THREAD);            \
       RET = OGL_NAME->NAME(__VA_ARGS__);                                       \
       FATAL_IF (OGL_NAME->checkError(__FUNCTION__) == false, #NAME " failed"); \
     } while (0)

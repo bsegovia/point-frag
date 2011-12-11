@@ -25,7 +25,7 @@ namespace pf
 {
   /*! Binary BVH tree */
   template <typename T>
-  struct BVH2 : public RefCount
+  struct BVH2 : public RefCount, public NonCopyable
   {
     /*! Empty tree */
     BVH2(void);

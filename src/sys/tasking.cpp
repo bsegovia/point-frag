@@ -223,6 +223,10 @@ namespace pf
     void lock(void);
     /*! Unlock the scheduler */
     void unlock(void);
+    /*! Wait the task completion */
+    void wait(Ref<Task> task);
+    /*! Wait until all queues are empty */
+    void emptyQueues(void);
     /*! Data provided to each thread */
     struct ThreadStartup {
       ThreadStartup(size_t tid, TaskScheduler &scheduler_) :
@@ -673,6 +677,7 @@ namespace pf
     this->taskThread[PF_TASK_MAIN_THREAD].thread = NULL;
     this->taskThread[PF_TASK_MAIN_THREAD].scheduler = this;
     this->taskThread[PF_TASK_MAIN_THREAD].threadID = 0;
+    this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_DEAD;
 
     // Only if we have dedicated worker threads
     if (workerNum > 0) {
@@ -838,6 +843,12 @@ namespace pf
             nextToRun = NULL;
           }
         }
+
+        // Check dependencies. Only run a task which is ready
+        if (nextToRun && nextToRun->toStart > 1) {
+          nextToRun->scheduled();
+          nextToRun = NULL;
+        }
       }
       task = nextToRun;
       if (task) __store_release(&task->state, uint8(TaskState::READY));
@@ -846,9 +857,30 @@ namespace pf
 
   void TaskScheduler::go(void) {
     ThreadStartup *thread = PF_NEW(ThreadStartup, PF_TASK_MAIN_THREAD, *this);
-    // Resurrect the main thread if required
     this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_RUNNING;
     threadFunction(thread);
+  }
+
+  void TaskScheduler::wait(Ref<Task> task) {
+    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_DEAD);
+    PF_ASSERT(threadID == PF_TASK_MAIN_THREAD);
+    if (LIKELY(task)) {
+      while (__load_acquire(&task->state) != TaskState::DONE) {
+        Ref<Task> someTask = this->getTask();
+        if (someTask) this->runTask(someTask);
+      }
+    }
+  }
+
+  void TaskScheduler::emptyQueues(void) {
+    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_DEAD);
+    PF_ASSERT(threadID == PF_TASK_MAIN_THREAD);
+    for (;;) {
+      Task *task = this->getTask();
+      if (task) this->runTask(task);
+      if (task == NULL && this->sleepingNum == this->queueNum - 1)
+        return;
+    }
   }
 
   static TaskScheduler *scheduler = NULL;
@@ -900,13 +932,6 @@ namespace pf
     return NULL;
   }
 
-  void Task::waitForCompletion(void) {
-    while (__load_acquire(&this->state) != TaskState::DONE) {
-      Task *someTask = scheduler->getTask();
-      if (someTask) scheduler->runTask(someTask);
-    }
-  }
-
   void TaskingSystemStart(int32 workerNum) {
     static const uint32 bitsPerByte = 8;
     FATAL_IF (workerNum >= int32(sizeof(size_t)*bitsPerByte), "Too many workers are required");
@@ -930,6 +955,16 @@ namespace pf
     scheduler->go();
   }
 
+  void TaskingSystemWait(Ref<Task> task) {
+    FATAL_IF (scheduler == NULL, "scheduler not started");
+    scheduler->wait(task);
+  }
+
+  void TaskingSystemEmptyQueues(void) {
+    FATAL_IF (scheduler == NULL, "scheduler not started");
+    scheduler->emptyQueues();
+  }
+
   void TaskingSystemInterruptMain(void) {
     FATAL_IF (scheduler == NULL, "scheduler not started");
     scheduler->stopMain();
@@ -948,16 +983,6 @@ namespace pf
   uint32 TaskingSystemGetThreadID(void) {
     FATAL_IF (scheduler == NULL, "scheduler not started");
     return scheduler->getThreadID();
-  }
-
-  bool TaskingSystemRunAnyTask(void) {
-    FATAL_IF (scheduler == NULL, "scheduler not started");
-    Task *someTask = scheduler->getTask();
-    if (someTask) {
-      scheduler->runTask(someTask);
-      return true;
-    } else
-      return false;
   }
 }
 

@@ -23,7 +23,7 @@
 namespace pf
 {
   /*! Simple FPS like camera */
-  class FPSCamera : public RefCount
+  class FPSCamera : public RefCount, public NonCopyable
   {
   public:
     FPSCamera(const vec3f &org = vec3f(0.f,0.4f,1.2f),

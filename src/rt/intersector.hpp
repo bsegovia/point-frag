@@ -29,7 +29,7 @@ namespace pf
   /*! Represents any kind of intersectable geometry that we are going to
    *  traverse with rays or packet of rays
    */
-  class Intersector : public RefCount
+  class Intersector : public RefCount, public NonCopyable
   {
   public:
     /*! Traverse routine for rays */

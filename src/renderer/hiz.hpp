@@ -36,7 +36,7 @@ namespace pf
    *  tiles. We reference count it since it is possibly filled by several
    *  threads
    */
-  struct HiZ : public RefCount
+  struct HiZ : public RefCount, public NonCopyable
   {
     /*! width and height will be aligned on Tile::width and Tile::height if
      *  required
