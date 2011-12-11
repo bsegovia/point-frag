@@ -300,7 +300,6 @@ namespace pf
 
     // We were not able to find the texture. So we use a default one
     if (data->isValid() == false) {
-      debugbreak();
       PF_MSG_V("TextureStreamer: texture: " << request.name << " not found");
       PF_DELETE(data);
       Lock<MutexSys> lock(streamer.mutex);
