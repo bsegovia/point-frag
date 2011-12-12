@@ -241,7 +241,7 @@ namespace pf
     Ref<Task> hizTask = hiz->rayTrace(state->cam, intersector);
 
     // Then cull the segments
-    Ref<Task> cullTask = spawnTask(TASK_HERE, [=]
+    Ref<Task> cullTask = spawn(HERE, [=]
     {
       PerspectiveFrustum fr(state->cam, hiz);
       state->visibleNum = 0;
@@ -296,7 +296,7 @@ namespace pf
     Task *cull = HiZCull(state);
 
     // Transform matrix for the current point of view
-    Task *display = spawnTask(TASK_HERE, [=]
+    Task *display = spawn(HERE, [=]
     {
       const mat4x4f MVP = cam->getMatrix();
       Renderer *renderer = &state->renderObj->renderer;

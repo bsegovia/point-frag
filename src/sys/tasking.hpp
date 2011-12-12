@@ -56,7 +56,7 @@
  * task). The basic idea here is to overcome typical issues with tasking system:
  * How do you handle asynchronous/non-blocking IO? You may want to reschedule a
  * task if the IO takes too long. But in that case, how can you be sure that the
- * scheduler is not going to run the task you just pushed? Our idea (to PF_ASSERT
+ * scheduler is not going to run the task you just pushed? Our idea (to assert
  * in later tests) is to offer the ability to run *something* already ready to
  * hide the IO latency from the task itself. At least, you can keep the HW
  * thread busy if you want to.
@@ -200,6 +200,8 @@ namespace pf
     INLINE void setAffinity(uint16 affi);
     INLINE uint8 getPriority(void) const;
     INLINE uint16 getAffinity(void) const;
+    /*! Get the current task state */
+    INLINE uint8 getState(void) const;
 
 #if PF_TASK_USE_DEDICATED_ALLOCATOR
     /*! Tasks use a scalable fixed size allocator */
@@ -231,7 +233,6 @@ namespace pf
     INLINE TaskSet(size_t elemNum, const char *name = NULL);
     /*! This function is user-specified */
     virtual void run(size_t elemID) = 0;
-
   private:
     virtual Task* run(void); //!< Reimplemented for all task sets
     Atomic elemNum;          //!< Number of outstanding elements
@@ -242,7 +243,7 @@ namespace pf
    */
   void TaskingSystemStart(int workerNum = -1);
 
-  /*! Make the main thread enter the tasking system (MAIN THREAD outside a Task) */
+  /*! Shutdown the tasking system (MAIN THREAD outside a Task) */
   void TaskingSystemEnd(void);
 
   /*! Make the main thread enter the tasking system (MAIN THREAD outside a Task) */
@@ -252,8 +253,8 @@ namespace pf
   void TaskingSystemWait(Ref<Task> task);
 
   /*! Wait until all pending tasks have been executed. When the function
-   *  returns, we are sure that nothing can be run anymore (MAIN THREAD outside a
-   *  Task)
+   *  returns, we are sure that nothing can be run anymore (MAIN THREAD outside
+   *  a Task)
    */
   void TaskingSystemEmptyQueues(void);
 
@@ -299,8 +300,8 @@ namespace pf
 #ifndef NDEBUG
     const uint32 state = other->state;
     PF_ASSERT(state == TaskState::NEW ||
-           state == TaskState::SCHEDULED ||
-           state == TaskState::RUNNING);
+              state == TaskState::SCHEDULED ||
+              state == TaskState::RUNNING);
 #endif /* NDEBUG */
     if (UNLIKELY(this->toBeEnded)) return;  // already a task to end
     other->toEnd++;
@@ -319,6 +320,7 @@ namespace pf
 
   INLINE uint8 Task::getPriority(void)  const { return this->priority; }
   INLINE uint16 Task::getAffinity(void) const { return this->affinity; }
+  INLINE uint8 Task::getState(void)  const { return this->state; }
 
   INLINE TaskSet::TaskSet(size_t elemNum, const char *name) :
     Task(name), elemNum(elemNum) {}

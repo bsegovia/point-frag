@@ -227,6 +227,9 @@ do {                                                 \
 /* Align X on A */
 #define ALIGN(X,A) (((X) % (A)) ? ((X) + (A) - ((X) % (A))) : (X))
 
+/*! Produce a string from the macro locatiom */
+#define HERE (STRING(__LINE__) "@" __FILE__)
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Visibility parameters (DLL export and so on)
 ////////////////////////////////////////////////////////////////////////////////

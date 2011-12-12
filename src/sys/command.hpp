@@ -109,10 +109,10 @@ namespace pf
   };
 
   /*! With LuaJIT, this is going to be super simple. LuaJIT is able to get a
-   * symbol from a executable and DLL. We just need to provide the function
-   * prototype. We take this idea from Cube 2 and we just use a string for
-   * that. This structure just makes the book keeping when a macro declares
-   * the exported function
+   *  symbol from a executable and DLL. We just need to provide the function
+   *  prototype. We take this idea from Cube 2 and we just use a string for
+   *  that. This structure just makes the book keeping when a macro declares
+   *  the exported function
    */
   struct ConCommand
   {

@@ -41,6 +41,7 @@ set (SRC
   renderer/renderer.cpp
   renderer/renderer_obj.cpp
   renderer/renderer_driver.cpp
+  renderer/renderer_context.cpp
   rt/bvh2.cpp
   rt/bvh2_traverser.cpp
   rt/ray_packet.cpp

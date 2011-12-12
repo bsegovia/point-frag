@@ -18,6 +18,7 @@
 #define __PF_TASKING_UTILITY_HPP__
 
 #include "tasking.hpp"
+#include "mutex.hpp"
 
 namespace pf
 {
@@ -41,9 +42,61 @@ namespace pf
   class TaskMain : public Task
   {
   public:
-    INLINE TaskMain(const char *name) : Task(name) {
-      this->setAffinity(PF_TASK_MAIN_THREAD);
-    }
+    TaskMain(const char *name);
+  };
+
+  /*! Chained tasks form a single list. Each task schedules its successor */
+  class TaskChained : public Task
+  {
+  public:
+    TaskChained(void);
+    virtual Task *run(void);
+    INLINE void setNext(Task *succ_) { this->succ = succ_; }
+  protected:
+    Task *succ;
+  };
+
+  /*! Dependency root is the first task that triggers the multiple
+   *  dependencies. It includes a mutex protected variable that allows the
+   *  start dependencies to be added at any time
+   */
+  class TaskDependencyRoot : public TaskChained
+  {
+  public:
+    TaskDependencyRoot(void);
+    virtual Task *run(void);
+    /*! Lock the run function (then we can modify variable "done") */
+    void lock(void);
+    /*! Unlock the run function */
+    void unlock(void);
+    /*! Once done, the parent task cannot be a input dependency anymore */
+    INLINE bool isDone(void) const { return done; }
+  private:
+    MutexActive mutex;  //!< Protect isDone variable
+    volatile bool done; //!< true means the parent task is ended
+  };
+
+  /*! MultipleDependency is a policy that allows a task to start and end
+   *  several tasks (instead of one with the standard task).
+   *  - More importantly, MultipleDependency also relaxes the requirement to add
+   *  a start dependency (method "multiStarts"). multiStarts can be called
+   *  from anywhere regardless the current state the task (it can be NEW,
+   *  RUNNING or DONE)
+   *  - Internally, it simply uses a list of dummy tasks to trigger the
+   *  dependencies
+   */
+  template <typename T>
+  class TaskMultipleDependencyPolicy
+  {
+    /*! Allocate the chained list of dependency tasks */
+    INLINE TaskMultipleDependencyPolicy(void);
+    /*! Add one more task to start */
+    INLINE void multiStarts(Task *other);
+    /*! Add one more task to end */
+    INLINE void multiEnds(Task *other);
+  private:
+    Ref<TaskDependencyRoot> root; //!< First dependency task
+    TaskChained *head;            //!< Ends us and triggers the dependencies
   };
 
   /*! Encapsulates functor (and anonymous lambda) */
@@ -51,23 +104,70 @@ namespace pf
   class TaskFunctor : public Task
   {
   public:
-    INLINE TaskFunctor(const T &functor, const char *name = NULL) :
-      Task(name), functor(functor) {}
-    virtual Task *run(void) { functor(); return NULL; }
+    INLINE TaskFunctor(const T &functor, const char *name = NULL);
+    virtual Task *run(void);
   private:
     T functor;
   };
 
   /*! Spawn a task from a functor */
   template <typename T>
-  Task *spawnTask(const char *name, const T &functor) {
+  Task *spawn(const char *name, const T &functor) {
     return PF_NEW(TaskFunctor<T>, functor, name);
   }
 
-} /* namespace pf */
+  ///////////////////////////////////////////////////////////////////////////
+  /// Implementation of methods and functions
+  ///////////////////////////////////////////////////////////////////////////
 
-/*! To give a name to an anonymous task */
-#define TASK_HERE (STRING(__LINE__) "@" __FILE__)
+  template <typename T>
+  INLINE TaskMultipleDependencyPolicy<T>::TaskMultipleDependencyPolicy(void)
+  {
+    this->root = PF_NEW(TaskDependencyRoot);
+    this->head = this->root;
+    this->starts(head);
+    head->scheduled();
+  }
+
+  template <typename T>
+  INLINE void TaskMultipleDependencyPolicy<T>::multiStarts(Task *other)
+  {
+    if (UNLIKELY(other == NULL)) return;
+    if (root->isDone() == true) return;
+    root->lock();
+    if (root->isDone() == false) {
+      TaskChained *newHead = PF_NEW(TaskChained);
+      newHead->starts(other);
+      head->setNext(newHead);
+      head = newHead;
+    }
+    root->unlock();
+  }
+
+  template <typename T>
+  INLINE void TaskMultipleDependencyPolicy<T>::multiEnds(Task *other)
+  {
+    if (UNLIKELY(other == NULL)) return;
+#ifndef NDEBUG
+    const uint32 state = other->getState();
+    PF_ASSERT(state == TaskState::NEW ||
+              state == TaskState::SCHEDULED ||
+              state == TaskState::RUNNING);
+#endif /* NDEBUG */
+    TaskChained *newHead = PF_NEW(TaskChained);
+    newHead->ends(other);
+    head->setNext(newHead);
+    head = newHead;
+  }
+
+  template <typename T>
+  INLINE TaskFunctor<T>::TaskFunctor(const T &functor, const char *name) :
+    Task(name), functor(functor) {}
+
+  template <typename T>
+  Task *TaskFunctor<T>::run(void) { functor(); return NULL; }
+
+} /* namespace pf */
 
 #endif /* __PF_TASKING_UTILITY_HPP__ */
 

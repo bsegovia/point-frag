@@ -27,5 +27,22 @@ namespace pf
   TaskDummy::TaskDummy(void) : Task("TaskDummy") {}
   Task *TaskDummy::run(void) { return NULL; }
 
+  TaskChained::TaskChained(void) : Task("TaskChained"), succ(NULL) {}
+  Task *TaskChained::run(void) { return succ; }
+
+  TaskDependencyRoot::TaskDependencyRoot(void) : done(false) {}
+  Task *TaskDependencyRoot::run(void) {
+    this->lock();
+    done = true;
+    this->unlock();
+    return succ;
+  }
+  void TaskDependencyRoot::lock(void)   { mutex.lock(); }
+  void TaskDependencyRoot::unlock(void) { mutex.unlock(); }
+
+  TaskMain::TaskMain(const char *name) : Task(name) {
+    this->setAffinity(PF_TASK_MAIN_THREAD);
+  }
+
 } /* namespace pf */
 

@@ -38,7 +38,6 @@ namespace pf
     MutexSys& operator= (const MutexSys&); // don't implement
   };
 
-
   /*! active mutex */
   class MutexActive {
   public:

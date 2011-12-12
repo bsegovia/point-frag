@@ -14,38 +14,5 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_RENDERER_HPP__
-#define __PF_RENDERER_HPP__
+#include "renderer_context.hpp"
 
-#include "renderer/texture.hpp"
-
-namespace pf
-{
-  class RendererObj;
-  class RendererDriver;
-  class TextureStreamer;
-
-  /*! Renderer. This is the real interface for all other game component. It
-   *  contains all the graphics objects, performs the culling, manage the
-   *  occlusion queuries ...
-   */
-  class Renderer : public NonCopyable
-  {
-  public:
-    Renderer(void);
-    ~Renderer(void);
-
-    /*! Get the texture or possibly a task loading it */
-    INLINE TextureState getTexture(const char *name) {
-      return this->streamer->getTextureState(name);
-    }
-
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-
-    RendererDriver *driver;    //!< Low-level interface to the graphics API
-    TextureStreamer *streamer; //!< Handles and stores textures
-  };
-
-} /* namespace pf*/
-#endif /* __PF_RENDERER_HPP__ */

@@ -14,9 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "renderer/renderer.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer_segment.hpp"
-#include "renderer/renderer.hpp"
+#include "renderer/renderer_driver.hpp"
 #include "models/obj.hpp"
 #include "rt/bvh2.hpp"
 #include "rt/bvh2_node.hpp"

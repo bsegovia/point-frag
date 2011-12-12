@@ -17,12 +17,13 @@
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "game_frame.hpp"
-#include "sys/alloc.hpp"
-#include "sys/tasking.hpp"
-#include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
 #include "models/obj.hpp"
+#include "sys/alloc.hpp"
+#include "sys/tasking.hpp"
+#include "sys/logging.hpp"
+#include "sys/default_path.hpp"
 
 #include <GL/freeglut.h>
 #include <cstdio>
@@ -96,9 +97,6 @@ namespace pf
     glutInitWindowPosition(64, 64);
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    //glutInitContextVersion(3, 3);
-    //glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-    //glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
