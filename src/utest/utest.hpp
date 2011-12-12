@@ -14,25 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "renderer/font.hpp"
-#include "sys/default_path.hpp"
-#include "utest/utest.hpp"
+#ifndef __PF_UTEST_HPP__
+#define __PF_UTEST_HPP__
 
-#include <string>
+#include <vector>
 
-using namespace pf;
-static const std::string fontName = "font.fnt";
-
-void utest_font(void)
+namespace pf
 {
-  Font font;
-  size_t i = 0;
-  for (; i < defaultPathNum; ++i) {
-    const FileName path(std::string(defaultPath[i]) + fontName);
-    if (font.load(path)) break;
-  }
-  PF_ASSERT(i < defaultPathNum);
-}
+  /*! Quick and dirty Unit test system with registration */
+  struct UTest
+  {
+    /*! A unit test function to run */
+    typedef void (*Function) (void);
+    /*! Empty test */
+    UTest(void);
+    /*! Build a new unit test and append it to the unit test list */
+    UTest(Function fn, const char *name);
+    /*! Function to execute */
+    Function fn;
+    /*! Name of the test */
+    const char *name;
+    /*! The tests that are registered */
+    static std::vector<UTest> *utestList;
+    /*! Run the test with the given name */
+    static void run(const char *name);
+    /*! Run all the tests */
+    static void runAll(void);
+  };
+} /* namespace pf */
 
-UTEST_REGISTER(utest_font);
+/*! Register a new unit test */
+#define UTEST_REGISTER(FN) static const pf::UTest __##NAME##__(FN, #FN);
+
+#endif /* __PF_UTEST_HPP__ */
 

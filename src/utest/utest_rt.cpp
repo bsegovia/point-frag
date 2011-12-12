@@ -14,10 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sys/alloc.hpp"
-#include "sys/tasking.hpp"
-#include "sys/tasking_utility.hpp"
-#include "sys/logging.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
 #include "rt/bvh2_traverser.hpp"
@@ -27,6 +23,14 @@
 #include "game/camera.hpp"
 #include "image/stb_image.hpp"
 
+#include "sys/alloc.hpp"
+#include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
+#include "sys/logging.hpp"
+#include "sys/default_path.hpp"
+
+#include "utest/utest.hpp"
+
 #include <cstring>
 #include <GL/freeglut.h>
 #include <cstdio>
@@ -35,49 +39,7 @@
 namespace pf
 {
   Ref<Intersector> intersector  = NULL;
-  static LoggerStream *coutStream = NULL;
-  static LoggerStream *fileStream = NULL;
   static const int CAMW = 1024, CAMH = 1024;
-
-  class CoutStream : public LoggerStream {
-  public:
-    virtual LoggerStream& operator<< (const std::string &str) {
-      std::cout << str;
-      return *this;
-    }
-  };
-
-  class FileStream : public LoggerStream {
-  public:
-    FileStream(void) {
-      file = fopen("log_rt.txt", "w");
-      PF_ASSERT(file);
-    }
-    virtual ~FileStream(void) {fclose(file);}
-    virtual LoggerStream& operator<< (const std::string &str) {
-      fprintf(file, str.c_str());
-      return *this;
-    }
-  private:
-    FILE *file;
-  };
-
-  static void LoggerStart(void) {
-    logger = PF_NEW(Logger);
-    coutStream = PF_NEW(CoutStream);
-    fileStream = PF_NEW(FileStream);
-    logger->insert(*coutStream);
-    logger->insert(*fileStream);
-  }
-
-  static void LoggerEnd(void) {
-    logger->remove(*fileStream);
-    logger->remove(*coutStream);
-    PF_DELETE(fileStream);
-    PF_DELETE(coutStream);
-    PF_DELETE(logger);
-    logger = NULL;
-  }
 
   static const FileName objName("f000.obj");
   //static const FileName objName("arabic_city_II.obj");
@@ -177,7 +139,7 @@ namespace pf
     PF_DELETE_ARRAY(rgba);
   }
 
-  static void GameStart(int argc, char **argv)
+  static void RTStart(void)
   {
     Obj obj;
     size_t path = 0;
@@ -213,19 +175,15 @@ namespace pf
     PF_DELETE_ARRAY(c);
   }
 
-  static void GameEnd(void) { intersector = NULL; }
+  static void RTEnd(void) { intersector = NULL; }
 }
 
-int main(int argc, char **argv)
+void utest_rt(void)
 {
   using namespace pf;
-  MemDebuggerStart();
-  TaskingSystemStart();
-  LoggerStart();
-  GameStart(argc, argv);
-  GameEnd();
-  LoggerEnd();
-  TaskingSystemEnd();
-  MemDebuggerDumpAlloc();
-  return 0;
+  RTStart();
+  RTEnd();
 }
+
+UTEST_REGISTER(utest_rt);
+

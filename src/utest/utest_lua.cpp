@@ -18,38 +18,14 @@
 #include "sys/command.hpp"
 #include "sys/logging.hpp"
 #include "sys/tasking.hpp"
+#include "utest/utest.hpp"
 
 using namespace pf;
 
 VARI(coucou, 0, 2, 3, "coucou");
-static LoggerStream *coutStream = NULL;
 
-class CoutStream : public LoggerStream {
-public:
-  virtual LoggerStream& operator<< (const std::string &str) {
-    std::cout << str;
-    return *this;
-  }
-};
-
-static void LoggerStart(void) {
-  logger = PF_NEW(Logger);
-  coutStream = PF_NEW(CoutStream);
-  logger->insert(*coutStream);
-}
-
-static void LoggerEnd(void) {
-  logger->remove(*coutStream);
-  PF_DELETE(coutStream);
-  PF_DELETE(logger);
-  logger = NULL;
-}
-
-int main(int argc, char *argv[])
+void utest_lua(void)
 {
-  MemDebuggerStart();
-  TaskingSystemStart();
-  LoggerStart();
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   ScriptStatus status;
   scriptSystem->run("local x = 0", status);
@@ -73,8 +49,7 @@ int main(int argc, char *argv[])
 
   ConsoleSystemEnd();
   PF_DELETE(scriptSystem);
-  LoggerEnd();
-  TaskingSystemEnd();
-  MemDebuggerEnd();
 }
+
+UTEST_REGISTER(utest_lua)
 

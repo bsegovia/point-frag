@@ -14,25 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "renderer/font.hpp"
-#include "sys/default_path.hpp"
-#include "utest/utest.hpp"
+#include "utest.hpp"
+#include "sys/string.hpp"
 
-#include <string>
-
-using namespace pf;
-static const std::string fontName = "font.fnt";
-
-void utest_font(void)
+namespace pf
 {
-  Font font;
-  size_t i = 0;
-  for (; i < defaultPathNum; ++i) {
-    const FileName path(std::string(defaultPath[i]) + fontName);
-    if (font.load(path)) break;
-  }
-  PF_ASSERT(i < defaultPathNum);
-}
+  std::vector<UTest> *UTest::utestList = NULL;
+  void releaseUTestList(void) { if (UTest::utestList) delete UTest::utestList; }
 
-UTEST_REGISTER(utest_font);
+  UTest::UTest(Function fn, const char *name) : fn(fn), name(name) {
+    if (utestList == NULL) {
+      utestList = new std::vector<UTest>;
+      atexit(releaseUTestList);
+    }
+    utestList->push_back(*this);
+  }
+
+  UTest::UTest(void) : fn(NULL), name(NULL) {}
+
+  void UTest::run(const char *name) {
+    if (name == NULL) return;
+    if (utestList == NULL) return;
+    for (size_t i = 0; i < utestList->size(); ++i) {
+      const UTest &utest = (*utestList)[i];
+      if (utest.name == NULL || utest.fn == NULL) continue;
+      if (strequal(utest.name, name)) (utest.fn)();
+    }
+  }
+
+  void UTest::runAll(void) {
+    if (utestList == NULL) return;
+    for (size_t i = 0; i < utestList->size(); ++i) {
+      const UTest &utest = (*utestList)[i];
+      if (utest.fn == NULL) continue;
+      (utest.fn)();
+    }
+  }
+} /* namespace pf */
 

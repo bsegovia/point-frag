@@ -2,6 +2,8 @@ include (FindGLUT)
 include (FindLuaJIT)
 include_directories (${GLUT_INCLUDE_PATH})
 set (SRC
+  game/main.cpp
+  game/game.cpp
   game/camera.cpp
   game/game_event.cpp
   game/game_frame.cpp
@@ -45,7 +47,18 @@ set (SRC
   rt/bvh2.cpp
   rt/bvh2_traverser.cpp
   rt/ray_packet.cpp
-  rt/rt_camera.cpp)
+  rt/rt_camera.cpp
+  utest/utest.cpp)
+
+set (COMPILE_UTEST false CACHE bool "Compile or not the unit tests")
+if (COMPILE_UTEST)
+  set (SRC ${SRC}
+       utest/utest_lua.cpp
+       utest/utest_rt.cpp
+       utest/utest_font.cpp
+       utest/utest_tasking.cpp)
+endif (COMPILE_UTEST)
+
 include_directories (.)
 include_directories (${LUAJIT_INCLUDE_DIR})
 
@@ -55,29 +68,6 @@ else (UNIX)
   set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY})
 endif (UNIX)
 
-# dirty but otherwise, static variables are optimized out while using static
-# libraries. Dynamic libraries work but the code does not support it right now
-set (COMPILE_TEST_LUA false CACHE bool "Compile or not test_lua")
-if (COMPILE_TEST_LUA)
-  add_executable (test_lua ${SRC} test/lua.cpp)
-  target_link_libraries (test_lua ${EXEC_DEPENDENCIES})
-endif ()
-
-set (COMPILE_TEST_RT false CACHE bool "Compile or not test_rt")
-if (COMPILE_TEST_RT)
-  add_executable (test_rt ${SRC} test/rt.cpp)
-  target_link_libraries (test_rt ${EXEC_DEPENDENCIES})
-endif ()
-
-set (COMPILE_TEST_FONT false CACHE bool "Compile or not test_rt")
-if (COMPILE_TEST_FONT)
-  add_executable (test_font ${SRC} test/font.cpp)
-  target_link_libraries (test_font ${EXEC_DEPENDENCIES})
-endif ()
-
-set (COMPILE_GAME true CACHE bool "Compile or not game")
-if (COMPILE_GAME)
-  add_executable (game ${SRC} game/game.cpp)
-  target_link_libraries (game ${EXEC_DEPENDENCIES})
-endif ()
+add_executable (game ${SRC})
+target_link_libraries (game ${EXEC_DEPENDENCIES})
 

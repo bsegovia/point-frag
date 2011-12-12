@@ -14,25 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "renderer/font.hpp"
-#include "sys/default_path.hpp"
-#include "utest/utest.hpp"
+#ifndef __PF_GAME_HPP__
+#define __PF_GAME_HPP__
 
-#include <string>
+/*! Run the game code */
+void game(int argc, char *argv[]);
 
-using namespace pf;
-static const std::string fontName = "font.fnt";
-
-void utest_font(void)
-{
-  Font font;
-  size_t i = 0;
-  for (; i < defaultPathNum; ++i) {
-    const FileName path(std::string(defaultPath[i]) + fontName);
-    if (font.load(path)) break;
-  }
-  PF_ASSERT(i < defaultPathNum);
-}
-
-UTEST_REGISTER(utest_font);
+#endif /* __PF_GAME_HPP__ */
 

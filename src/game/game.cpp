@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "game.hpp"
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "game_frame.hpp"
@@ -38,48 +39,6 @@ namespace pf
   static const int defaultWidth = 1024, defaultHeight = 1024;
   Renderer *renderer = NULL;
   extern Ref<RendererObj> renderObj;
-  static LoggerStream *coutStream = NULL;
-  static LoggerStream *fileStream = NULL;
-
-  class CoutStream : public LoggerStream {
-  public:
-    virtual LoggerStream& operator<< (const std::string &str) {
-      std::cout << str;
-      return *this;
-    }
-  };
-
-  class FileStream : public LoggerStream {
-  public:
-    FileStream(void) {
-      file = fopen("log.txt", "w");
-      PF_ASSERT(file);
-    }
-    virtual ~FileStream(void) {fclose(file);}
-    virtual LoggerStream& operator<< (const std::string &str) {
-      fprintf(file, str.c_str());
-      return *this;
-    }
-  private:
-    FILE *file;
-  };
-
-  static void LoggerStart(void) {
-    logger = PF_NEW(Logger);
-    coutStream = PF_NEW(CoutStream);
-    fileStream = PF_NEW(FileStream);
-    logger->insert(*coutStream);
-    logger->insert(*fileStream);
-  }
-
-  static void LoggerEnd(void) {
-    logger->remove(*fileStream);
-    logger->remove(*coutStream);
-    PF_DELETE(fileStream);
-    PF_DELETE(coutStream);
-    PF_DELETE(logger);
-    logger = NULL;
-  }
 
   //static const FileName objName("f000.obj");
   //static const FileName objName("small.obj");
@@ -91,7 +50,8 @@ namespace pf
 
   extern Ref<BVH2<RTTriangle>> bvh; // XXX -> HiZ
 
-  static void GameStart(int argc, char **argv) {
+  static void GameStart(int argc, char **argv)
+  {
     PF_MSG_V("GLUT: initialization");
     glutInitWindowSize(defaultWidth, defaultHeight);
     glutInitWindowPosition(64, 64);
@@ -137,12 +97,9 @@ namespace pf
   }
 } /* namespace pf */
 
-int main(int argc, char **argv)
+void game(int argc, char **argv)
 {
   using namespace pf;
-  MemDebuggerStart();
-  TaskingSystemStart();
-  LoggerStart();
   GameStart(argc, argv);
 
   // We create a dummy frame such that a previous frame always exists in the
@@ -158,9 +115,5 @@ int main(int argc, char **argv)
 
   // Beyond this point, the worker threads are not doing anything
   GameEnd();
-  LoggerEnd();
-  TaskingSystemEnd();
-  MemDebuggerDumpAlloc();
-  return 0;
 }
 
