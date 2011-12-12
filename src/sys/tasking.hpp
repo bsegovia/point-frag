@@ -243,7 +243,7 @@ namespace pf
    */
   void TaskingSystemStart(int workerNum = -1);
 
-  /*! Shutdown the tasking system (MAIN THREAD outside a Task) */
+  /*! Shutdown and deallocate the tasking system (MAIN THREAD outside a Task) */
   void TaskingSystemEnd(void);
 
   /*! Make the main thread enter the tasking system (MAIN THREAD outside a Task) */

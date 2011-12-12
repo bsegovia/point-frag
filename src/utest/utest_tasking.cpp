@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 #include "sys/ref.hpp"
 #include "sys/thread.hpp"
 #include "sys/mutex.hpp"
@@ -37,19 +38,17 @@ using namespace pf;
 ///////////////////////////////////////////////////////////////////////////////
 // Very simple test which basically does nothing
 ///////////////////////////////////////////////////////////////////////////////
-class NothingTask : public Task {
+class TaskDone : public Task {
 public:
-  virtual Task* run(void) { return NULL; }
-};
-
-class DoneTask : public Task {
-public:
-  virtual Task* run(void) { TaskingSystemInterruptMain(); return NULL; }
+  virtual Task* run(void) {
+    TaskingSystemInterruptMain();
+    return NULL;
+  }
 };
 
 START_UTEST(TestDummy)
-  Task *done = PF_NEW(DoneTask);
-  Task *nothing = PF_NEW(NothingTask);
+  Task *done = PF_NEW(TaskDone);
+  Task *nothing = PF_NEW(TaskDummy);
   nothing->starts(done);
   done->scheduled();
   nothing->scheduled();
@@ -59,9 +58,9 @@ END_UTEST(TestDummy)
 ///////////////////////////////////////////////////////////////////////////////
 // Simplest taskset test. An array is filled by each worker
 ///////////////////////////////////////////////////////////////////////////////
-class SimpleTaskSet : public TaskSet {
+class TaskSetSimple : public TaskSet {
 public:
-  INLINE SimpleTaskSet(size_t elemNum, uint32 *array_) :
+  INLINE TaskSetSimple(size_t elemNum, uint32 *array_) :
     TaskSet(elemNum), array(array_) {}
   virtual void run(size_t elemID) { array[elemID] = 1u; }
   uint32 *array;
@@ -72,8 +71,8 @@ START_UTEST(TestTaskSet)
   uint32 *array = PF_NEW_ARRAY(uint32, elemNum);
   for (size_t i = 0; i < elemNum; ++i) array[i] = 0;
   double t = getSeconds();
-  Task *done = PF_NEW(DoneTask);
-  Task *taskSet = PF_NEW(SimpleTaskSet, elemNum, array);
+  Task *done = PF_NEW(TaskDone);
+  Task *taskSet = PF_NEW(TaskSetSimple, elemNum, array);
   taskSet->starts(done);
   done->scheduled();
   taskSet->scheduled();
@@ -93,9 +92,9 @@ END_UTEST(TestTaskSet)
 enum { maxLevel = 20u };
 
 /*! One node task per node in the tree. Task completes the root */
-class NodeTask : public Task {
+class TaskNode : public Task {
 public:
-  INLINE NodeTask(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
+  INLINE TaskNode(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
     value(value_), lvl(lvl_) {
     this->root = root_ == NULL ? this : root_;
   }
@@ -105,12 +104,12 @@ public:
   uint32 lvl;
 };
 
-Task* NodeTask::run(void) {
+Task* TaskNode::run(void) {
   if (this->lvl == maxLevel)
     this->value++;
   else {
-    Task *left  = PF_NEW(NodeTask, this->value, this->lvl+1, this->root);
-    Task *right = PF_NEW(NodeTask, this->value, this->lvl+1, this->root);
+    Task *left  = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *right = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
     left->ends(this->root);
     right->ends(this->root);
     left->scheduled();
@@ -120,14 +119,14 @@ Task* NodeTask::run(void) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Same as NodeTask but we use a continuation passing style strategy to improve
+// Same as TaskNode but we use a continuation passing style strategy to improve
 // the system throughtput
 ///////////////////////////////////////////////////////////////////////////////
 
 /*! One node task per node in the tree. Task completes the root */
-class NodeTaskOpt : public Task {
+class TaskNodeOpt : public Task {
 public:
-  INLINE NodeTaskOpt(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
+  INLINE TaskNodeOpt(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
     value(value_), lvl(lvl_) {
     this->root = root_ == NULL ? this : root_;
   }
@@ -137,13 +136,13 @@ public:
   uint32 lvl;
 };
 
-Task* NodeTaskOpt::run(void) {
+Task* TaskNodeOpt::run(void) {
   if (this->lvl == maxLevel) {
     this->value++;
     return NULL;
   } else {
-    Task *left  = PF_NEW(NodeTask, this->value, this->lvl+1, this->root);
-    Task *right = PF_NEW(NodeTask, this->value, this->lvl+1, this->root);
+    Task *left  = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
+    Task *right = PF_NEW(TaskNode, this->value, this->lvl+1, this->root);
     left->ends(this->root);
     right->ends(this->root);
     left->scheduled();
@@ -152,26 +151,26 @@ Task* NodeTaskOpt::run(void) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Same as NodeTask but here each task completes its parent task directly. This
+// Same as TaskNode but here each task completes its parent task directly. This
 // stresses the completion system but strongly limits cache line contention
 ///////////////////////////////////////////////////////////////////////////////
 
 /*! One node task per node in the tree. Task completes its parent */
-class CascadeNodeTask : public Task {
+class TaskCascadeNode : public Task {
 public:
-  INLINE CascadeNodeTask(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
+  INLINE TaskCascadeNode(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
     value(value_), lvl(lvl_) {}
   virtual Task* run(void);
   Atomic &value;
   uint32 lvl;
 };
 
-Task *CascadeNodeTask::run(void) {
+Task *TaskCascadeNode::run(void) {
   if (this->lvl == maxLevel)
     this->value++;
   else {
-    Task *left  = PF_NEW(CascadeNodeTask, this->value, this->lvl+1);
-    Task *right = PF_NEW(CascadeNodeTask, this->value, this->lvl+1);
+    Task *left  = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *right = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
     left->ends(this);
     right->ends(this);
     left->scheduled();
@@ -181,24 +180,24 @@ Task *CascadeNodeTask::run(void) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Same as CascadeNodeTask but with continuation passing style tasks
+// Same as TaskCascadeNode but with continuation passing style tasks
 ///////////////////////////////////////////////////////////////////////////////
-class CascadeNodeTaskOpt : public Task {
+class TaskCascadeNodeOpt : public Task {
 public:
-  INLINE CascadeNodeTaskOpt(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
+  INLINE TaskCascadeNodeOpt(Atomic &value_, uint32 lvl_, Task *root_=NULL) :
     value(value_), lvl(lvl_) {}
   virtual Task* run(void);
   Atomic &value;
   uint32 lvl;
 };
 
-Task *CascadeNodeTaskOpt::run(void) {
+Task *TaskCascadeNodeOpt::run(void) {
   if (this->lvl == maxLevel) {
     this->value++;
     return NULL;
   } else {
-    Task *left  = PF_NEW(CascadeNodeTask, this->value, this->lvl+1);
-    Task *right = PF_NEW(CascadeNodeTask, this->value, this->lvl+1);
+    Task *left  = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
+    Task *right = PF_NEW(TaskCascadeNode, this->value, this->lvl+1);
     left->ends(this);
     right->ends(this);
     left->scheduled();
@@ -212,7 +211,7 @@ START_UTEST(TestTree)
   Atomic value(0u);
   std::cout << "nodeNum = " << (2 << maxLevel) - 1 << std::endl;
   double t = getSeconds();
-  Task *done = PF_NEW(DoneTask);
+  Task *done = PF_NEW(TaskDone);
   Task *root = PF_NEW(NodeType, value, 0);
   root->starts(done);
   done->scheduled();
@@ -226,26 +225,26 @@ END_UTEST(TestTree)
 ///////////////////////////////////////////////////////////////////////////////
 // We try to stress the internal allocator here
 ///////////////////////////////////////////////////////////////////////////////
-class AllocateTask : public TaskSet {
+class TaskAllocate : public TaskSet {
 public:
-  AllocateTask(size_t elemNum) : TaskSet(elemNum) {}
+  TaskAllocate(size_t elemNum) : TaskSet(elemNum) {}
   virtual void run(size_t elemID);
   enum { allocNum = 1 << 10 };
   enum { iterNum = 1 << 5 };
 };
 
-void AllocateTask::run(size_t elemID) {
+void TaskAllocate::run(size_t elemID) {
   Task *tasks[allocNum];
   for (int j = 0; j < iterNum; ++j) {
     const int taskNum = rand() % allocNum;
-    for (int i = 0; i < taskNum; ++i) tasks[i] = PF_NEW(NothingTask);
+    for (int i = 0; i < taskNum; ++i) tasks[i] = PF_NEW(TaskDummy);
     for (int i = 0; i < taskNum; ++i) PF_DELETE(tasks[i]);
   }
 }
 
 START_UTEST(TestAllocator)
-  Task *done = PF_NEW(DoneTask);
-  Task *allocate = PF_NEW(AllocateTask, 1 << 10);
+  Task *done = PF_NEW(TaskDone);
+  Task *allocate = PF_NEW(TaskAllocate, 1 << 10);
   double t = getSeconds();
   allocate->starts(done);
   done->scheduled();
@@ -258,15 +257,15 @@ END_UTEST(TestAllocator)
 ///////////////////////////////////////////////////////////////////////////////
 // We are making the queue full to make the system recurse to empty it
 ///////////////////////////////////////////////////////////////////////////////
-class FullTask : public Task {
+class TaskFull : public Task {
 public:
   enum { taskToSpawn = 1u << 16u };
-  FullTask(const char *name, Atomic &counter, int lvl = 0) :
+  TaskFull(const char *name, Atomic &counter, int lvl = 0) :
     Task(name), counter(counter), lvl(lvl) {}
   virtual Task* run(void) {
     if (lvl == 0)
       for (size_t i = 0; i < taskToSpawn; ++i) {
-        Task *task = PF_NEW(FullTask, "FullTaskLvl1", counter, 1);
+        Task *task = PF_NEW(TaskFull, "TaskFullLvl1", counter, 1);
         task->ends(this);
         task->scheduled();
       }
@@ -281,9 +280,9 @@ public:
 START_UTEST(TestFullQueue)
   Atomic counter(0u);
   double t = getSeconds();
-  Task *done = PF_NEW(DoneTask);
+  Task *done = PF_NEW(TaskDone);
   for (size_t i = 0; i < 64; ++i) {
-    Task *task = PF_NEW(FullTask, "FullTask", counter);
+    Task *task = PF_NEW(TaskFull, "TaskFull", counter);
     task->starts(done);
     task->scheduled();
   }
@@ -291,24 +290,24 @@ START_UTEST(TestFullQueue)
   TaskingSystemEnter();
   t = getSeconds() - t;
   std::cout << t * 1000. << " ms" << std::endl;
-  FATAL_IF (counter != 64 * FullTask::taskToSpawn, "TestFullQueue failed");
+  FATAL_IF (counter != 64 * TaskFull::taskToSpawn, "TestFullQueue failed");
 END_UTEST(TestFullQueue)
 
 ///////////////////////////////////////////////////////////////////////////////
 // We spawn a lot of affinity jobs to saturate the affinity queues
 ///////////////////////////////////////////////////////////////////////////////
-class AffinityTask : public Task {
+class TaskAffinity : public Task {
 public:
   enum { taskToSpawn = 2048u };
-  AffinityTask(Task *done, Atomic &counter, int lvl = 0) :
-    Task("AffinityTask"), counter(counter), lvl(lvl) {}
+  TaskAffinity(Task *done, Atomic &counter, int lvl = 0) :
+    Task("TaskAffinity"), counter(counter), lvl(lvl) {}
   virtual Task *run(void) {
     if (lvl == 1)
       counter++;
     else {
       const uint32 threadNum = TaskingSystemGetThreadNum();
       for (uint32 i = 0; i < taskToSpawn; ++i) {
-        Task *task = PF_NEW(AffinityTask, done.ptr, counter, 1);
+        Task *task = PF_NEW(TaskAffinity, done.ptr, counter, 1);
         task->setAffinity(i % threadNum);
         task->ends(this);
         task->scheduled();
@@ -326,9 +325,9 @@ START_UTEST(TestAffinity)
   for (int i = 0; i < 8; ++i) {
     Atomic counter(0u);
     double t = getSeconds();
-    Ref<Task> done = PF_NEW(DoneTask);
+    Ref<Task> done = PF_NEW(TaskDone);
     for (size_t i = 0; i < batchNum; ++i) {
-      Task *task = PF_NEW(AffinityTask, done.ptr, counter);
+      Task *task = PF_NEW(TaskAffinity, done.ptr, counter);
       task->starts(done.ptr);
       task->scheduled();
     }
@@ -337,7 +336,7 @@ START_UTEST(TestAffinity)
     t = getSeconds() - t;
     std::cout << t * 1000. << " ms" << std::endl;
     std::cout << counter << std::endl;
-    FATAL_IF (counter != batchNum * AffinityTask::taskToSpawn, "TestAffinity failed");
+    FATAL_IF (counter != batchNum * TaskAffinity::taskToSpawn, "TestAffinity failed");
   }
 END_UTEST(TestAffinity)
 
@@ -345,10 +344,10 @@ END_UTEST(TestAffinity)
 // Exponential Fibonnaci to stress the task spawning and the completions
 ///////////////////////////////////////////////////////////////////////////////
 static Atomic fiboNum(0u);
-class FiboSpawnTask : public Task {
+class TaskFiboSpawn : public Task {
 public:
-  FiboSpawnTask(uint64 rank, uint64 *root = NULL) :
-    Task("FiboSpawnTask"), rank(rank), root(root) {fiboNum++;}
+  TaskFiboSpawn(uint64 rank, uint64 *root = NULL) :
+    Task("TaskFiboSpawn"), rank(rank), root(root) {fiboNum++;}
   virtual Task* run(void);
   uint64 rank, sumLeft, sumRight;
   uint64 *root;
@@ -356,15 +355,15 @@ public:
 
 class FiboSumTask : public Task {
 public:
-  FiboSumTask(FiboSpawnTask *fibo) : Task("FiboSumTask"), fibo(fibo) {}
+  FiboSumTask(TaskFiboSpawn *fibo) : Task("FiboSumTask"), fibo(fibo) {}
   virtual Task* run(void);
-  FiboSpawnTask *fibo;
+  TaskFiboSpawn *fibo;
 };
 
-Task *FiboSpawnTask::run(void) {
+Task *TaskFiboSpawn::run(void) {
   if (rank > 1) {
-    FiboSpawnTask *left = PF_NEW(FiboSpawnTask, rank-1, &this->sumLeft);
-    FiboSpawnTask *right = PF_NEW(FiboSpawnTask, rank-2, &this->sumRight);
+    TaskFiboSpawn *left = PF_NEW(TaskFiboSpawn, rank-1, &this->sumLeft);
+    TaskFiboSpawn *right = PF_NEW(TaskFiboSpawn, rank-2, &this->sumRight);
     FiboSumTask *sum = PF_NEW(FiboSumTask, this);
     left->starts(sum);
     right->starts(sum);
@@ -401,36 +400,164 @@ static uint64 fiboLinear(uint64 rank)
 }
 
 START_UTEST(TestFibo)
-  {
-    const uint64 rank = rand() % 32;
-    uint64 sum;
-    double t = getSeconds();
-    fiboNum = 0u;
-    Ref<FiboSpawnTask> fibo = PF_NEW(FiboSpawnTask, rank, &sum);
-    Task *done = PF_NEW(DoneTask);
-    fibo->starts(done);
-    fibo->scheduled();
-    done->scheduled();
-    TaskingSystemEnter();
-    t = getSeconds() - t;
-    std::cout << t * 1000. << " ms" << std::endl;
-    std::cout << "Fibonacci Task Num: "<< fiboNum << std::endl;
-    FATAL_IF (sum != fiboLinear(rank), "TestFibonacci failed");
-  }
+{
+  const uint64 rank = rand() % 32;
+  uint64 sum;
+  double t = getSeconds();
+  fiboNum = 0u;
+  Ref<TaskFiboSpawn> fibo = PF_NEW(TaskFiboSpawn, rank, &sum);
+  Task *done = PF_NEW(TaskDone);
+  fibo->starts(done);
+  fibo->scheduled();
+  done->scheduled();
+  TaskingSystemEnter();
+  t = getSeconds() - t;
+  std::cout << t * 1000. << " ms" << std::endl;
+  std::cout << "Fibonacci Task Num: "<< fiboNum << std::endl;
+  FATAL_IF (sum != fiboLinear(rank), "TestFibonacci failed");
+}
 END_UTEST(TestFibo)
+
+///////////////////////////////////////////////////////////////////////////////
+// Task with multiple dependencies
+///////////////////////////////////////////////////////////////////////////////
+class TaskMultiTrigger : public Task,
+                         public MultiDependencyPolicy<TaskMultiTrigger>
+{
+public:
+  TaskMultiTrigger(int32 *valueToSet) : valueToSet(valueToSet) {}
+  virtual Task *run(void) { *valueToSet = 1; return NULL; }
+private:
+  int32 *valueToSet;
+};
+
+class TaskTriggered : public Task
+{
+public:
+  TaskTriggered(const int32 *valueToRead, Atomic32 &dst) :
+    valueToRead(valueToRead), dst(dst) {}
+  virtual Task *run(void) { dst += *valueToRead; return NULL; }
+private:
+  const int32 *valueToRead;
+  Atomic32 &dst;
+};
+
+START_UTEST(TestMultiDependency)
+{
+  static const uint32 multiTaskToSpawn = 512;
+  static const uint32 triggeredTaskToSpawn = 512;
+  static const uint32 valueToSetNum = multiTaskToSpawn;
+
+  int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+  Atomic32 dst(0);
+  Task *doneTask = PF_NEW(TaskDone);
+  for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
+  for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
+    Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+    for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
+      Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
+      Ref<Task> dummy = PF_NEW(TaskDummy);
+      task->multiStarts(dummy);
+      dummy->starts(triggered);
+      triggered->starts(doneTask);
+      triggered->scheduled();
+      dummy->scheduled();
+    }
+    task->scheduled();
+  }
+  doneTask->scheduled();
+  TaskingSystemEnter();
+  PF_DELETE_ARRAY(toSet);
+  const uint32 result = dst;
+  std::cout << "result: " << result << std::endl;
+  FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
+           "MultiDependency failed");
+}
+END_UTEST(TestMultiDependency)
+
+START_UTEST(TestMultiDependencyTwoStage)
+{
+  static const uint32 multiTaskToSpawn = 512;
+  static const uint32 triggeredTaskToSpawn = 512;
+  static const uint32 valueToSetNum = multiTaskToSpawn;
+
+  int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+  Atomic32 dst(0);
+  Task *doneTask = PF_NEW(TaskDone);
+  for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
+  for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
+    Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+    for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
+      Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
+      task->multiStarts(triggered);
+      triggered->starts(doneTask);
+      triggered->scheduled();
+    }
+    task->scheduled();
+  }
+  doneTask->scheduled();
+  TaskingSystemEnter();
+  PF_DELETE_ARRAY(toSet);
+  const uint32 result = dst;
+  std::cout << "result: " << result << std::endl;
+  FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
+           "MultiDependency failed");
+}
+END_UTEST(TestMultiDependencyTwoStage)
+
+START_UTEST(TestMultiDependencyRandomStart)
+{
+  static const uint32 multiTaskToSpawn = 512;
+  static const uint32 triggeredTaskToSpawn = 512;
+  static const uint32 valueToSetNum = multiTaskToSpawn;
+  static const uint32 repeatNum = 8;
+
+  for (uint32 i = 0; i < repeatNum; ++i) {
+    int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
+    Atomic32 dst(0);
+    Ref<Task> doneTask = PF_NEW(TaskDone);
+    for (uint32 i = 0; i < valueToSetNum; ++i) toSet[i] = 0;
+    for (uint32 i = 0; i < multiTaskToSpawn; ++i) {
+      Ref<TaskMultiTrigger> task = PF_NEW(TaskMultiTrigger, toSet + i);
+      bool isScheduled = false;
+      for (uint32 j = 0; j < triggeredTaskToSpawn; ++j) {
+        Ref<Task> triggered = PF_NEW(TaskTriggered, toSet + i, dst);
+        task->multiStarts(triggered);
+        triggered->starts(doneTask);
+        triggered->scheduled();
+        if (drand48() < 0.8 && isScheduled == false) {
+          task->scheduled();
+          isScheduled = true;
+        }
+      }
+      if (isScheduled == false) task->scheduled();
+    }
+    doneTask->scheduled();
+    TaskingSystemEnter();
+    PF_DELETE_ARRAY(toSet);
+    const uint32 result = dst;
+    std::cout << "result: " << result << std::endl;
+    FATAL_IF(result != multiTaskToSpawn * triggeredTaskToSpawn,
+             "MultiDependencyRandomStart failed");
+  }
+}
+END_UTEST(TestMultiDependencyRandomStart)
 
 void utest_tasking(void)
 {
   TestDummy();
-  TestTree<NodeTaskOpt>();
-  TestTree<NodeTask>();
-  TestTree<CascadeNodeTaskOpt>();
-  TestTree<CascadeNodeTask>();
+  TestTree<TaskNodeOpt>();
+  TestTree<TaskNode>();
+  TestTree<TaskCascadeNodeOpt>();
+  TestTree<TaskCascadeNode>();
   TestTaskSet();
   TestAllocator();
   TestFullQueue();
   TestAffinity();
   TestFibo();
+  TestMultiDependency();
+  TestMultiDependencyTwoStage();
+  TestMultiDependencyRandomStart();
 }
 
 UTEST_REGISTER(utest_tasking);

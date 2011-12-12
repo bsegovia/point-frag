@@ -153,6 +153,7 @@ namespace pf
     TASK_THREAD_STATE_SLEEPING = 0,
     TASK_THREAD_STATE_RUNNING  = 1,
     TASK_THREAD_STATE_DEAD     = 2,
+    TASK_THREAD_STATE_OUTSIDE  = 3,
     TASK_THREAD_STATE_INVALID  = 0xffffffff
   };
 
@@ -677,7 +678,7 @@ namespace pf
     this->taskThread[PF_TASK_MAIN_THREAD].thread = NULL;
     this->taskThread[PF_TASK_MAIN_THREAD].scheduler = this;
     this->taskThread[PF_TASK_MAIN_THREAD].threadID = 0;
-    this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_DEAD;
+    this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_OUTSIDE;
 
     // Only if we have dedicated worker threads
     if (workerNum > 0) {
@@ -855,14 +856,37 @@ namespace pf
     } while (task);
   }
 
-  void TaskScheduler::go(void) {
-    ThreadStartup *thread = PF_NEW(ThreadStartup, PF_TASK_MAIN_THREAD, *this);
-    this->taskThread[PF_TASK_MAIN_THREAD].state = TASK_THREAD_STATE_RUNNING;
-    threadFunction(thread);
+  void TaskScheduler::go(void)
+  {
+    TaskThread &myself = this->taskThread[PF_TASK_MAIN_THREAD];
+    // Be sure that nobody already killed us before we can start
+    myself.mutex.lock();
+    const uint32 state = myself.state;
+    PF_ASSERT(state == TASK_THREAD_STATE_OUTSIDE ||
+              state == TASK_THREAD_STATE_DEAD);
+
+    // We were killed, directly exit
+    if (state == TASK_THREAD_STATE_DEAD) {
+      myself.mutex.unlock();
+      goto exit;
+    }
+    // Nobody killed us. We can enter the tasking system
+    else {
+      ThreadStartup *thread = PF_NEW(ThreadStartup, PF_TASK_MAIN_THREAD, *this);
+      myself.state = TASK_THREAD_STATE_RUNNING;
+      myself.mutex.unlock();
+      threadFunction(thread);
+    }
+
+  exit:
+    // Properly indicate that we are not in the tasking system anymore
+    myself.mutex.lock();
+    myself.state = TASK_THREAD_STATE_OUTSIDE;
+    myself.mutex.unlock();
   }
 
   void TaskScheduler::wait(Ref<Task> task) {
-    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_DEAD);
+    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_OUTSIDE);
     PF_ASSERT(threadID == PF_TASK_MAIN_THREAD);
     if (LIKELY(task)) {
       while (__load_acquire(&task->state) != TaskState::DONE) {
@@ -873,7 +897,7 @@ namespace pf
   }
 
   void TaskScheduler::emptyQueues(void) {
-    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_DEAD);
+    PF_ASSERT(taskThread[PF_TASK_MAIN_THREAD].state == TASK_THREAD_STATE_OUTSIDE);
     PF_ASSERT(threadID == PF_TASK_MAIN_THREAD);
     for (;;) {
       Task *task = this->getTask();

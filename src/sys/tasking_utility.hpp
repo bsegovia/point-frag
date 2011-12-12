@@ -86,16 +86,17 @@ namespace pf
    *  dependencies
    */
   template <typename T>
-  class TaskMultipleDependencyPolicy
+  class MultiDependencyPolicy
   {
+  public:
     /*! Allocate the chained list of dependency tasks */
-    INLINE TaskMultipleDependencyPolicy(void);
+    INLINE MultiDependencyPolicy(void);
     /*! Add one more task to start */
     INLINE void multiStarts(Task *other);
     /*! Add one more task to end */
     INLINE void multiEnds(Task *other);
   private:
-    Ref<TaskDependencyRoot> root; //!< First dependency task
+    Ref<TaskDependencyRoot> tail; //!< First dependency task
     TaskChained *head;            //!< Ends us and triggers the dependencies
   };
 
@@ -121,31 +122,31 @@ namespace pf
   ///////////////////////////////////////////////////////////////////////////
 
   template <typename T>
-  INLINE TaskMultipleDependencyPolicy<T>::TaskMultipleDependencyPolicy(void)
+  INLINE MultiDependencyPolicy<T>::MultiDependencyPolicy(void)
   {
-    this->root = PF_NEW(TaskDependencyRoot);
-    this->head = this->root;
-    this->starts(head);
+    this->tail = PF_NEW(TaskDependencyRoot);
+    this->head = this->tail;
+    static_cast<T*>(this)->starts(head);
     head->scheduled();
   }
 
   template <typename T>
-  INLINE void TaskMultipleDependencyPolicy<T>::multiStarts(Task *other)
+  INLINE void MultiDependencyPolicy<T>::multiStarts(Task *other)
   {
     if (UNLIKELY(other == NULL)) return;
-    if (root->isDone() == true) return;
-    root->lock();
-    if (root->isDone() == false) {
+    if (tail->isDone() == true) return;
+    tail->lock();
+    if (tail->isDone() == false) {
       TaskChained *newHead = PF_NEW(TaskChained);
       newHead->starts(other);
       head->setNext(newHead);
       head = newHead;
     }
-    root->unlock();
+    tail->unlock();
   }
 
   template <typename T>
-  INLINE void TaskMultipleDependencyPolicy<T>::multiEnds(Task *other)
+  INLINE void MultiDependencyPolicy<T>::multiEnds(Task *other)
   {
     if (UNLIKELY(other == NULL)) return;
 #ifndef NDEBUG
