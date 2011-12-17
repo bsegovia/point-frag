@@ -65,7 +65,7 @@ include_directories (${LUAJIT_INCLUDE_DIR})
 if (UNIX)
   set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY} pthread)
 else (UNIX)
-  set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY})
+  set (EXEC_DEPENDENCIES ${GLUT_LIBRARY} ${LUAJIT_LIBRARY} OpenGL32)
 endif (UNIX)
 
 add_executable (game ${SRC})

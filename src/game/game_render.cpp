@@ -236,7 +236,7 @@ namespace pf
   static Task *HiZCull(HiZCullState *state)
   {
     // Compute the HiZ buffer
-    Ref<HiZ> hiz = PF_NEW(HiZ, 256, 128);
+    Ref<HiZ> hiz = PF_NEW(HiZ, 128, 64);
     Ref<Intersector> intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     Ref<Task> hizTask = hiz->rayTrace(state->cam, intersector);
 

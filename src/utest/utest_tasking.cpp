@@ -20,6 +20,7 @@
 #include "sys/thread.hpp"
 #include "sys/mutex.hpp"
 #include "sys/sysinfo.hpp"
+#include "math/random.hpp"
 
 #include "utest/utest.hpp"
 
@@ -511,7 +512,7 @@ START_UTEST(TestMultiDependencyRandomStart)
   static const uint32 triggeredTaskToSpawn = 512;
   static const uint32 valueToSetNum = multiTaskToSpawn;
   static const uint32 repeatNum = 8;
-
+  Random rand;
   for (uint32 i = 0; i < repeatNum; ++i) {
     int32 *toSet = PF_NEW_ARRAY(int32, valueToSetNum);
     Atomic32 dst(0);
@@ -525,7 +526,7 @@ START_UTEST(TestMultiDependencyRandomStart)
         task->multiStarts(triggered);
         triggered->starts(doneTask);
         triggered->scheduled();
-        if (drand48() < 0.8 && isScheduled == false) {
+        if (rand.getFloat() < 0.8 && isScheduled == false) {
           task->scheduled();
           isScheduled = true;
         }
@@ -543,6 +544,39 @@ START_UTEST(TestMultiDependencyRandomStart)
 }
 END_UTEST(TestMultiDependencyRandomStart)
 
+///////////////////////////////////////////////////////////////////////////////
+// Test tasking lock and unlock
+///////////////////////////////////////////////////////////////////////////////
+class TaskLockUnlock : public Task
+{
+public:
+  TaskLockUnlock(int32 *shared) : shared(shared) {}
+  virtual Task *run(void) {
+    TaskingSystemLock();
+    *shared = *shared + 1;
+    TaskingSystemUnlock();
+    return NULL;
+  }
+  int32 *shared;
+};
+
+START_UTEST(TestLockUnlock)
+{
+  static const uint32 taskNum = 1024;
+  int32 shared = 0;
+  Ref<Task> doneTask = PF_NEW(TaskDone);
+  for (uint32 i = 0; i < taskNum; ++i) {
+    Task *updateTask = PF_NEW(TaskLockUnlock, &shared);
+    updateTask->starts(doneTask);
+    updateTask->scheduled();
+  }
+  doneTask->scheduled();
+  TaskingSystemEnter();
+  FATAL_IF(shared != int32(taskNum), "TestLockUnlock failed");
+}
+END_UTEST(TestLockUnlock)
+
+/*! Run all tasking tests */
 void utest_tasking(void)
 {
   TestDummy();
@@ -558,6 +592,7 @@ void utest_tasking(void)
   TestMultiDependency();
   TestMultiDependencyTwoStage();
   TestMultiDependencyRandomStart();
+  TestLockUnlock();
 }
 
 UTEST_REGISTER(utest_tasking);

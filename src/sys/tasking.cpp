@@ -192,10 +192,12 @@ namespace pf
     ALIGNED_CLASS(CACHE_LINE);
   };
 
-  /*! Handle the scheduling of all tasks. We basically implement here a
+  /*! Handle the scheduling of all tasks. We first implement a
    *  work-stealing algorithm. Each thread has each own queue where it picks
    *  up task in depth first order. Each thread can also steal other tasks
-   *  in breadth first order when his own queue is empty
+   *  in breadth first order when his own queue is empty. Each thread also
+   *  maintains a FIFO queue that contains jobs that it is the only to run
+   *  (this is called "affinity" queue)s
    */
   class CACHE_LINE_ALIGNED TaskScheduler
   {
@@ -509,8 +511,12 @@ namespace pf
     Lock<MutexSys> lock(mutex);
 
     // Double check that we did not get anything to run in the mean time
-    if (afQueue.getActiveMask() || wsQueue.getActiveMask()) return;
+    // Note that we always go to sleep if the system is locked
+    if (afQueue.getActiveMask() && !scheduler->locked) return;
     if (state == TASK_THREAD_STATE_DEAD) return;
+
+    // Previous state is not necessarily RUNNING. It can be "OUTSIDE"
+    const TaskThreadState prevState = state;
     state = TASK_THREAD_STATE_SLEEPING;
 
     // Indicate that we are now sleeping
@@ -522,11 +528,15 @@ namespace pf
     while (state == TASK_THREAD_STATE_SLEEPING)
       cond.wait(mutex);
 
-    // We are not sleeping anymore
+    // We are not sleeping anymore. Return to our previous state
     scheduler->sleepMutex.lock();
     scheduler->sleepingNum--;
     scheduler->sleeping &= ~(size_t(1u) << this->threadID);
     scheduler->sleepMutex.unlock();
+    
+    // We got killed
+    if (state == TASK_THREAD_STATE_DEAD) return;
+    state = prevState;
   }
 
   void TaskThread::wakeUp(int32 threadThatWakesMeUp) {
@@ -629,10 +639,6 @@ namespace pf
     this->allocateNum--;
   }
 
-  // Stupid windows
-  template <typename T> INLINE T _min(T x, T y) {return x<y?x:y;}
-  template <typename T> INLINE T _max(T x, T y) {return x>y?x:y;}
-
   void TaskScheduler::threadFunction(TaskScheduler::ThreadStartup *threadData)
   {
     threadID = uint32(threadData->tid);
@@ -661,7 +667,7 @@ namespace pf
         inactivityNum = 0;
         myself.sleep();
       }
-      if (UNLIKELY(This->locked))
+      while (UNLIKELY(This->locked))
         myself.sleep();
     }
   }
@@ -727,7 +733,7 @@ namespace pf
   }
 
   void TaskScheduler::lock(void) {
-    // If somebody locks the system, we sleep
+    // If somebody locked the system, we sleep
     while (atomic_cmpxchg(&this->locked, 1, 0) != 0) {
       TaskThread &myself = this->taskThread[threadID];
       myself.sleep();
@@ -737,7 +743,7 @@ namespace pf
     // locking is anyway super expensive. So, let's do it like this
     while (this->sleepingNum != this->queueNum - 1) _mm_pause();
 
-    // Now we are alone in this world
+    // Now we are alone in the world now
   }
 
   void TaskScheduler::unlock(void) {
@@ -967,9 +973,10 @@ namespace pf
   }
 
   void TaskingSystemEnd(void) {
-    TaskingSystemInterrupt();
-    PF_SAFE_DELETE(scheduler);
-    PF_SAFE_DELETE(allocator);
+    scheduler->emptyQueues();  // Empty the queues (ie wait for all tasks)
+    scheduler->stopAll();      // Kill all the threads
+    PF_SAFE_DELETE(scheduler); // Deallocate the scheduler
+    PF_SAFE_DELETE(allocator); // Release the tasks allocator
     scheduler = NULL;
     allocator = NULL;
   }
@@ -984,19 +991,24 @@ namespace pf
     scheduler->wait(task);
   }
 
-  void TaskingSystemEmptyQueues(void) {
+  void TaskingSystemWaitAll(void) {
     FATAL_IF (scheduler == NULL, "scheduler not started");
     scheduler->emptyQueues();
+  }
+
+  void TaskingSystemLock(void) {
+    FATAL_IF (scheduler == NULL, "scheduler not started");
+    scheduler->lock();
+  }
+
+  void TaskingSystemUnlock(void) {
+    FATAL_IF (scheduler == NULL, "scheduler not started");
+    scheduler->unlock();
   }
 
   void TaskingSystemInterruptMain(void) {
     FATAL_IF (scheduler == NULL, "scheduler not started");
     scheduler->stopMain();
-  }
-
-  void TaskingSystemInterrupt(void) {
-    FATAL_IF (scheduler == NULL, "scheduler not started");
-    scheduler->stopAll();
   }
 
   uint32 TaskingSystemGetThreadNum(void) {
@@ -1011,4 +1023,3 @@ namespace pf
 }
 
 #undef IF_TASK_STATISTICS
-

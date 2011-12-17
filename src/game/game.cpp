@@ -73,20 +73,25 @@ namespace pf
     if (path == defaultPathNum)
       PF_WARNING_V("Obj: " << objName << " not found");
 
-    PF_MSG_V("RendererObj: building BVH of segments");
-    RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
-    for (size_t i = 0; i < obj.triNum; ++i) {
-      const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p;
-      const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p;
-      const vec3f &v2 = obj.vert[obj.tri[i].v[2]].p;
-      tris[i] = RTTriangle(v0,v1,v2);
-    }
-    bvh = PF_NEW(BVH2<RTTriangle>);
-    buildBVH2(tris, obj.triNum, *bvh);
-    PF_DELETE_ARRAY(tris);
+    Ref<Task> bvhTask = spawn(HERE,[=, &obj]
+    {
+      PF_MSG_V("Game: building BVH");
+      RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
+      for (size_t i = 0; i < obj.triNum; ++i) {
+        const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p;
+        const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p;
+        const vec3f &v2 = obj.vert[obj.tri[i].v[2]].p;
+        tris[i] = RTTriangle(v0,v1,v2);
+      }
+      bvh = PF_NEW(BVH2<RTTriangle>);
+      buildBVH2(tris, obj.triNum, *bvh);
+      PF_DELETE_ARRAY(tris);
+    });
+    bvhTask->scheduled();
 
     // Build the renderer OBJ
     renderObj = PF_NEW(RendererObj, *renderer, obj);
+    TaskingSystemWait(bvhTask);
   }
 
   static void GameEnd(void) {
@@ -111,7 +116,7 @@ void game(int argc, char **argv)
   TaskingSystemEnter();
 
   // We must be sure that all pending tasks are done
-  TaskingSystemEmptyQueues();
+  TaskingSystemWaitAll();
 
   // Beyond this point, the worker threads are not doing anything
   GameEnd();

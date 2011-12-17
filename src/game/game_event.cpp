@@ -55,7 +55,7 @@ namespace pf
 
   TaskEvent::TaskEvent(InputEvent &current, InputEvent &previous) :
     TaskMain("TaskEvent"), current(&current), previous(&previous), cloneRoot(NULL)
-  { }
+  {}
 
   void TaskEvent::keyDown(unsigned char key, int x, int y) {
     taskEvent->current->downKey(key);
@@ -102,20 +102,11 @@ namespace pf
   // static double prevT0 = 0.;
   Task *TaskEvent::run(void)
   {
-#if 0
-    while (getSeconds() - prevT0 < .010) {
-      TaskingSystemRunAnyTask();
-      Task *task = this->clone();
-      task->scheduled();
-      return NULL;
-    }
-    prevT0 = getSeconds();
-#endif
     if (UNLIKELY(frameNum++ == 0)) {
       t = getSeconds();
     } else if (frameNum % 256 == 0) {
       const double t0 = getSeconds();
-      printf("\rfps %lf frame/s", 256. / (t0 - t));
+      printf("\rfps %f frame/s", 256. / (t0 - t));
       fflush(stdout);
       t = t0;
     }
@@ -135,4 +126,3 @@ namespace pf
     return NULL;
   }
 }
-

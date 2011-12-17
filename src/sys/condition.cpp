@@ -75,8 +75,7 @@ namespace pf
     LeaveCriticalSection((CRITICAL_SECTION *) mutex.mutex);
     timeout_ms = INFINITE;
 
-    // Wait for either event to become signaled due to glfwSignalCond or
-    // glfwBroadcastCond being called
+    // Wait for either event to become signaled
     result = WaitForMultipleObjects(2, cv->events, FALSE, timeout_ms);
 
     // Check if we are the last waiter
@@ -86,7 +85,7 @@ namespace pf
                   (cv->waiters_count == 0);
     LeaveCriticalSection(&cv->waiters_count_lock);
 
-    // Some thread called glfwBroadcastCond
+    // Some thread called broadcast
     if (last_waiter) {
       // We're the last waiter to be notified or to stop waiting, so
       // reset the manual event

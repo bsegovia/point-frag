@@ -122,9 +122,10 @@ namespace pf
     const RTCamera cam(fpsCam.org, fpsCam.up, fpsCam.view, fpsCam.fov, fpsCam.ratio);
     uint32 *rgba = PF_NEW_ARRAY(uint32, w * h);
     std::memset(rgba, 0, sizeof(uint32) * w * h);
+    PF_COMPILER_READ_WRITE_BARRIER;
     const double t = getSeconds();
     Task *rayTask = PF_NEW(TaskRayTrace<singleRay>, *intersector,
-      cam, c, rgba, w, h/RayPacket::height);
+                           cam, c, rgba, w, h/RayPacket::height);
     Task *returnToMain = PF_NEW(TaskInterruptMain);
     rayTask->starts(returnToMain);
     rayTask->scheduled();
@@ -186,4 +187,3 @@ void utest_rt(void)
 }
 
 UTEST_REGISTER(utest_rt);
-

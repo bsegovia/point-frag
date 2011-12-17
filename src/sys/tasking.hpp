@@ -134,7 +134,7 @@
 #define PF_TASK_STATICTICS 0
 
 /*! Give number of tries before yielding (multiplied by number of threads) */
-#define PF_TASK_TRIES_BEFORE_YIELD 8
+#define PF_TASK_TRIES_BEFORE_YIELD 64
 
 /*! Main thread (the one that the system gives us) is always 0 */
 #define PF_TASK_MAIN_THREAD 0
@@ -256,13 +256,19 @@ namespace pf
    *  returns, we are sure that nothing can be run anymore (MAIN THREAD outside
    *  a Task)
    */
-  void TaskingSystemEmptyQueues(void);
+  void TaskingSystemWaitAll(void);
 
-  /*! Signal the *main* thread only to stop (THREAD SAFE) */
+  /*! Lock the tasking system. After the lock, only one thread is running.
+   *  All other threads are sleeping. This is a particularly expensive
+   *  operation so use it with moderation :-)
+   */
+  void TaskingSystemLock(void);
+
+  /*! Unlock the tasking system. Basically wake up the other threads */
+  void TaskingSystemUnlock(void);
+
+  /*! Signal the main thread to return to the application (THREAD SAFE) */
   void TaskingSystemInterruptMain(void);
-
-  /*! Signal *all* threads to stop (THREAD SAFE) */
-  void TaskingSystemInterrupt(void);
 
   /*! Number of threads currently in the tasking system (*including main*) */
   uint32 TaskingSystemGetThreadNum(void);
