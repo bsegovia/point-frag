@@ -133,6 +133,9 @@
 /*! Store or not run-time statistics in the tasking system */
 #define PF_TASK_STATICTICS 0
 
+/*! Enable or not the profiling interface */
+#define PF_TASK_PROFILER 1
+
 /*! Give number of tries before yielding (multiplied by number of threads) */
 #define PF_TASK_TRIES_BEFORE_YIELD 64
 
@@ -161,9 +164,9 @@ namespace pf
     };
   };
 
-  /*! Describe the current state of a task. This PF_ASSERTs the correctness of the
-   * operations (like Task::starts or Task::ends which only operates on tasks
-   * with specific states)
+  /*! Describe the current state of a task. This asserts the correctness of the
+   *  operations (like Task::starts or Task::ends which only operates on tasks
+   *  with specific states)
    */
   struct TaskState {
     enum {
@@ -238,6 +241,28 @@ namespace pf
     Atomic elemNum;          //!< Number of outstanding elements
   };
 
+#if PF_TASK_PROFILER
+  /*! Callback collection to record useful events in the tasking system */
+  class TaskProfiler
+  {
+  public:
+    /*! Triggered when thread threadID goes to sleep */
+    virtual void onSleep(uint32 threadID) = 0;
+    /*! Triggered when thread threadID wakes up */
+    virtual void onWakeUp(uint32 threadID) = 0;
+    /*! Triggered when thread threadID locks the tasking system */
+    virtual void onLock(uint32 threadID) = 0;
+    /*! Triggered when thread threadID unlocks the tasking system */
+    virtual void onUnlock(uint32 threadID) = 0;
+    /*! Triggered when the task run function starts to execute */
+    virtual void onRunStart(const char *taskName, uint32 threadID) = 0;
+    /*! Triggered when the task run function ends to execute */
+    virtual void onRunEnd(const char *taskName, uint32 threadID) = 0;
+    /*! Triggered when the task finishes (possibly later due to dependencies) */
+    virtual void onEnd(const char *taskName, uint32 threadID) = 0;
+  };
+#endif /* PF_TASK_PROFILER */
+
   /*! Mandatory before creating and running any task. If workerNum < 0, the
    *  number of hardware threads minus 1 is chosen (MAIN THREAD outside a Task)
    */
@@ -275,6 +300,11 @@ namespace pf
 
   /*! Return the ID of the calling thread (between 0 and threadNum) */
   uint32 TaskingSystemGetThreadID(void);
+
+#if PF_TASK_PROFILER
+  /*! Set the profiling interface (can be NULL) */
+  void TaskingSystemSetProfiler(TaskProfiler *profiler);
+#endif /* PF_TASK_PROFILER */
 
   ///////////////////////////////////////////////////////////////////////////
   /// Implementation of the inlined functions

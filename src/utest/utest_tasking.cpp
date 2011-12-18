@@ -576,6 +576,57 @@ START_UTEST(TestLockUnlock)
 }
 END_UTEST(TestLockUnlock)
 
+///////////////////////////////////////////////////////////////////////////////
+// Test tasking profiler
+///////////////////////////////////////////////////////////////////////////////
+#if PF_TASK_PROFILER
+class UTestProfiler : public TaskProfiler
+{
+public:
+  UTestProfiler(void) : 
+    sleepNum(0), wakeUpNum(0),
+    lockNum(0), unlockNum(0),
+    runStartNum(0), runEndNum(0), endNum(0) {}
+  virtual void onSleep(uint32 threadID)  {sleepNum++;}
+  virtual void onWakeUp(uint32 threadID) {wakeUpNum++;}
+  virtual void onLock(uint32 threadID)   {lockNum++;}
+  virtual void onUnlock(uint32 threadID) {unlockNum++;}
+  virtual void onRunStart(const char *taskName, uint32 threadID) {runStartNum++;}
+  virtual void onRunEnd(const char *taskName, uint32 threadID)   {runEndNum++;}
+  virtual void onEnd(const char *taskName, uint32 threadID)      {endNum++;}
+  Atomic sleepNum;
+  Atomic wakeUpNum;
+  Atomic lockNum;
+  Atomic unlockNum;
+  Atomic runStartNum;
+  Atomic runEndNum;
+  Atomic endNum;
+};
+
+START_UTEST(TestProfiler)
+{
+  UTestProfiler *profiler = PF_NEW(UTestProfiler);
+  TaskingSystemSetProfiler(profiler);
+  TestFibo();
+  TestTaskSet();
+  TestMultiDependency();
+  TestLockUnlock();
+#define OUTPUT_FIELD(FIELD) \
+  std::cout << #FIELD ": " << profiler->FIELD << std::endl
+  OUTPUT_FIELD(sleepNum);
+  OUTPUT_FIELD(wakeUpNum);
+  OUTPUT_FIELD(lockNum);
+  OUTPUT_FIELD(unlockNum);
+  OUTPUT_FIELD(runStartNum);
+  OUTPUT_FIELD(runEndNum);
+  OUTPUT_FIELD(endNum);    
+#undef OUTPUT_FIELD
+  TaskingSystemSetProfiler(NULL);
+  PF_DELETE(profiler);
+}
+END_UTEST(TestProfiler)
+#endif /* PF_TASK_PROFILER */
+
 /*! Run all tasking tests */
 void utest_tasking(void)
 {
@@ -593,7 +644,7 @@ void utest_tasking(void)
   TestMultiDependencyTwoStage();
   TestMultiDependencyRandomStart();
   TestLockUnlock();
+  TestProfiler();
 }
 
 UTEST_REGISTER(utest_tasking);
-
