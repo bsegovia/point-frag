@@ -51,6 +51,7 @@ namespace pf
     static const float defaultSpeed;
     static const float defaultAngularSpeed;
     static const float acosMinAngle;
+    PF_CLASS(FPSCamera);
   };
 
   /*! Handle mouse, keyboard ... */

@@ -47,6 +47,7 @@ namespace pf
 
     /*! The BVH we intersect */
     Ref< BVH2<T> > bvh;
+    PF_CLASS(BVH2Traverser);
   };
 
 } /* namespace pf */

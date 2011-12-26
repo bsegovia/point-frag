@@ -101,9 +101,8 @@ namespace pf
     if (ptr == NULL) return;
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
-    // FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
-    if(allocMap.find(iptr) == allocMap.end()) debugbreak();
-    
+    FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
+    //if(allocMap.find(iptr) == allocMap.end()) debugbreak();
     allocMap.erase(iptr);
     unfreedNum--;
   }
@@ -149,9 +148,7 @@ namespace pf
 
 namespace pf
 {
-  void* malloc(size_t size) {
-    return std::malloc(size);
-  }
+  void* malloc(size_t size) { return std::malloc(size); }
 
   void* realloc(void *ptr, size_t size) {
 #if PF_DEBUG_MEMORY
@@ -161,9 +158,7 @@ namespace pf
     return std::realloc(ptr, size);
   }
 
-  void free(void *ptr) {
-    if (ptr != NULL) std::free(ptr);
-  }
+  void free(void *ptr) { if (ptr != NULL) std::free(ptr); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,9 +178,7 @@ namespace pf
     return ptr;
   }
 
-  void alignedFree(void *ptr) {
-    _mm_free(ptr);
-  }
+  void alignedFree(void *ptr) { _mm_free(ptr); }
 }
 #endif
 
@@ -209,9 +202,7 @@ namespace pf
     return ptr;
   }
 
-  void alignedFree(void *ptr) {
-    free(ptr);
-  }
+  void alignedFree(void *ptr) { free(ptr); }
 }
 
 #endif

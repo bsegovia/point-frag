@@ -20,7 +20,7 @@
 #include "renderer_displayable.hpp"
 #include "math/matrix.hpp"
 #include "sys/ref.hpp"
-#include <list>
+#include "sys/list.hpp"
 
 namespace pf
 {
@@ -46,14 +46,15 @@ namespace pf
     /*! Append a set with the given model 4x4 matrix */
     void add(RendererSet *set, const float *model = NULL);
     /*! Get the list of objects */
-    INLINE std::list<Elem> &getList(void) { return this->objects; }
+    INLINE list<Elem> &getList(void) { return this->objects; }
   private:
     /*! Implements base class method */
     void onCompile(void);
     /*! Implements base class method */
     void onUnreferenced(void);
     /*! All the objects to render */
-    std::list<Elem> objects;
+    list<Elem> objects;
+    PF_CLASS(RendererDisplayList);
   };
 } /* namespace pf */
 

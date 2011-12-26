@@ -38,7 +38,7 @@ namespace pf
     /*! This will be the used display list (TODO supports more that one list) */
     INLINE void setDisplayList(RendererDisplayList *list_) {
       PF_ASSERT(this->isCompiled() == false);
-      this->list = list_;
+      this->displayList = list_;
     }
     /*! Set the screen dimensions */
     INLINE void setScreenDimension(uint32 w_, uint32 h_) {
@@ -72,14 +72,15 @@ namespace pf
       this->ratio = ratio;
     }
   private:
-    virtual void onCompile(void);     //!< Implements base class
-    virtual void onUnreferenced(void);//!< Implements base class
-    vec3f org;                        //!< Camera origin
-    vec3f up;                         //!< Camera up vector
-    vec3f view;                       //!< Camera view vector
-    float fov, ratio;                 //!< Fov and aspect ratio
-    uint32 w, h;                      //!< Screen dimensions
-    Ref<RendererDisplayList> list;    //!< Objects to display
+    virtual void onCompile(void);         //!< Implements base class
+    virtual void onUnreferenced(void);    //!< Implements base class
+    vec3f org;                            //!< Camera origin
+    vec3f up;                             //!< Camera up vector
+    vec3f view;                           //!< Camera view vector
+    float fov, ratio;                     //!< Fov and aspect ratio
+    uint32 w, h;                          //!< Screen dimensions
+    Ref<RendererDisplayList> displayList; //!< Objects to display
+    PF_CLASS(RendererFrame);
   };
 
 } /* namespace pf */

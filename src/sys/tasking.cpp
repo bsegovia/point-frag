@@ -100,7 +100,7 @@ namespace pf
       volatile int32 x[TaskPriority::NUM];
       volatile __m128i v;
     } head, tail;
-    ALIGNED_CLASS(CACHE_LINE);
+    PF_ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! For work stealing:
@@ -200,7 +200,7 @@ namespace pf
 #if PF_TASK_STATICTICS
     Atomic sleepNum;
 #endif /* PF_TASK_STATICTICS */
-    ALIGNED_CLASS(CACHE_LINE);
+    PF_ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! Handle the scheduling of all tasks. We first implement a
@@ -277,7 +277,7 @@ namespace pf
     volatile size_t sleepingNum;  //!< Number of threads sleeping
     MutexActive sleepMutex;       //!< Protect the sleeping field
     CACHE_LINE_ALIGNED volatile int32 locked; //!< To globally lock the tasking system
-    ALIGNED_CLASS(CACHE_LINE);
+    PF_ALIGNED_CLASS(CACHE_LINE);
   };
 
   /*! Allocator per thread */
@@ -956,7 +956,13 @@ namespace pf
 #if PF_TASK_USE_DEDICATED_ALLOCATOR
   void *Task::operator new(size_t size) { return allocator->allocate(size); }
   void Task::operator delete(void *ptr) { allocator->deallocate(ptr); }
+#else
+  void *Task::operator new(size_t size) { return alignedMalloc(size, 16); }
+  void Task::operator delete(void *ptr) { alignedFree(ptr); }
 #endif /* PF_TASK_USE_DEDICATED_ALLOCATOR */
+  static void * const fake = NULL;
+  void* Task::operator new[](size_t size) { NOT_IMPLEMENTED; return fake; }
+  void  Task::operator delete[](void* ptr){ NOT_IMPLEMENTED; }
 
   Task* TaskSet::run(void)
   {

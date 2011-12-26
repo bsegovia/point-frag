@@ -26,22 +26,21 @@ namespace pf {
    *  density it got sampled with. */
   template<typename T> struct Sample
   {
-    inline Sample           () {}
-    inline Sample           ( const Sample& other ) { value = other.value; pdf = other.pdf; }
-    inline Sample& operator=( const Sample& other ) { value = other.value; pdf = other.pdf; return *this; }
-
-    inline Sample (const T& value, float pdf = 1.f) : value(value), pdf(pdf) {}
-
-    inline operator const T&( ) const { return value; }
-    inline operator       T&( )       { return value; }
+    INLINE Sample           () {}
+    INLINE Sample           ( const Sample& other ) { value = other.value; pdf = other.pdf; }
+    INLINE Sample& operator=( const Sample& other ) { value = other.value; pdf = other.pdf; return *this; }
+    INLINE Sample (const T& value, float pdf = 1.f) : value(value), pdf(pdf) {}
+    INLINE operator const T&( ) const { return value; }
+    INLINE operator       T&( )       { return value; }
 
   public:
     T value;    //!< location of the sample
     float pdf;  //!< probability density of the sample
+    PF_STRUCT(Sample);
   };
 
   /*! output operator */
-  template<typename T> inline std::ostream& operator<<(std::ostream& cout, const Sample<T>& s) {
+  template<typename T> INLINE std::ostream& operator<<(std::ostream& cout, const Sample<T>& s) {
     return cout << "{ value = " << s.value << ", pdf = " << s.pdf << "}";
   }
 

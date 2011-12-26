@@ -26,7 +26,6 @@ namespace pf
   struct BBox
   {
     T lower, upper;
-
     INLINE BBox() { }
     INLINE BBox(const BBox& other) { lower = other.lower; upper = other.upper; }
     INLINE BBox& operator= (const BBox &other) { lower = other.lower; upper = other.upper; return *this; }
@@ -40,6 +39,7 @@ namespace pf
     INLINE BBox(TrueTy)  : lower(neg_inf), upper(pos_inf) {}
     INLINE BBox(NegInfTy): lower(pos_inf), upper(neg_inf) {}
     INLINE BBox(PosInfTy): lower(neg_inf), upper(pos_inf) {}
+    PF_CLASS(BBox);
   };
 
   /*! tests if box is empty */
@@ -116,7 +116,7 @@ namespace pf
   struct Box : BBox<ssef> {
     INLINE Box(void) {}
     INLINE Box(EmptyTy) : BBox<ssef>(empty) {}
-    ALIGNED_CLASS(sizeof(ssef))
+    PF_ALIGNED_CLASS(sizeof(ssef))
   };
 }
 

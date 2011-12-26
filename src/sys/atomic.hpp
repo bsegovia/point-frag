@@ -43,6 +43,7 @@ namespace pf
 
   private:
     volatile T data;
+    PF_STRUCT(AtomicInternal);
   };
 
   typedef AtomicInternal<atomic32_t> Atomic32;

@@ -36,6 +36,7 @@ namespace pf
     uint32 *primID; //!< Indices of primitives per leaf
     uint32 nodeNum; //!< Number of nodes in the tree
     uint32 primNum; //!< The number of primitives
+    PF_STRUCT(BVH2);
   };
 
   template <typename T>

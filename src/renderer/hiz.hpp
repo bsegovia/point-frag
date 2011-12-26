@@ -84,6 +84,7 @@ namespace pf
     const uint32 tileYNum;//!< Number of tiles per column
     const uint32 tileNum; //!< pixelNum / Tile::pixelNum
     Tile *tiles;          //!< The depth buffer data
+    PF_STRUCT(HiZ);
   };
 
   /*! SIMD optimized structure to perform frustum and HiZ culling */
@@ -107,6 +108,7 @@ namespace pf
     ssef windowing;      //!< To scale the position in {w,h}
     ssef hizExtent;      //!< Maximum extent in the HiZ {w-1,h-1}
     Ref<HiZ> hiz;        //!< To perform Z test
+    PF_STRUCT(PerspectiveFrustum);
   };
 
 // Do we want to use the HiZ buffer?

@@ -27,6 +27,7 @@ namespace pf
   {
     std::string msg; //!< Error message if the script failed
     bool success;    //!< Indicate if the script properly run
+    PF_CLASS(ScriptStatus);
   };
 
   /*! Bare metal script system interface. We will use LuaJIT for that. We have
@@ -47,6 +48,7 @@ namespace pf
     virtual void runNonProtected(const char *str, ScriptStatus &status) = 0;
     /*! Open the file and run it */
     virtual void runFileNonProtected(const char *path, ScriptStatus &status) = 0;
+    PF_CLASS(ScriptStatus);
   };
 
   /*! Instantiate a Lua state basically */

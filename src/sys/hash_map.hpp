@@ -62,6 +62,7 @@ namespace pf
       parent_type(first,last,n,hf,eql,a) {}
     /*! Copy constructor */
     INLINE hash_map(const hash_map &other) : parent_type(other) {}
+    PF_CLASS(hash_map);
   };
 } /* namespace pf */
 

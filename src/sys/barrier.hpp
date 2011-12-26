@@ -31,18 +31,15 @@ namespace pf
       this->full_size = count;
     }
 
-    int wait()
-    {
+    int wait() {
       count_mutex.lock();
       count++;
-
       if (count == full_size) {
         count = 0;
         cond.broadcast();
         count_mutex.unlock();
         return 1;
       }
-
       cond.wait(count_mutex);
       count_mutex.unlock();
       return 0;
@@ -52,6 +49,7 @@ namespace pf
     size_t count, full_size;
     MutexSys count_mutex;
     ConditionSys cond;
+    PF_CLASS(BarrierSys);
   };
 
   /* default barrier type */

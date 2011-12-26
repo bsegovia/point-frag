@@ -39,6 +39,7 @@ namespace pf
     INLINE vec2(NegInfTy) : x(neg_inf), y(neg_inf) {}
     INLINE const T& operator [](size_t axis) const {PF_ASSERT(axis < 2); return (&x)[axis];}
     INLINE       T& operator [](size_t axis)       {PF_ASSERT(axis < 2); return (&x)[axis];}
+    PF_STRUCT(vec2);
   };
 
   DECL V2 OP+ (V2ARG a)  {return V2(+a.x, +a.y);}
@@ -106,6 +107,7 @@ namespace pf
     INLINE vec3 (NegInfTy) : x(neg_inf), y(neg_inf), z(neg_inf) {}
     INLINE const T& OP [](size_t axis) const {PF_ASSERT(axis < 3); return (&x)[axis];}
     INLINE       T& OP [](size_t axis)       {PF_ASSERT(axis < 3); return (&x)[axis];}
+    PF_STRUCT(vec3);
   };
 
   DECL V3 abs (V3ARG a) {return V3(abs(a.x), abs(a.y), abs(a.z));}
@@ -180,6 +182,7 @@ namespace pf
     INLINE vec4 (NegInfTy) : x(neg_inf), y(neg_inf), z(neg_inf), w(neg_inf) {}
     INLINE const T& operator [](size_t axis) const {PF_ASSERT(axis < 4); return (&x)[axis];}
     INLINE       T& operator [](size_t axis)       {PF_ASSERT(axis < 4); return (&x)[axis];}
+    PF_STRUCT(vec4);
   };
 
   DECL V4 OP+ (V4ARG a) {return V4(+a.x, +a.y, +a.z, +a.w);}

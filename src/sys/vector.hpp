@@ -60,6 +60,7 @@ namespace pf
       PF_ASSERT(index < this->size());
       return parent_type::operator[] (index);
     }
+    PF_CLASS(vector);
   };
 } /* namespace pf */
 

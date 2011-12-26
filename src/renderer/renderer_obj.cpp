@@ -257,6 +257,7 @@ namespace pf
     uint32 *indices;
     uint32 vertNum;
     uint32 indexNum;
+    PF_STRUCT(RendererObjSharedData);
   };
 
 #define OGL_NAME (obj.renderer.driver)

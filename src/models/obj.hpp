@@ -28,36 +28,35 @@ namespace pf
   struct Obj : public NonCopyable
   {
     /*! OBJ triangle - indexes vertices and material */
-    struct Triangle
-    {
+    struct Triangle {
       INLINE Triangle(void) {}
       INLINE Triangle(vec3i v_, int m_) : v(v_), m(m_) {}
       vec3i v;
       int m;
+      PF_STRUCT(Triangle);
     };
 
     /*! OBJ vertex - stores position, normal and texture coordinates */
-    struct Vertex
-    {
+    struct Vertex {
       INLINE Vertex(void) {}
       INLINE Vertex(vec3f p_, vec3f n_, vec2f t_) :
         p(p_), n(n_), t(t_) {}
       vec3f p, n;
       vec2f t;
+      PF_STRUCT(Vertex);
     };
 
     /*! OBJ material group - triangles are grouped by material */
-    struct MatGroup
-    {
+    struct MatGroup {
       MatGroup(int first_, int last_, int m_) :
         first(first_), last(last_), m(m_) {}
       MatGroup(void) {}
       int first, last, m;
+      PF_STRUCT(MatGroup);
     };
 
     /*! OBJ Material - just a dump of mtl description */
-    struct Material
-    {
+    struct Material {
       char *name;
       char *map_Ka;
       char *map_Kd;
@@ -73,6 +72,7 @@ namespace pf
       double shiny;
       double glossy;
       double refract_index;
+      PF_STRUCT(Material);
     };
 
     Obj(void);
@@ -87,6 +87,7 @@ namespace pf
     size_t vertNum;
     size_t grpNum;
     size_t matNum;
+    PF_STRUCT(Obj);
   };
 } /* namespace pf */
 

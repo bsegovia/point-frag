@@ -47,6 +47,7 @@ namespace pf
       int16 padding[4];    //!< Padding for each character (up, right, down, left)
       int16 spacing[2];    //!< Spacing for each character (horizontal, vertical)
       int16 outline;       //!< Outline thickness
+      PF_STRUCT(Info);
     };
 
     /*! Holds information common to all characters */
@@ -63,6 +64,7 @@ namespace pf
       int16 scaleH;     //!< Texture height
       int16 pages;      //!< Number of texture pages included in the font
       int16 packed;     //!< Set to 1 if the monochrome characters have been packed
+      PF_STRUCT(Common);
     };
 
     /*! Page information */
@@ -71,6 +73,7 @@ namespace pf
       Page(void);
       int16 id;         //!< Page ID
       std::string file; //!< Texture file name
+      PF_STRUCT(Page);
     };
 
     /*! This tag describes on character in the font. There is one for each
@@ -89,6 +92,7 @@ namespace pf
       int16 xadvance; //!< How much the current position should be advanced in the screen
       int16 page;     //!< Page ID
       int16 channel;  //!< 1=blue, 2=green, 4=red, 8=alpha, 15=all channels
+      PF_STRUCT(Char);
     };
 
     /*! The kerning information is used to adjust the distance between certain
@@ -101,6 +105,7 @@ namespace pf
       int16 first;
       int16 second;
       int16 amount;
+      PF_STRUCT(Kerning);
     };
 
     Info info;
@@ -108,6 +113,7 @@ namespace pf
     vector<Char> chars;
     vector<Page> pages;
     vector<Kerning> kernings;
+    PF_STRUCT(Font);
   };
 
 } /* namespace pf */

@@ -244,6 +244,7 @@ namespace pf
   struct QuadVertex {
     INLINE QuadVertex(vec2f p_, vec2f t_) : p(p_), t(t_) {}
     vec2f p, t;
+    PF_STRUCT(QuadVertex);
   };
   static const QuadVertex quadData[] = {
     QuadVertex(vec2f(-1.0f,-1.0f), vec2f(0.0f, 1.0f)),

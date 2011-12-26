@@ -119,6 +119,7 @@ namespace pf
      *  doing scheduled and then waitForCompletion on it
      */
     Ref<Task> waitForDestruction;
+    PF_STRUCT(OGL);
   };
 
 /*! Convenient way to catch all GL related errors. User defines the name of the

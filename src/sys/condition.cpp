@@ -30,8 +30,8 @@ namespace pf
   // readapted from the glfw source code that may be found here:
   // http://www.glfw.org
   enum {
-      MINGW32_COND_SIGNAL     = 0,
-      MINGW32_COND_BROADCAST  = 1
+    MINGW32_COND_SIGNAL     = 0,
+    MINGW32_COND_BROADCAST  = 1
   };
 
   /*! Implement the internal condition variable implementation Mingw lacks */

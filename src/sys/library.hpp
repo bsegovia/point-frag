@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_LIBRARY_H__
-#define __PF_LIBRARY_H__
+#ifndef __PF_LIBRARY_HPP__
+#define __PF_LIBRARY_HPP__
 
 #include <string>
 
@@ -25,15 +25,13 @@ namespace pf
 {
   /*! type for shared library */
   typedef struct opaque_lib_t* lib_t;
-
   /*! loads a shared library */
   lib_t openLibrary(const std::string& file);
-
   /*! returns address of a symbol from the library */
   void* getSymbol(lib_t lib, const std::string& sym);
-
   /*! unloads a shared library */
   void closeLibrary(lib_t lib);
-}
+} /* namespace pf */
 
-#endif
+#endif /* __PF_LIBRARY_HPP__ */
+

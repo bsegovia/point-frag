@@ -25,10 +25,8 @@ namespace pf
 {
   /*! get the full path to the running executable */
   std::string getExecutableFileName();
-
   /*! return platform name */
   std::string getPlatformName();
-
   /*! return the number of logical threads of the system */
   int getNumberOfLogicalThreads();
 }

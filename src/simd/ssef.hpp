@@ -78,6 +78,7 @@ namespace pf
     static const ssef IDENTITY; //!< Stores {0,1,2,3}
     static const ssef LANE_NUM; //!< Stores {4,4,4,4}
     static const ssef EPSILON;  //!< Stores {eps,eps,eps,eps}
+    PF_STRUCT(ssef);
   };
 
   INLINE const ssef operator+ (const ssef& a) { return a; }

@@ -32,6 +32,7 @@ namespace pf
       std::cout << str;
       return *this;
     }
+    PF_CLASS(CoutStream);
   };
 
   class FileStream : public LoggerStream {
@@ -47,6 +48,7 @@ namespace pf
     }
   private:
     FILE *file;
+    PF_CLASS(FileStream);
   };
 
   static void LoggerStart(void) {

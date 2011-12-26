@@ -48,6 +48,7 @@ namespace pf
     GLuint magFilter;   //!< Magnification filter
     GLuint minFilter;   //!< Magnification filter
     GLuint internalFmt; //!< Internal format
+    PF_STRUCT(Texture2D);
   };
 
   /*! Texture compression quality when used */
@@ -83,6 +84,7 @@ namespace pf
     GLuint minFilter;       //!< Minification
     GLuint magFilter;       //!< Magnification (will compute mip-maps if needed)
     TextureQuality quality; //!< Compression quality when used
+    PF_STRUCT(TextureRequest);
   };
 
   /*! States of the texture. This also includes the loading task itself. This
@@ -104,6 +106,7 @@ namespace pf
       COMPLETE  = 2, //!< It is here!
       INVALID_STATE = 0xffffffff
     };
+    PF_STRUCT(TextureState);
   };
 
   /*! The texture streamer is responsible of loading asynchronously the
@@ -116,7 +119,6 @@ namespace pf
   public:
     TextureStreamer(Renderer &renderer);
     ~TextureStreamer(void);
-
     /*! Indicate the current loading state of the texture */
     TextureState getTextureState(const std::string &name);
     /*! If the texture is not loading, spawn a task and load it. Otherwise,
@@ -133,6 +135,7 @@ namespace pf
     Renderer &renderer;              //!< Owner of the streamer
     friend class TaskTextureLoad;    //!< Load the textures from the disk
     friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
+    PF_CLASS(TextureStreamer);
   };
 } /* namespace pf */
 

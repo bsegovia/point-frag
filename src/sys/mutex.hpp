@@ -26,16 +26,15 @@ namespace pf
   class MutexSys {
     friend class ConditionSys;
   public:
-
     MutexSys(void);
     ~MutexSys(void);
     void lock(void);
     void unlock(void);
-
   protected:
     void* mutex;
     MutexSys(const MutexSys&); // don't implement
     MutexSys& operator= (const MutexSys&); // don't implement
+    PF_CLASS(MutexSys);
   };
 
   /*! active mutex */
@@ -52,9 +51,9 @@ namespace pf
   protected:
     enum ${ LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1 };
     Atomic $lock;
-
     MutexActive(const MutexActive&); // don't implement
     MutexActive& operator=(const MutexActive&); // don't implement
+    PF_CLASS(MutexActive);
   };
 
   /*! safe mutex lock and unlock helper */
@@ -66,6 +65,7 @@ namespace pf
     Mutex& mutex;
     Lock(const Lock&); // don't implement
     Lock& operator= (const Lock&); // don't implement
+    PF_CLASS(Lock);
   };
 }
 

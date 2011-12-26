@@ -48,6 +48,7 @@ namespace pf
     ssef iaMaxrDir;      //!< Maximum rcp(direction) for IA
     sseb iasign;         //!< Sign of the ray directions
     uint32 properties;   //!< CR / IA / CO (see above)
+    PF_STRUCT(RayPacket);
   };
 
   /*! Set of hit points for a ray packet */
@@ -62,6 +63,7 @@ namespace pf
     ssef v[RayPacket::chunkNum];   //!< v barycentric coordinate
     ssei id0[RayPacket::chunkNum]; //!< First ID of intersection
     ssei id1[RayPacket::chunkNum]; //!< Second ID of intersection
+    PF_STRUCT(PacketHit);
   };
 
 } /* namespace pf */

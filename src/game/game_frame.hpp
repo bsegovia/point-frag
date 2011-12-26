@@ -33,6 +33,7 @@ namespace pf
     GameFrame(int w, int h);
     Ref<FPSCamera> cam;    //!< Camera for this frame
     Ref<InputEvent> event; //!< Input as captured for this frame
+    PF_CLASS(GameFrame); // Custom new / delete operators
   };
 
   /*! Responsible to handle the complete frame */

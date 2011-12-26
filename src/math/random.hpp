@@ -87,9 +87,7 @@ namespace pf
   {
   public:
     INLINE Random(const int seed = 27) {setSeed(seed);}
-
-    INLINE void setSeed(const int s)
-    {
+    INLINE void setSeed(const int s) {
       const int a = 16807;
       const int m = 2147483647;
       const int q = 127773;
@@ -108,9 +106,7 @@ namespace pf
       }
       state = table[0];
     }
-
-    INLINE int getInt()
-    {
+    INLINE int getInt() {
       const int a = 16807;
       const int m = 2147483647;
       const int q = 127773;
@@ -125,7 +121,6 @@ namespace pf
 
       return state;
     }
-
     INLINE int getInt(int limit) { return getInt() % limit; }
     INLINE float getFloat () { return min(getInt() / 2147483647.0f, 1.0f - float(ulp)); }
     INLINE double getDouble() { return min(getInt() / 2147483647.0 , 1.0  - double(ulp)); }
@@ -134,6 +129,7 @@ namespace pf
     int seed;
     int state;
     int table[32];
+    PF_CLASS(Random);
   };
 }
 

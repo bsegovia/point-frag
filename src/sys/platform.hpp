@@ -230,6 +230,14 @@ do {                                                 \
 /*! Produce a string from the macro locatiom */
 #define HERE (STRING(__LINE__) "@" __FILE__)
 
+/*! Portable AlignOf */
+template <typename T>
+struct AlignOf
+{
+  struct Helper { char x; T t; };
+  static const size_t value = offsetof(Helper, t);
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Visibility parameters (DLL export and so on)
 ////////////////////////////////////////////////////////////////////////////////
@@ -315,7 +323,7 @@ namespace pf
   INLINE bool  select(bool s, bool  t , bool f) { return s ? t : f; }
   INLINE int   select(bool s, int   t,   int f) { return s ? t : f; }
   INLINE float select(bool s, float t, float f) { return s ? t : f; }
- 
+
   /*! Fatal error function */
   void FATAL(const std::string&);
 
@@ -344,22 +352,7 @@ namespace pf
     }
     return true;
   }
-
   template<> INLINE uint32 isPowerOf<2>(uint32 i) { return ((i-1)&i) == 0; }
-
-#define ALIGNED_STRUCT(ALIGN)                                              \
-  void* operator new(size_t size) { return alignedMalloc(size, ALIGN); }   \
-  void operator delete(void* ptr) { alignedFree(ptr); }                    \
-  void* operator new[](size_t size) { return alignedMalloc(size, ALIGN); } \
-  void operator delete[](void* ptr) { alignedFree(ptr); }                  \
-
-#define ALIGNED_CLASS(ALIGN)                                        \
-public:                                                             \
-  ALIGNED_STRUCT(ALIGN)                                             \
-private:
-
-#define ALIGNED_STRUCT_ON(T) ALIGNED_STRUCT(sizeof(T))
-#define ALIGNED_CLASS_ON(ALIGN) ALIGNED_CLASS(sizeof(T))
 
   /*! random functions */
   template<typename T> T   random() { return T(0); }

@@ -62,6 +62,7 @@ namespace pf
 
     INLINE const int32& operator [](const size_t index) const { PF_ASSERT(index < 4); return v[index]; }
     INLINE       int32& operator [](const size_t index)       { PF_ASSERT(index < 4); return v[index]; }
+    PF_STRUCT(ssei);
   };
 
   ////////////////////////////////////////////////////////////////////////////////

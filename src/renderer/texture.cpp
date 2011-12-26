@@ -127,6 +127,7 @@ namespace pf
     size_t *sz;             //!< Size of them (if compression used)
     int levelNum;           //!< Number of mip-maps
     int fmt;                //!< Format of the texture
+    PF_CLASS(TextureLoadData);
   };
 
   TextureLoadData::TextureLoadData(const TextureRequest &request) :

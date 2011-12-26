@@ -17,10 +17,12 @@
 #ifndef __PF_MAP_HPP__
 #define __PF_MAP_HPP__
 
+#include "sys/platform.hpp"
 #include <map>
 
 namespace pf
 {
+  /*! Use custom allocator instead of std one */
   template<class Key, class T, class Pred = std::less<Key>>
   class map : public std::map<Key,T,Pred,Allocator<std::pair<const Key, T>>>
   {
@@ -50,6 +52,7 @@ namespace pf
       parent_type(first, last, comp, a) {}
     /*! Copy constructor */
     INLINE map(const map& x) : parent_type(x) {}
+    PF_CLASS(map);
   };
 } /* namespace pf */
 

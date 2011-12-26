@@ -33,6 +33,7 @@ namespace pf
     ALIGNED(16) vec3f dir;  //!< Direction of it
     ALIGNED(16) vec3f rdir; //!< Per-compoment inverse of the direction
     float tnear, tfar;      //!< Valid segment along the direction
+    PF_STRUCT(Ray);
   };
 
   /*! Hit point */
@@ -44,6 +45,7 @@ namespace pf
     INLINE operator bool(void) { return id0 != -1; }
     ALIGNED(16) float t, u, v, w; //!< Intersection coordinates (in the triangle)
     int id0, id1;                 //!< Two IDs hit
+    PF_STRUCT(Hit);
   };
 
 } /* namespace pf */

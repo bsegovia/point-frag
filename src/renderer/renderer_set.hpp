@@ -17,12 +17,14 @@
 #ifndef __PF_RENDERER_SET_HPP__
 #define __PF_RENDERER_SET_HPP__
 
+#include "sys/platform.hpp"
+
 namespace pf
 {
   /*! A set of objects to display */
   class RendererSet : public RendererDisplayable
   {
-
+    PF_CLASS(RendererSet);
   };
 
 } /* namspace pf */

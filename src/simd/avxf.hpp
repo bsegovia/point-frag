@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_AVXF_H__
-#define __PF_AVXF_H__
+#ifndef __PF_AVXF_HPP__
+#define __PF_AVXF_HPP__
 
 namespace pf
 {
@@ -64,8 +64,8 @@ namespace pf
 
     INLINE const float& operator []( const size_t index ) const { PF_ASSERT(index < 8); return v[index]; }
     INLINE       float& operator []( const size_t index )       { PF_ASSERT(index < 8); return v[index]; }
+    PF_STRUCT(avxf);
   };
-
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Unary Operators
@@ -248,4 +248,5 @@ namespace pf
   }
 }
 
-#endif
+#endif /* __PF_AVXF_HPP__ */
+

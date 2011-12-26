@@ -50,6 +50,7 @@ namespace pf
       file(file), function(function), line(line) {}
     const char *file, *function;
     int line;
+    PF_CLASS(LoggerInfo);
   };
 
   /*! Used to lazily create strings from the user defined logs. When destroyed
@@ -71,6 +72,7 @@ namespace pf
     LoggerBuffer(void);
     Logger *logger;       //!< The logger that created this buffer
     std::stringstream ss; //!< Stores all the user strings
+    PF_CLASS(LoggerBuffer);
   };
 
   /*! Central class to log anything from the engine */
@@ -94,6 +96,7 @@ namespace pf
     LoggerStream *streams; //!< All the output streams
     LoggerBuffer *buffers; //!< One buffer per thread
     double startTime;      //!< When the logger has been created
+    PF_CLASS(Logger);
   };
 
   /*! We have one logger for the application */

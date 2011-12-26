@@ -14,8 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_AVXB_H__
-#define __PF_AVXB_H__
+#ifndef __PF_AVXB_HPP__
+#define __PF_AVXB_HPP__
+
+#include "sys/platform.hpp"
 
 namespace pf
 {
@@ -59,6 +61,7 @@ namespace pf
 
     INLINE bool   operator []( const size_t index ) const { PF_ASSERT(index < 8); return (_mm256_movemask_ps(m256) >> index) & 1; }
     INLINE int32& operator []( const size_t index )       { PF_ASSERT(index < 8); return v[index]; }
+    PF_STRUCT(avxb);
   };
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -149,4 +152,5 @@ namespace pf
   }
 }
 
-#endif
+#endif /* __PF_AVXB_HPP__ */
+

@@ -63,10 +63,10 @@ namespace pf
       PF_ASSERT(index < size());
       return elem[index];
     }
-
   private:
     T elem[N];            //!< Store the elements
     STATIC_ASSERT(N > 0); //!< zero element is not allowed
+    PF_CLASS(fixed_array);
   };
 
 } /* namespace pf */

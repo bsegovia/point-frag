@@ -35,6 +35,7 @@ namespace pf
     vec3f v[3];
     vec3f n;
     float pad; // == 0 (for faster intersection)
+    PF_STRUCT(RTTriangle);
   };
 
   INLINE RTTriangle::RTTriangle(void) {}

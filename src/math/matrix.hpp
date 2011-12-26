@@ -99,8 +99,9 @@ namespace pf
       return mat3x3(u.x*u.x+(1-u.x*u.x)*c, u.x*u.y*(1-c)-u.z*s,  u.x*u.z*(1-c)+u.y*s,
                     u.x*u.y*(1-c)+u.z*s,   u.y*u.y+(1-u.y*u.y)*c,u.y*u.z*(1-c)-u.x*s,
                     u.x*u.z*(1-c)-u.y*s,   u.y*u.z*(1-c)+u.x*s,  u.z*u.z+(1-u.z*u.z)*c);
-   }
- };
+    }
+    PF_STRUCT(mat3x3);
+  };
 
   /*! External operators */
   DECL M33 OP- (M33 a)           {return M33(-a.vx,-a.vy,-a.vz);}
@@ -166,6 +167,7 @@ namespace pf
       V3 v = normalize(cross(z,u));
       return mat4x3(M33(u,v,z),eye);
     }
+    PF_STRUCT(mat4x3);
   };
 
   /*! External operators */
@@ -313,6 +315,7 @@ namespace pf
     }
     INLINE V4&        OP[] (int i) {return this->c[i];}
     INLINE const V4&  OP[] (int i) const {return this->c[i];}
+    PF_STRUCT(mat4x4);
   };
 
   /*! External operators */

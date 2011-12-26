@@ -80,6 +80,7 @@ namespace pf
     INLINE       Ref<TypeOut> cast()       { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
     template<typename TypeOut>
     INLINE const Ref<TypeOut> cast() const { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
+    PF_CLASS(Ref);
   };
 
   template<typename Type> INLINE bool operator< ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }

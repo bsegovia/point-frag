@@ -51,6 +51,7 @@ namespace pf
     char isResized:1;           //!< True if the user resized the window
   private:
     int32 keys[KEY_ARRAY_SIZE]; //!< Bitfield saying if key is pressed?
+    PF_CLASS(InputEvent); // Declare custom new / delete operators
   };
 
   /*! Record all events (keyboard, mouse, resizes) */

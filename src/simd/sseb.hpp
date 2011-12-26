@@ -25,7 +25,6 @@ namespace pf
   struct sseb
   {
     union { __m128 m128; int32 v[4]; };
-    //__m128 m128;
 
     ////////////////////////////////////////////////////////////////////////////////
     /// Constructors, Assignment & Cast Operators
@@ -63,6 +62,7 @@ namespace pf
 
     INLINE bool   operator [](const size_t index) const { PF_ASSERT(index < 4); return (_mm_movemask_ps(m128) >> index) & 1; }
     INLINE int32& operator [](const size_t index) { PF_ASSERT(index < 4); return this->v[index]; }
+    PF_STRUCT(sseb);
   };
 
   INLINE const sseb operator !(const sseb& a) { return _mm_xor_ps(a, sseb(True)); }

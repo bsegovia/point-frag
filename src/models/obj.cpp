@@ -16,7 +16,6 @@
 
 #include "obj.hpp"
 #include "sys/platform.hpp"
-#include "sys/alloc.hpp"
 #include "sys/logging.hpp"
 #include "sys/vector.hpp"
 #include "sys/string.hpp"
@@ -75,6 +74,7 @@ namespace pf
     static const int MAT_NAME_SZ = 1024;
     static const int LINE_SZ = 4096;
     static const int MAX_VERT_NUM = 4;
+    PF_CLASS(ObjLoader);
   };
   const char *ObjLoader::whiteSpace = " \t\n\r";
 

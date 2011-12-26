@@ -21,8 +21,6 @@
 #include "simd/ssef.hpp"
 #include "math/bbox.hpp"
 #include "sys/logging.hpp"
-#include "sys/logging.hpp"
-#include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
 #include "sys/array.hpp"
 #include "sys/vector.hpp"
@@ -59,6 +57,7 @@ namespace pf
       vec3f(t.v[0].x + t.v[1].x + t.v[2].x,
             t.v[0].y + t.v[1].y + t.v[2].y,
             t.v[0].z + t.v[1].z + t.v[2].z) {}
+    PF_STRUCT(Centroid);
   };
 
   /*! To sort primitives */
@@ -79,18 +78,19 @@ namespace pf
     /*! Build the hierarchy itself */
     void compile(void);
 
-    Box sceneAABB;         //!< AABB of the scene
-    vector<uint32> primID; //!< Sorted array of primitives
-    array<uint32> IDs[3];  //!< Sorted ID per axis
-    array<int32>  pos;     //!< Says if a node is on left or on right of the cut
-    array<uint32> tmpIDs;  //!< Used to temporaly store IDs
-    array<Box> aabbs;      //!< All the bounding boxes
-    array<Box> rlAABBs;    //!< Bounding boxes sorted right to left
-    array<BVH2Node> root;  //!< Root of the tree
-    int32 n;               //!< NUmber of primitives
-    int32 nodeNum;         //!< Maximum number of nodes (== 2*n+1 for a BVH)
-    uint32 currID;         //!< Last node pushed
-    BVH2BuildOption options;
+    Box sceneAABB;          //!< AABB of the scene
+    vector<uint32> primID;  //!< Sorted array of primitives
+    array<uint32> IDs[3];   //!< Sorted ID per axis
+    array<int32>  pos;      //!< Says if a node is on left or on right of the cut
+    array<uint32> tmpIDs;   //!< Used to temporaly store IDs
+    array<Box> aabbs;       //!< All the bounding boxes
+    array<Box> rlAABBs;     //!< Bounding boxes sorted right to left
+    array<BVH2Node> root;   //!< Root of the tree
+    int32 n;                //!< NUmber of primitives
+    int32 nodeNum;          //!< Maximum number of nodes (== 2*n+1 for a BVH)
+    uint32 currID;          //!< Last node pushed
+    BVH2BuildOption options;//!< SAH options and stop criterium
+    PF_STRUCT(BVH2Builder);
   };
 
   BVH2Builder::BVH2Builder(void) : n(0), nodeNum(0), currID(0) { }
@@ -191,6 +191,7 @@ namespace pf
     int32 first[2], last[2];
     uint32 axis;
     float cost;
+    PF_STRUCT(Partition);
   };
 
   /*! Sweep left to right and find the best partition */

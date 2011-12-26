@@ -97,6 +97,7 @@ namespace pf
   private:
     T *elem;        //!< Points to the elements
     size_t elemNum; //!< Number of elements in the array
+    PF_CLASS(array);
   };
 } /* namespace pf */
 

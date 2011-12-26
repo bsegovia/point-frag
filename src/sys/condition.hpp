@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_CONDITION_H__
-#define __PF_CONDITION_H__
+#ifndef __PF_CONDITION_HPP__
+#define __PF_CONDITION_HPP__
 
 #include "sys/mutex.hpp"
 
@@ -24,11 +24,10 @@ namespace pf
   class ConditionSys
   {
   public:
-    ConditionSys( void );
-    ~ConditionSys( void );
-    void wait( class MutexSys& mutex );
-    void broadcast( void );
-
+    ConditionSys(void);
+    ~ConditionSys(void);
+    void wait(class MutexSys& mutex);
+    void broadcast(void);
   protected:
     void* cond;
   };

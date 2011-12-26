@@ -57,6 +57,7 @@ namespace pf
     vector<uint32> visible;      //!< List of visible objects we update
     RTCamera cam;               //!< For frustum culling and HiZ culling
     uint32 visibleNum;          //!< Total number of visible objects
+    PF_STRUCT(HiZCullState);
   };
 
   /*! Perform the HiZ culling (Frustum + Z) on the given segments */
@@ -129,8 +130,8 @@ namespace pf
     RTCamera cam(org, up, view, fov, ratio);
 
     // XXX right now we only support one or zero object
-    if (this->list) {
-      std::list<RendererDisplayList::Elem> &elems = this->list->getList();
+    if (this->displayList) {
+      list<RendererDisplayList::Elem> &elems = this->displayList->getList();
       for (auto it = elems.begin(); it != elems.end(); ++it) elemNum++;
       FATAL_IF(elemNum > 1, "XXX only one object per display list is supported");
       if (elemNum) {

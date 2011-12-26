@@ -59,6 +59,7 @@ namespace pf
     ALIGNED(16) vec3f xAxis;          //!< X axis of the image plane
     ALIGNED(16) vec3f zAxis;          //!< Z axis of the image plane
     float fov, ratio, dist;
+    PF_CLASS(RTCamera);
   };
 
   /*! Generate single rays from a pinhole camera */
@@ -70,6 +71,7 @@ namespace pf
     ALIGNED(16) vec3f imagePlaneOrg;  //!< Position of the image plane origin
     ALIGNED(16) vec3f xAxis;          //!< X axis of the image plane
     ALIGNED(16) vec3f zAxis;          //!< Y axis of the image plane
+    PF_CLASS(RTCameraRayGen);
   };
 
   /*! Generate packet of rays from a pinhole camera */
@@ -101,6 +103,7 @@ namespace pf
     ssef aImagePlaneOrg; //!< Image plane origin (AoS format)
     ssef axAxis;         //!< X axis of the image plane (AoS format)
     ssef azAxis;         //!< Z axis of the image plane (AoS format)
+    PF_CLASS(RTCameraPacketGen);
   };
 
   ///////////////////////////////////////////////////////////////////////////

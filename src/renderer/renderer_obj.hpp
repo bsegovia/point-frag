@@ -81,6 +81,7 @@ namespace pf
     virtual void onCompile(void);
     virtual void onUnreferenced(void);
     friend class Renderer;
+    PF_CLASS(RendererObj);
   };
 }
 

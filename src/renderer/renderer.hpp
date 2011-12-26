@@ -48,6 +48,7 @@ namespace pf
     RendererDriver *driver;
     /*! Handles and stores textures */
     TextureStreamer *streamer;
+    PF_CLASS(Renderer);
   };
 
 } /* namespace pf*/

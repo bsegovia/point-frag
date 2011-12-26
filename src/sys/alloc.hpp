@@ -28,7 +28,7 @@ namespace pf
   void* realloc(void *ptr, size_t size);
   void  free(void *ptr);
 
-  /*! aligned malloc */
+  /*! Aligned allocation */
   void* alignedMalloc(size_t size, size_t align = 64);
   void  alignedFree(void* ptr);
 
@@ -37,12 +37,14 @@ namespace pf
   void* MemDebuggerInsertAlloc(void*, const char*, const char*, int);
   void  MemDebuggerRemoveAlloc(void *ptr);
   void  MemDebuggerDumpAlloc(void);
+  void  MemDebuggerInitializeMem(void *mem, size_t sz);
   void  MemDebuggerStart(void);
   void  MemDebuggerEnd(void);
 #else
   INLINE void* MemDebuggerInsertAlloc(void *ptr, const char*, const char*, int) {return ptr;}
   INLINE void  MemDebuggerRemoveAlloc(void *ptr) {}
   INLINE void  MemDebuggerDumpAlloc(void) {}
+  INLINE void  MemDebuggerInitializeMem(void *mem, size_t sz) {}
   INLINE void  MemDebuggerStart(void) {}
   INLINE void  MemDebuggerEnd(void) {}
 #endif /* PF_DEBUG_MEMORY */
@@ -54,6 +56,52 @@ namespace pf
     return ptr;
   }
 } /* namespace pf */
+
+/*! Declare a structure with custom allocators */
+#define PF_STRUCT(TYPE)                                      \
+  void* operator new(size_t size)   {                        \
+    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+      return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
+    else                                                     \
+      return pf::malloc(size);                               \
+  }                                                          \
+  void* operator new[](size_t size)   {                      \
+    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+      return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
+    else                                                     \
+      return pf::malloc(size);                               \
+  }                                                          \
+  void  operator delete(void* ptr) {                         \
+    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+      return pf::alignedFree(ptr);                           \
+    else                                                     \
+      return pf::free(ptr);                                  \
+  }                                                          \
+  void  operator delete[](void* ptr) {                       \
+    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+      return pf::alignedFree(ptr);                           \
+    else                                                     \
+      return pf::free(ptr);                                  \
+  }                                                          \
+
+/*! Declare a class with custom allocators */
+#define PF_CLASS(TYPE) \
+public:                \
+  PF_STRUCT(TYPE)      \
+private:
+
+/*! Declare an aligned structure */
+#define PF_ALIGNED_STRUCT(ALIGN)                                              \
+  void* operator new(size_t size)   { return pf::alignedMalloc(size, ALIGN); }\
+  void* operator new[](size_t size) { return pf::alignedMalloc(size, ALIGN); }\
+  void  operator delete(void* ptr)   { pf::alignedFree(ptr); }                \
+  void  operator delete[](void* ptr) { pf::alignedFree(ptr); }
+
+/*! Declare an aligned class */
+#define PF_ALIGNED_CLASS(ALIGN)    \
+public:                            \
+  PF_ALIGNED_STRUCT(ALIGN)         \
+private:
 
 /*! Macros to handle allocation position */
 #define PF_NEW(T,...)               \
@@ -99,12 +147,9 @@ namespace pf
     typedef const value_type& const_reference;
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
-
-  public:
     template<typename U>
     struct rebind { typedef Allocator<U> other; };
 
-  public:
     INLINE Allocator(void) {}
     INLINE ~Allocator(void) {}
     INLINE Allocator(Allocator const&) {}
@@ -142,7 +187,6 @@ namespace pf
       T *data = current->data + current->allocated++;
       return data;
     }
-
   private:
     /*! Chunk of elements to allocate */
     class GrowingPoolElem
@@ -164,8 +208,9 @@ namespace pf
       size_t allocated, maxElemNum;
     };
     GrowingPoolElem *current;
+    PF_CLASS(GrowingPool);
   };
-
 } /* namespace pf */
+
 #endif /* __PF_ALLOC_HPP__ */
 

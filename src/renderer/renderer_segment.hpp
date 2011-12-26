@@ -34,6 +34,7 @@ namespace pf
     BBox3f bbox;        //!< Bounding box of the triangles
     uint32 first, last; //!< First and last index in the index buffer
     uint32 matID;       //!< Material ID
+    PF_STRUCT(RendererSegment);
   };
 
 } /* namespace pf */

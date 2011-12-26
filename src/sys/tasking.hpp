@@ -205,13 +205,10 @@ namespace pf
     INLINE uint16 getAffinity(void) const;
     /*! Get the current task state */
     INLINE uint8 getState(void) const;
-
-#if PF_TASK_USE_DEDICATED_ALLOCATOR
-    /*! Tasks use a scalable fixed size allocator */
+    /*! Tasks may use a scalable fixed size allocator */
     void* operator new(size_t size);
-    /*! Deallocations go through the dedicated allocator too */
+    /*! Deallocations may go through the dedicated allocator too */
     void operator delete(void* ptr);
-#endif /* PF_TASK_USE_DEDICATED_ALLOCATOR */
 
   private:
     template <int> friend struct TaskWorkStealingQueue; //!< Contains tasks
@@ -226,6 +223,8 @@ namespace pf
     uint16 affinity;           //!< The task will run on a particular thread
     uint8 priority;            //!< Task priority
     volatile uint8 state;      //!< Assert correctness of the operations
+    void* operator new[](size_t size);
+    void  operator delete[](void* ptr);
   };
 
   /*! Allow the run function to be executed several times */

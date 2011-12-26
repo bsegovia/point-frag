@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_QUATERNION_H__
-#define __PF_QUATERNION_H__
+#ifndef __PF_QUATERNION_HPP__
+#define __PF_QUATERNION_HPP__
 
 #include "sys/platform.hpp"
 #include "math/vec.hpp"
@@ -64,6 +64,7 @@ namespace pf
 
   public:
     T r, i, j, k;
+    PF_STRUCT(QuaternionT);
   };
 
   template<typename T> INLINE QuaternionT<T> operator *( const T             & a, const QuaternionT<T>& b ) { return QuaternionT<T>(a * b.r, a * b.i, a * b.j, a * b.k); }

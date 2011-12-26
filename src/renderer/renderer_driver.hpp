@@ -37,7 +37,6 @@ namespace pf
     virtual ~RendererDriver(void);
     /*! Call it when window size changes */
     void resize(int w, int h);
-
     /*! Display bounding boxes in wireframe */
     void displayBBox(const BBox3f *bbox, int n = 1, const vec4f *c = NULL);
     /*! Uniform values used in the renderer */
