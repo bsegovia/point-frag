@@ -27,6 +27,8 @@ namespace pf
   class vector : public std::vector<T>
   {
   public:
+    INLINE vector(void) {}
+    INLINE vector(size_t elemNum) : std::vector<T>(elemNum) {}
     /*! Get element at position index (with a bound check) */
     T &operator[] (size_t index) {
       PF_ASSERT(index < this->size());

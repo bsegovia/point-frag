@@ -18,7 +18,7 @@
 #define __PF_FONT_HPP__
 
 #include "sys/platform.hpp"
-#include "sys/array.hpp"
+#include "sys/vector.hpp"
 #include "sys/filename.hpp"
 
 namespace pf
@@ -105,9 +105,9 @@ namespace pf
 
     Info info;
     Common common;
-    array<Char> chars;
-    array<Page> pages;
-    array<Kerning> kernings;
+    vector<Char> chars;
+    vector<Page> pages;
+    vector<Kerning> kernings;
   };
 
 } /* namespace pf */

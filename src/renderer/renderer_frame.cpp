@@ -40,7 +40,7 @@ namespace pf
   // XXX Debug code to see the actual effect of culling. Press 'l' to save the
   // displayed boxes and 'k' to display these boxes later. There will be a leak
   // here since the last allocated cullSegment will not be allocated.
-  static array<uint32> *savedVisible = NULL;
+  static vector<uint32> *savedVisible = NULL;
   static uint32 savedNum = 0;
   uint32 key_l = 0;
   uint32 key_k = 0;
@@ -54,7 +54,7 @@ namespace pf
       cam(cam)
     {}
     Ref<RendererObj> renderObj; //!< Renderer object we are going to cull
-    array<uint32> visible;      //!< List of visible objects we update
+    vector<uint32> visible;      //!< List of visible objects we update
     RTCamera cam;               //!< For frustum culling and HiZ culling
     uint32 visibleNum;          //!< Total number of visible objects
   };
@@ -79,7 +79,7 @@ namespace pf
       // XXX Saved the currently visible boxes
       if (key_l) {
         if (savedVisible == NULL)
-          savedVisible = PF_NEW(array<uint32>, segmentNum);
+          savedVisible = PF_NEW(vector<uint32>, segmentNum);
         savedNum = state->visibleNum;
         for (uint32 i = 0; i < savedNum; ++i)
           (*savedVisible)[i] = state->visible[i];

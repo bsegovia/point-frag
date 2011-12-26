@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 {
   using namespace pf;
   MemDebuggerStart();
-  TaskingSystemStart(1);
+  TaskingSystemStart();
   LoggerStart();
 
   // Run the unit tests specified by the user

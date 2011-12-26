@@ -24,7 +24,6 @@
 #include "sys/logging.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
-#include "sys/array.hpp"
 #include "sys/vector.hpp"
 
 #include <algorithm>
@@ -81,12 +80,12 @@ namespace pf
 
     Box sceneAABB;         //!< AABB of the scene
     vector<uint32> primID; //!< Sorted array of primitives
-    array<uint32> IDs[3];  //!< Sorted ID per axis
-    array<int32>  pos;     //!< Says if a node is on left or on right of the cut
-    array<uint32> tmpIDs;  //!< Used to temporaly store IDs
-    array<Box> aabbs;      //!< All the bounding boxes
-    array<Box> rlAABBs;    //!< Bounding boxes sorted right to left
-    array<BVH2Node> root;  //!< Root of the tree
+    vector<uint32> IDs[3]; //!< Sorted ID per axis
+    vector<int32>  pos;    //!< Says if a node is on left or on right of the cut
+    vector<uint32> tmpIDs; //!< Used to temporaly store IDs
+    vector<Box> aabbs;     //!< All the bounding boxes
+    vector<Box> rlAABBs;   //!< Bounding boxes sorted right to left
+    vector<BVH2Node> root; //!< Root of the tree
     int32 n;               //!< NUmber of primitives
     int32 nodeNum;         //!< Maximum number of nodes (== 2*n+1 for a BVH)
     uint32 currID;         //!< Last node pushed
@@ -109,7 +108,7 @@ namespace pf
   template <typename T>
   void BVH2Builder::injection(const T * const RESTRICT soup, uint32 primNum)
   {
-    array<Centroid> centroids(primNum);
+    vector<Centroid> centroids(primNum);
     double t = getSeconds();
 
     // Allocate nodes and leaves for the BVH2

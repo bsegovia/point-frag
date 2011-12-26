@@ -380,7 +380,7 @@ namespace pf
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
   }
 
-  void RendererObj::display(const array<uint32> &visible, uint32 visibleNum)
+  void RendererObj::display(const vector<uint32> &visible, uint32 visibleNum)
   {
     // Creating the OGL data if not done yet
     if (UNLIKELY(this->sharedData)) {

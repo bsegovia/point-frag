@@ -19,15 +19,15 @@
 
 #include "renderer/texture.hpp"
 #include "renderer/renderer_displayable.hpp"
+#include "renderer/renderer_segment.hpp"
 #include "rt/intersector.hpp"
 #include "math/vec.hpp"
-#include "sys/array.hpp"
+#include "sys/vector.hpp"
 #include "GL/gl3.h"
 
 namespace pf
 {
   struct Obj;                // We build the renderer obj from a Wavefront OBJ
-  struct RendererSegment;    // To make a partition of the objects to display
   struct RendererObjOGLData; // Data to upload to OGL
 
   /*! Entity used for rendering of OBJ models */
@@ -65,9 +65,9 @@ namespace pf
     /*! Valid means there is something to display */
     INLINE bool isValid(void) { return this->segments.size() > 0; }
     /*! We provide the indices of the visible segments */
-    void display(const array<uint32> &visible, uint32 visibleNum);
-    array<Material> mat;             //!< All the material of the object
-    array<RendererSegment> segments; //!< All the sub-meshes to display
+    void display(const vector<uint32> &visible, uint32 visibleNum);
+    vector<Material> mat;             //!< All the material of the object
+    vector<RendererSegment> segments; //!< All the sub-meshes to display
     Ref<Intersector> intersector; //!< Optional BVH
     Ref<Task> texLoading;         //!< Load the textures
     Ref<RefCount> sharedData;     //!< May be needed by other renderer objects

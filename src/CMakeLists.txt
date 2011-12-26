@@ -13,7 +13,6 @@ set (SRC
   game/game_frame.hpp
   game/game_render.cpp
   game/game_render.hpp
-  sys/array.hpp
   sys/vector.hpp
   sys/filename.cpp
   sys/filename.hpp
