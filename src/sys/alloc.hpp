@@ -147,6 +147,7 @@ namespace pf
     typedef const value_type& const_reference;
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
+    typedef typename std::allocator<void>::const_pointer void_allocator_ptr;
     template<typename U>
     struct rebind { typedef Allocator<U> other; };
 
@@ -157,11 +158,18 @@ namespace pf
     INLINE Allocator(Allocator<U> const&) {}
     INLINE pointer address(reference r) { return &r; }
     INLINE const_pointer address(const_reference r) { return &r; }
-    INLINE pointer allocate(size_type n,
-                            typename std::allocator<void>::const_pointer = 0) {
-      return reinterpret_cast<pointer>(PF_MALLOC(n * sizeof (T)));
+    INLINE pointer allocate(size_type n, void_allocator_ptr = 0) {
+      if (AlignOf<T>::value > sizeof(uintptr_t))
+        return (pointer) PF_ALIGNED_MALLOC(n*sizeof(T), AlignOf<T>::value);
+      else
+        return (pointer) PF_MALLOC(n * sizeof(T));
     }
-    INLINE void deallocate(pointer p, size_type) { PF_FREE(p); }
+    INLINE void deallocate(pointer p, size_type) {
+      if (AlignOf<T>::value > sizeof(uintptr_t))
+        PF_ALIGNED_FREE(p);
+      else
+        PF_FREE(p);
+    }
     INLINE size_type max_size(void) const {
       return std::numeric_limits<size_type>::max() / sizeof(T);
     }

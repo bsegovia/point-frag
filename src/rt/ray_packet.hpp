@@ -69,4 +69,3 @@ namespace pf
 } /* namespace pf */
 
 #endif /* __PF_RAY_PACKET_HPP__ */
-

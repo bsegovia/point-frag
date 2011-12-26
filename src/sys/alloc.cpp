@@ -24,6 +24,7 @@
 #else
 #include <tr1/unordered_map>
 #endif /* __MSVC__ */
+#include <cstring>
 #endif /* PF_DEBUG_MEMORY */
 
 #if defined(__ICC__)
@@ -134,6 +135,9 @@ namespace pf
   void MemDebuggerDumpAlloc(void) {
     if (memDebugger) memDebugger->dumpAlloc();
   }
+  void MemDebuggerInitializeMem(void *mem, size_t sz) {
+    std::memset(mem, 0xcd, sz);
+  }
   void MemDebuggerStart(void) {
     if (memDebugger) MemDebuggerEnd();
     memDebugger = new MemDebugger;
@@ -148,14 +152,23 @@ namespace pf
 
 namespace pf
 {
-  void* malloc(size_t size) { return std::malloc(size); }
+  void* malloc(size_t size) {
+    void *ptr = std::malloc(size);
+    MemDebuggerInitializeMem(ptr, size);
+    return ptr;
+  }
 
   void* realloc(void *ptr, size_t size) {
 #if PF_DEBUG_MEMORY
     if (ptr) MemDebuggerRemoveAlloc(ptr);
 #endif /* PF_DEBUG_MEMORY */
     PF_ASSERT(size);
-    return std::realloc(ptr, size);
+    if (ptr == NULL) {
+      ptr = std::realloc(ptr, size);
+      MemDebuggerInitializeMem(ptr, size);
+      return ptr;
+    } else
+      return std::realloc(ptr, size);
   }
 
   void free(void *ptr) { if (ptr != NULL) std::free(ptr); }
@@ -199,6 +212,7 @@ namespace pf
   void* alignedMalloc(size_t size, size_t align) {
     void* ptr = memalign(align,size);
     FATAL_IF (!ptr && size, "memory allocation failed");
+    MemDebuggerInitializeMem(ptr, size);
     return ptr;
   }
 
@@ -223,6 +237,7 @@ namespace pf
     char* aligned = ((char*)mem) + sizeof(void*);
     aligned += align - ((uintptr_t)aligned & (align - 1));
     ((void**)aligned)[-1] = mem;
+    MemDebuggerInitializeMem(aligned, size);
     return aligned;
   }
 
