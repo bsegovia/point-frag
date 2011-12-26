@@ -554,7 +554,7 @@ namespace pf
     scheduler->sleepingNum--;
     scheduler->sleeping &= ~(size_t(1u) << this->threadID);
     scheduler->sleepMutex.unlock();
-    
+
     // We got killed
     if (state == TASK_THREAD_STATE_DEAD) return;
     state = prevState;
@@ -954,7 +954,11 @@ namespace pf
   }
 
 #if PF_TASK_USE_DEDICATED_ALLOCATOR
-  void *Task::operator new(size_t size) { return allocator->allocate(size); }
+  void *Task::operator new(size_t size) {
+    void *ptr = allocator->allocate(size);
+    MemDebuggerInitializeMem(ptr, size);
+    return ptr;
+  }
   void Task::operator delete(void *ptr) { allocator->deallocate(ptr); }
 #else
   void *Task::operator new(size_t size) { return alignedMalloc(size, 16); }
@@ -1011,7 +1015,7 @@ namespace pf
   }
 
   void TaskingSystemEnd(void) {
-    scheduler->waitAll();  // Empty the queues (ie wait for all tasks)
+    scheduler->waitAll();      // Empty the queues (ie wait for all tasks)
     scheduler->stopAll();      // Kill all the threads
     PF_SAFE_DELETE(scheduler); // Deallocate the scheduler
     PF_SAFE_DELETE(allocator); // Release the tasks allocator
