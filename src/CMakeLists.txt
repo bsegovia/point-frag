@@ -1,6 +1,18 @@
 include (FindGLUT)
 include (FindLuaJIT)
 include_directories (${GLUT_INCLUDE_PATH})
+set (SQUISH_SRC
+  image/squish/alpha.cpp
+  image/squish/clusterfit.cpp
+  image/squish/colourblock.cpp
+  image/squish/colourfit.cpp
+  image/squish/colourset.cpp
+  image/squish/maths.cpp
+  image/squish/rangefit.cpp
+  image/squish/singlecolourfit.cpp
+  image/squish/squish.cpp)
+add_library (squish STATIC ${SQUISH_SRC})
+
 set (SRC
   game/main.cpp
   game/game.cpp
@@ -14,6 +26,10 @@ set (SRC
   game/game_render.cpp
   game/game_render.hpp
   sys/vector.hpp
+  sys/hash_map.hpp
+  sys/map.hpp
+  sys/string.cpp
+  sys/string.hpp
   sys/filename.cpp
   sys/filename.hpp
   sys/library.cpp
@@ -35,8 +51,6 @@ set (SRC
   sys/condition.hpp
   sys/platform.cpp
   sys/platform.hpp
-  sys/string.cpp
-  sys/string.hpp
   sys/logging.cpp
   sys/logging.hpp
   sys/default_path.cpp
@@ -49,15 +63,6 @@ set (SRC
   image/stb_image.cpp
   image/stb_image.hpp
   image/stb_image_write.cpp
-  image/squish/alpha.cpp
-  image/squish/clusterfit.cpp
-  image/squish/colourblock.cpp
-  image/squish/colourfit.cpp
-  image/squish/colourset.cpp
-  image/squish/maths.cpp
-  image/squish/rangefit.cpp
-  image/squish/singlecolourfit.cpp
-  image/squish/squish.cpp
   models/obj.cpp
   models/obj.hpp
   renderer/ogl.cpp
@@ -117,5 +122,5 @@ else (UNIX)
 endif (UNIX)
 
 add_executable (game ${SRC})
-target_link_libraries (game ${EXEC_DEPENDENCIES})
+target_link_libraries (game ${EXEC_DEPENDENCIES} squish)
 

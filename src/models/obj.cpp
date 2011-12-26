@@ -20,12 +20,12 @@
 #include "sys/logging.hpp"
 #include "sys/vector.hpp"
 #include "sys/string.hpp"
+#include "sys/map.hpp"
 
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
-#include <map>
 #include <algorithm>
 
 namespace pf
@@ -380,7 +380,7 @@ namespace pf
   bool Obj::load(const FileName &fileName)
   {
     ObjLoader loader;
-    std::map<VertexKey, int> map;
+    map<VertexKey, int> map;
     vector<Poly> polys;
     if (loader.loadObj(fileName.c_str()) == 0) return false;
 

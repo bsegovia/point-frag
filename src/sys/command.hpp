@@ -103,9 +103,9 @@ namespace pf
     /*! ConVarSystem instance built at pre-main */
     static ConVarSystem *global;
   private:
-    friend struct ConVar; //!< We can access fields from the ConVar
-    vector<ConVar> var;   //!< All the variables
-    bool modified;      //!< Modified means that a variable changed 
+    friend struct ConVar;    //!< We can access fields from the ConVar
+    std::vector<ConVar> var; //!< All the variables (use std::vector since this is pre-main)
+    bool modified;           //!< Modified means that a variable changed 
   };
 
   /*! With LuaJIT, this is going to be super simple. LuaJIT is able to get a
@@ -125,8 +125,10 @@ namespace pf
     const char *argument;
     /* Command returned type. ret == 0 means no value is returned */
     char ret;
-    /*! Stores all the commands declared in the code */
-    static vector<ConCommand> *cmds;
+    /*! Stores all the commands declared in the code (use std since pre-main,
+     *  the allocator is not running yet)
+     */
+    static std::vector<ConCommand> *cmds;
   };
 
   /*! Initialize the console system. This includes the console variables which

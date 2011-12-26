@@ -101,7 +101,9 @@ namespace pf
     if (ptr == NULL) return;
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
-    FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
+    // FATAL_IF(allocMap.find(iptr) == allocMap.end(), "Pointer not referenced");
+    if(allocMap.find(iptr) == allocMap.end()) debugbreak();
+    
     allocMap.erase(iptr);
     unfreedNum--;
   }

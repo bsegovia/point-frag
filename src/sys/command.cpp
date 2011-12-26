@@ -79,7 +79,7 @@ namespace pf
     ConVarSystem::global->var.push_back(*this);
   }
 
-  vector<ConCommand> *ConCommand::cmds = NULL;
+  std::vector<ConCommand> *ConCommand::cmds = NULL;
 
   ConCommand::ConCommand(const char *name, const char *argument, char ret) :
     name(name), argument(argument), ret(ret)
@@ -87,7 +87,7 @@ namespace pf
     PF_ASSERT(name != NULL && argument != NULL);
     PF_ASSERT(ret == 'i' || ret == 'f' || ret == 0);
     if (UNLIKELY(ConCommand::cmds == NULL))
-      ConCommand::cmds = PF_NEW(vector<ConCommand>);
+      ConCommand::cmds = PF_NEW(std::vector<ConCommand>);
     ConCommand::cmds->push_back(*this);
   }
 

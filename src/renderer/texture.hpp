@@ -22,13 +22,8 @@
 #include "sys/mutex.hpp"
 #include "sys/tasking.hpp"
 #include "sys/tasking_utility.hpp"
+#include "sys/hash_map.hpp"
 #include "renderer/GL/gl3.h"
-
-#ifdef __MSVC__
-#include <unordered_map>
-#else
-#include <tr1/unordered_map>
-#endif
 
 namespace pf
 {
@@ -132,7 +127,7 @@ namespace pf
 
   private:
     /*! Store for each texture its state */
-    std::tr1::unordered_map<std::string, TextureState> texMap;
+    hash_map<std::string, TextureState> texMap;
     /*! Serialize the streamer access */
     MutexSys mutex;
     Renderer &renderer;              //!< Owner of the streamer

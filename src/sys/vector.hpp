@@ -22,22 +22,43 @@
 
 namespace pf
 {
-  /*! Add bound checks */
+  /*! Add bound checks to the standard vector class and use the internal
+   *  allocator
+   */
   template<class T>
-  class vector : public std::vector<T>
+  class vector : public std::vector<T, Allocator<T>>
   {
   public:
-    INLINE vector(void) {}
-    INLINE vector(size_t elemNum) : std::vector<T>(elemNum) {}
+    // Typedefs
+    typedef std::vector<T, Allocator<T>>       parent_type;
+    typedef Allocator<T>                       allocator_type;
+    typedef typename allocator_type::size_type size_type;
+
+    /*! Default constructor */
+    INLINE explicit vector(const allocator_type &a = allocator_type()) :
+      parent_type(a) {}
+    /*! Copy constructor */
+    INLINE vector(const vector &x) : parent_type(x) {}
+    /*! Repetitive sequence constructor */
+    INLINE explicit vector(size_type n,
+                           const T& value= T(),
+                           const allocator_type &a = allocator_type()) :
+      parent_type(n, value, a) {}
+    /*! Iteration constructor */
+    template <class InputIterator>
+    INLINE vector(InputIterator first,
+                  InputIterator last,
+                  const allocator_type &a = allocator_type()) :
+      parent_type(first, last, a) {}
     /*! Get element at position index (with a bound check) */
     T &operator[] (size_t index) {
       PF_ASSERT(index < this->size());
-      return std::vector<T>::operator[] (index);
+      return parent_type::operator[] (index);
     }
     /*! Get element at position index (with a bound check) */
     const T &operator[] (size_t index) const {
       PF_ASSERT(index < this->size());
-      return std::vector<T>::operator[] (index);
+      return parent_type::operator[] (index);
     }
   };
 } /* namespace pf */

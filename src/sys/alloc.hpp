@@ -19,6 +19,7 @@
 
 #include "sys/platform.hpp"
 #include <cstdlib>
+#include <new>
 
 namespace pf
 {
@@ -87,6 +88,44 @@ namespace pf
 
 namespace pf
 {
+  /*! STL compliant allocator to intercept all memory allocations */
+  template<typename T>
+  class Allocator {
+  public:
+    typedef T value_type;
+    typedef value_type* pointer;
+    typedef const value_type* const_pointer;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
+
+  public:
+    template<typename U>
+    struct rebind { typedef Allocator<U> other; };
+
+  public:
+    INLINE Allocator(void) {}
+    INLINE ~Allocator(void) {}
+    INLINE Allocator(Allocator const&) {}
+    template<typename U>
+    INLINE Allocator(Allocator<U> const&) {}
+    INLINE pointer address(reference r) { return &r; }
+    INLINE const_pointer address(const_reference r) { return &r; }
+    INLINE pointer allocate(size_type n,
+                            typename std::allocator<void>::const_pointer = 0) {
+      return reinterpret_cast<pointer>(PF_MALLOC(n * sizeof (T)));
+    }
+    INLINE void deallocate(pointer p, size_type) { PF_FREE(p); }
+    INLINE size_type max_size(void) const {
+      return std::numeric_limits<size_type>::max() / sizeof(T);
+    }
+    INLINE void construct(pointer p, const T& t = T()) { ::new(p) T(t); }
+    INLINE void destroy(pointer p) { p->~T(); }
+    INLINE bool operator==(Allocator const&) { return true; }
+    INLINE bool operator!=(Allocator const& a) { return !operator==(a); }
+  };
+
   /*! A growing pool never deallocates */
   template <typename T>
   class GrowingPool
