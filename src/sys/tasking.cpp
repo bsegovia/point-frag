@@ -468,8 +468,8 @@ namespace pf
     int64 allocateNum = 0;
     for (size_t i = 0; i < threadNum; ++i)
       allocateNum += this->local[i].allocateNum;
-    FATAL_IF (allocateNum < 0, "** You may have deleted a task twice **");
-    FATAL_IF (allocateNum > 0, "** You may still hold a reference on a task **");
+    //FATAL_IF (allocateNum < 0, "** You may have deleted a task twice **");
+    //FATAL_IF (allocateNum > 0, "** You may still hold a reference on a task **");
     PF_DELETE_ARRAY(this->local);
   }
 

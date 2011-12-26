@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifndef __PF_RENDERER_SEGMENT_HPP__
+#define __PF_RENDERER_SEGMENT_HPP__
+
 #include "math/bbox.hpp"
 
 namespace pf
@@ -34,4 +37,6 @@ namespace pf
   };
 
 } /* namespace pf */
+
+#endif /* __PF_RENDERER_SEGMENT_HPP__ */
 

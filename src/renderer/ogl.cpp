@@ -205,7 +205,7 @@ namespace pf
 
     if (result == GL_FALSE) {
       int infoLogLength;
-      PF_ERROR_V("OGL: program validation failed\n");
+      PF_ERROR_V("OGL: program validation failed");
       this->GetProgramiv(programName, GL_INFO_LOG_LENGTH, &infoLogLength);
       std::vector<char> buffer(infoLogLength);
       this->GetProgramInfoLog(programName, infoLogLength, NULL, &buffer[0]);
@@ -252,7 +252,7 @@ namespace pf
       PF_DELETE_ARRAY(buffer);
     }
     if (result == GL_FALSE)
-      PF_ERROR_V("OGL: failed to compile shader\n" << source);
+      PF_ERROR_V("OGL: failed to compile shader" << source);
     return result == GL_TRUE;
   }
 

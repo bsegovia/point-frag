@@ -22,11 +22,15 @@
 #include "simd/ssef.hpp"
 #include "simd/ssei.hpp"
 #include "math/vec.hpp"
+#include "math/matrix.hpp"
 
 namespace pf
 {
   struct RTCameraRayGen;    //!< Outputs (single) rays
   struct RTCameraPacketGen; //!< Outputs packets of rays
+
+  static const float znear = 0.1f;   // XXX use CVAR
+  static const float zfar = 10000.f; // XXX use CVAR
 
   /*! Standard pinhole camera */
   class RTCamera
@@ -42,6 +46,12 @@ namespace pf
     void createGenerator(RTCameraRayGen &gen, int w, int h) const;
     /*! Build the ray packet generator */
     void createGenerator(RTCameraPacketGen &gen, int w, int h) const;
+    /*! Build the 4x4 projection matrix from the camera */
+    INLINE mat4x4f getMatrix(void) const {
+      const mat4x4f P = pf::perspective(fov, ratio, znear, zfar);
+      const mat4x4f V = pf::lookAt(org, org + view, up);
+      return P*V;
+    }
     ALIGNED(16) vec3f org;            //!< Origin of the camera
     ALIGNED(16) vec3f up;             //!< Up vector
     ALIGNED(16) vec3f view;           //!< View direction

@@ -82,15 +82,13 @@ namespace pf
     INLINE const Ref<TypeOut> cast() const { return Ref<TypeOut>(static_cast<TypeOut*>(ptr)); }
   };
 
-  template<typename Type> INLINE  bool operator< ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
-
-  template<typename Type> INLINE  bool operator== ( const Ref<Type>& a, NullTy             ) { return a.ptr == NULL  ; }
-  template<typename Type> INLINE  bool operator== ( NullTy            , const Ref<Type>& b ) { return NULL  == b.ptr ; }
-  template<typename Type> INLINE  bool operator== ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr == b.ptr ; }
-
-  template<typename Type> INLINE  bool operator!= ( const Ref<Type>& a, NullTy             ) { return a.ptr != NULL  ; }
-  template<typename Type> INLINE  bool operator!= ( NullTy            , const Ref<Type>& b ) { return NULL  != b.ptr ; }
-  template<typename Type> INLINE  bool operator!= ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
+  template<typename Type> INLINE bool operator< ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr <  b.ptr ; }
+  template<typename Type> INLINE bool operator== ( const Ref<Type>& a, NullTy             ) { return a.ptr == NULL  ; }
+  template<typename Type> INLINE bool operator== ( NullTy            , const Ref<Type>& b ) { return NULL  == b.ptr ; }
+  template<typename Type> INLINE bool operator== ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr == b.ptr ; }
+  template<typename Type> INLINE bool operator!= ( const Ref<Type>& a, NullTy             ) { return a.ptr != NULL  ; }
+  template<typename Type> INLINE bool operator!= ( NullTy            , const Ref<Type>& b ) { return NULL  != b.ptr ; }
+  template<typename Type> INLINE bool operator!= ( const Ref<Type>& a, const Ref<Type>& b ) { return a.ptr != b.ptr ; }
 }
 
 #endif /* __PF_REF_HPP__ */

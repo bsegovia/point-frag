@@ -14,26 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __RENDERER_OBJ_HPP__
-#define __RENDERER_OBJ_HPP__
+#ifndef __PF_RENDERER_OBJ_HPP__
+#define __PF_RENDERER_OBJ_HPP__
 
 #include "renderer/texture.hpp"
-#include "math/bbox.hpp"
-#include "rt/bvh2.hpp"
+#include "renderer/renderer_displayable.hpp"
+#include "rt/intersector.hpp"
+#include "math/vec.hpp"
 #include "sys/array.hpp"
 #include "GL/gl3.h"
 
 namespace pf
 {
-  class Renderer;         // Renderer owns all RendererObj
-  struct Obj;             // We build the renderer obj from a Wavefront OBJ
-  struct RendererSegment; // To make a partition of the objects to display
+  struct Obj;                // We build the renderer obj from a Wavefront OBJ
+  struct RendererSegment;    // To make a partition of the objects to display
+  struct RendererObjOGLData; // Data to upload to OGL
 
   /*! Entity used for rendering of OBJ models */
-  class RendererObj : public RefCount, public NonCopyable
+  class RendererObj : public RendererDisplayable
   {
   public:
-
     /*! Renderer mapping of a OBJ material */
     struct Material
     {
@@ -62,25 +62,27 @@ namespace pf
     RendererObj(Renderer &renderer, const Obj &obj);
     /*! Release it (still from a renderer */
     ~RendererObj(void);
-    /*! Valid means it is OGL uploaded */
-    INLINE bool isValid(void) { return this->segmentNum > 0; }
+    /*! Valid means there is something to display */
+    INLINE bool isValid(void) { return this->segments.size() > 0; }
     /*! We provide the indices of the visible segments */
     void display(const array<uint32> &visible, uint32 visibleNum);
-    /*! Index of the first and last triangle index */
-    struct Group { GLuint first, last; };
-    Renderer &renderer;              //!< A RendererObj belongs to a renderer
     array<Material> mat;             //!< All the material of the object
     array<RendererSegment> segments; //!< All the sub-meshes to display
-    uint32 matNum;                //!< Number of materials
-    uint32 segmentNum;            //!< Number of segments
+    Ref<Intersector> intersector; //!< Optional BVH
+    Ref<Task> texLoading;         //!< Load the textures
+    Ref<RefCount> sharedData;     //!< May be needed by other renderer objects
     GLuint vertexArray;           //!< Vertex declaration
     GLuint arrayBuffer;           //!< Vertex data (positions, normals...)
     GLuint elementBuffer;         //!< Indices
     GLuint topology;              //!< Mostly triangle or triangle strip
+    uint32 properties;            //!< occluder == has a BVH
     MutexSys mutex;               //!< XXX just to play with async load
+  private:
+    virtual void onCompile(void);
+    virtual void onUnreferenced(void);
     friend class Renderer;
   };
 }
 
-#endif /* __RENDERER_OBJ_HPP__ */
+#endif /* __PF_RENDERER_OBJ_HPP__ */
 

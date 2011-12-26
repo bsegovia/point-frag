@@ -158,5 +158,30 @@ namespace pf
   void HiZ::greyMinRGBA(uint8 **pixels) const { HiZGreyMinMax<true>(*this, pixels); }
   void HiZ::greyMaxRGBA(uint8 **pixels) const { HiZGreyMinMax<false>(*this, pixels); }
 
+  PerspectiveFrustum::PerspectiveFrustum(const RTCamera &cam, Ref<HiZ> hiz)
+    : hiz(hiz)
+  {
+    this->org_aos  = ssef(cam.org.x, cam.org.y, cam.org.z, 0.f);
+    this->view_aos = ssef(cam.view.x, cam.view.y, cam.view.z, 0.f);
+    this->org   = sse3f(cam.org.x, cam.org.y, cam.org.z);
+    this->view  = sse3f(cam.view.x, cam.view.y, cam.view.z);
+    this->xAxis = sse3f(cam.xAxis.x, cam.xAxis.y, cam.xAxis.z);
+    this->zAxis = sse3f(cam.zAxis.x, cam.zAxis.y, cam.zAxis.z);
+    this->yMaxSinAngle = sin(cam.fov * float(pi) / 360.f);
+    this->xMaxSinAngle = cam.ratio * this->yMaxSinAngle;
+    this->yMaxInvTanAngle = 1.f / tan(cam.fov * float(pi) / 360.f);
+    this->xMaxInvTanAngle = this->yMaxInvTanAngle / cam.ratio;
+    this->xAxis = normalize(this->xAxis);
+    this->zAxis = normalize(this->zAxis);
+    this->windowing = ssef(float(hiz->tileXNum) * 0.5f,
+                           float(hiz->tileXNum) * 0.5f,
+                           float(hiz->tileYNum) * 0.5f,
+                           float(hiz->tileYNum) * 0.5f);
+    this->hizExtent = ssef(float(hiz->tileXNum-1),
+                           float(hiz->tileXNum-1),
+                           float(hiz->tileYNum-1),
+                           float(hiz->tileYNum-1));
+  }
+
 } /* namespace pf */
 

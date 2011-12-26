@@ -13,6 +13,8 @@ set (SRC
   game/game_frame.hpp
   game/game_render.cpp
   game/game_render.hpp
+  sys/array.hpp
+  sys/vector.hpp
   sys/filename.cpp
   sys/filename.hpp
   sys/library.cpp
@@ -27,6 +29,7 @@ set (SRC
   sys/tasking_utility.hpp
   sys/sysinfo.cpp
   sys/sysinfo.hpp
+  sys/ref.hpp
   sys/mutex.cpp
   sys/mutex.hpp
   sys/condition.cpp
@@ -56,7 +59,6 @@ set (SRC
   image/squish/rangefit.cpp
   image/squish/singlecolourfit.cpp
   image/squish/squish.cpp
-  image/squish/squish.hpp
   models/obj.cpp
   models/obj.hpp
   renderer/ogl.cpp
@@ -69,12 +71,23 @@ set (SRC
   renderer/texture.hpp
   renderer/renderer.cpp
   renderer/renderer.hpp
+  renderer/renderer_object.cpp
+  renderer/renderer_object.hpp
   renderer/renderer_obj.cpp
   renderer/renderer_obj.hpp
+  renderer/renderer_set.cpp
+  renderer/renderer_set.hpp
+  renderer/renderer_displayable.cpp
+  renderer/renderer_displayable.hpp
+  renderer/renderer_display_list.cpp
+  renderer/renderer_display_list.hpp
   renderer/renderer_driver.cpp
   renderer/renderer_driver.hpp
+  renderer/renderer_frame.cpp
+  renderer/renderer_frame.hpp
   renderer/renderer_context.cpp
   renderer/renderer_context.hpp
+  rt/intersector.hpp
   rt/bvh2.cpp
   rt/bvh2.hpp
   rt/bvh2_traverser.cpp

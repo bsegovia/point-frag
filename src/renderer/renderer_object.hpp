@@ -14,41 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_RENDERER_HPP__
-#define __PF_RENDERER_HPP__
+#ifndef __PF_RENDERER_OBJECT_HPP__
+#define __PF_RENDERER_OBJECT_HPP__
 
-#include "renderer/texture.hpp"
-#include "sys/tasking_utility.hpp"
+#include "sys/platform.hpp" 
+#include "sys/ref.hpp"
 
 namespace pf
 {
-  class RendererObj;
-  class RendererDriver;
-  class TextureStreamer;
+  class Renderer; // Own all renderer objects
 
-  /*! Renderer. This is the real interface for all other game component. It
-   *  contains all the graphics objects, performs the culling, manage the
-   *  occlusion queuries ...
-   */
-  class Renderer : public NonCopyable, public RefCount
+  /*! Base class for renderer side objects */
+  class RendererObject : public RefCount
   {
   public:
-    Renderer(void);
-    ~Renderer(void);
-
-    /*! Get the texture or possibly a task loading it */
-    INLINE TextureState getTexture(const char *name) {
-      return this->streamer->getTextureState(name);
+    RendererObject(Renderer &renderer);
+    INLINE void externalRefInc(void) { this->externalRef++; }
+    INLINE void externalRefDec(void) {
+      if (!(--this->externalRef))
+        this->onUnreferenced();
     }
-    /*! Current rendering task (TODO make a pipeline) */
-    Ref<TaskInOut> renderingTask;
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-    /*! Low-level interface to the graphics API */
-    RendererDriver *driver;
-    /*! Handles and stores textures */
-    TextureStreamer *streamer;
+    /*! Compiling an object makes it immutable */
+    INLINE void compile(void) { this->onCompile(); compiled = true; }
+    INLINE bool isCompiled(void) const { return compiled; }
+    /*! When there is no more reference externally (ie the user does not hold
+     *  any reference on it), we can trigger any specific code
+     */
+    virtual void onUnreferenced(void) = 0;
+    Renderer &renderer;
+  protected:
+    /*! Override it in the inherited classes */
+    virtual void onCompile(void) = 0;
+  private:
+    Atomic externalRef;//!< Number of references held by the user
+    bool compiled;     //!< compiled == immutable
   };
 
-} /* namespace pf*/
-#endif /* __PF_RENDERER_HPP__ */
+} /* namespace pf */
+
+#endif /* __PF_RENDERER_OBJECT_HPP__ */
+

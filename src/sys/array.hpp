@@ -26,23 +26,50 @@ namespace pf
    *  since we do not want to implement an expensive deep copy
    */
   template<class T>
-  class array : NonCopyable
+  class array
   {
   public:
     /*! Create an empty array */
     INLINE array(void) : elem(NULL), elemNum(0) {}
     /*! Allocate an array with elemNum allocated elements */
     INLINE array(size_t elemNum) : elem(NULL), elemNum(0) { this->resize(elemNum); }
+    /*! Copy constructor */
+    INLINE array(const array &other) {
+      this->elemNum = other.elemNum;
+      if (this->elemNum) {
+        this->elem = PF_NEW_ARRAY(T, this->elemNum);
+        for (size_t i = 0; i < this->elemNum; ++i) this->elem[i] = other.elem[i];
+      } else
+        this->elem = NULL;
+    }
+    /*! Assignment operator */
+    INLINE array& operator= (const array &other) {
+      if (this->elem != NULL && this->elemNum != other->elemNum) {
+        PF_DELETE_ARRAY(this->elem);
+        this->elem = NULL;
+        this->elemNum = 0;
+      }
+      this->elemNum = other.elemNum;
+      if (this->elemNum) {
+        if (this->elem == NULL)
+          this->elem = PF_NEW_ARRAY(T, this->elemNum);
+        for (size_t i = 0; i < this->elemNum; ++i) this->elem[i] = other.elem[i];
+      } else
+        this->elem = NULL;
+      return *this;
+    }
     /*! Delete the allocated elements */
     INLINE ~array(void) { PF_SAFE_DELETE_ARRAY(elem); }
     /*! Free the already allocated elements and allocate a new array */
     INLINE void resize(size_t elemNum_) {
-      PF_SAFE_DELETE_ARRAY(elem);
-      if (elemNum_)
-        this->elem = PF_NEW_ARRAY(T, elemNum_);
-      else
-        this->elem = NULL;
-      this->elemNum = elemNum_;
+      if (elemNum_ != this->elemNum) {
+        PF_SAFE_DELETE_ARRAY(elem);
+        if (elemNum_)
+          this->elem = PF_NEW_ARRAY(T, elemNum_);
+        else
+          this->elem = NULL;
+        this->elemNum = elemNum_;
+      }
     }
     /*! Steal the pointer. The array becomes emtpy */
     INLINE T *steal(void) {

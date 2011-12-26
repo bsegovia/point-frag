@@ -21,7 +21,9 @@
 #include "sys/ref.hpp"
 #include "sys/mutex.hpp"
 #include "sys/tasking.hpp"
+#include "sys/tasking_utility.hpp"
 #include "renderer/GL/gl3.h"
+
 #ifdef __MSVC__
 #include <unordered_map>
 #else
@@ -96,11 +98,10 @@ namespace pf
   {
     INLINE TextureState(void) : value(NOT_HERE) {}
     INLINE TextureState(Texture2D &tex) : tex(&tex), value(COMPLETE) {}
-    TextureState(int value, Task &loadingTask, Task &proxyTask);
-    Ref<Texture2D> tex;    //!< Texture itself
-    Ref<Task> loadingTask; //!< Task that issued the load
-    Ref<Task> proxyTask;   //!< Task that depends on the loading task (for sync)
-    int value;             //!< Current loading state
+    TextureState(int value, TaskInOut &loadingTask);
+    Ref<Texture2D> tex;         //!< Texture itself
+    Ref<TaskInOut> loadingTask; //!< Task that issued the load
+    int value;                  //!< Current loading state
     enum
     {
       NOT_HERE  = 0, //!< Unknown not in the streamer at all
@@ -134,9 +135,9 @@ namespace pf
     std::tr1::unordered_map<std::string, TextureState> texMap;
     /*! Serialize the streamer access */
     MutexSys mutex;
+    Renderer &renderer;              //!< Owner of the streamer
     friend class TaskTextureLoad;    //!< Load the textures from the disk
     friend class TaskTextureLoadOGL; //!< Upload the mip level to OGL
-    Renderer &renderer;              //!< Owner of the streamer
   };
 } /* namespace pf */
 

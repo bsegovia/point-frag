@@ -15,14 +15,17 @@
 // ======================================================================== //
 
 #include "renderer/renderer.hpp"
+#include "renderer/renderer_context.hpp"
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer_segment.hpp"
 #include "renderer/renderer_driver.hpp"
 #include "models/obj.hpp"
 #include "rt/bvh2.hpp"
 #include "rt/bvh2_node.hpp"
+#include "rt/bvh2_traverser.hpp"
 #include "rt/rt_triangle.hpp"
 #include "sys/logging.hpp"
+#include "sys/tasking_utility.hpp"
 
 #include <cstring>
 #include <cassert>
@@ -30,8 +33,6 @@
 
 namespace pf
 {
-#define OGL_NAME (this->renderer.driver)
-
   /*! Append the newly loaded texture in the obj (XXX hack make something
    *  better later rather than using lock on the renderer obj. Better should
    *  be to make renderer obj immutable and replace it when all textures are
@@ -51,7 +52,7 @@ namespace pf
       const TextureState state = streamer.getTextureState(name);
       PF_ASSERT(state.value == TextureState::COMPLETE);
       Lock<MutexSys> lock(renderObj->mutex);
-      for (size_t matID = 0; matID < renderObj->matNum; ++matID)
+      for (size_t matID = 0; matID < renderObj->mat.size(); ++matID)
         if (renderObj->mat[matID].name_Kd == name)
           renderObj->mat[matID].map_Kd = state.tex;
       return NULL;
@@ -143,7 +144,7 @@ namespace pf
     segment.matID = obj.tri[triID].m; // Be aware, they must be remapped
   }
 
-  /*! Symmetry maniacs. We finish the segments with the last primitive index */
+  /*! Symetry maniacs. We finish the segments with the last primitive index */
   INLINE void endSegment(RendererSegment &segment, uint32 last)
   {
     segment.last = last;
@@ -228,9 +229,9 @@ namespace pf
 
     // Now we allocate the segments in the OBJ
     PF_MSG_V("RendererObj: " << segments.size() << " segments are created");
-    renderObj.segmentNum = segments.size();
-    renderObj.segments.resize(renderObj.segmentNum);
-    for (size_t segmentID = 0; segmentID < renderObj.segmentNum; ++segmentID)
+    const uint32 segmentNum = segments.size();
+    renderObj.segments.resize(segmentNum);
+    for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
       renderObj.segments[segmentID] = segments[segmentID];
 
     // Build the new index buffer
@@ -246,67 +247,132 @@ namespace pf
     return indices;
   }
 
+  /*! Data to upload to OGL and possibly shared by Renderer Set */
+  struct RendererObjSharedData : public RefCount
+  {
+    RendererObjSharedData(void);
+    ~RendererObjSharedData(void);
+    void upload(RendererObj &obj);
+    Obj::Vertex *vertices;
+    uint32 *indices;
+    uint32 vertNum;
+    uint32 indexNum;
+  };
+
+#define OGL_NAME (obj.renderer.driver)
+
+  RendererObjSharedData::RendererObjSharedData(void) :
+    vertices(NULL), indices(NULL), vertNum(0), indexNum(0) {}
+  RendererObjSharedData::~RendererObjSharedData(void) {
+    PF_SAFE_DELETE(vertices);
+    PF_SAFE_DELETE(indices);
+  }
+
+  void RendererObjSharedData::upload(RendererObj &obj)
+  {
+    PF_MSG_V("RendererObj: creating OGL objects");
+
+    // Create the index buffer
+    const size_t indexSize = sizeof(GLuint) * this->indexNum;
+    R_CALL (GenBuffers, 1, &obj.elementBuffer);
+    R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, obj.elementBuffer);
+    R_CALL (BufferData, GL_ELEMENT_ARRAY_BUFFER, indexSize, this->indices, GL_STATIC_DRAW);
+    R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // Create the OGL vertex buffer
+    const size_t vertexSize = this->vertNum * sizeof(Obj::Vertex);
+    R_CALL (GenBuffers, 1, &obj.arrayBuffer);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, obj.arrayBuffer);
+    R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, this->vertices, GL_STATIC_DRAW);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+
+    // Create the OGL vertex array
+    R_CALL (GenVertexArrays, 1, &obj.vertexArray);
+    R_CALL (BindVertexArray, obj.vertexArray);
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, obj.arrayBuffer);
+    R_CALL (VertexAttribPointer, RendererDriver::ATTR_POSITION, 3,
+            GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex),
+            NULL);
+    R_CALL (VertexAttribPointer, RendererDriver::ATTR_TEXCOORD, 2,
+            GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex),
+            (void*) offsetof(Obj::Vertex, t));
+    R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
+    R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_POSITION);
+    R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_TEXCOORD);
+    R_CALL (BindVertexArray, 0);
+  }
+
   RendererObj::RendererObj(Renderer &renderer, const Obj &obj) :
-    renderer(renderer), matNum(0), segmentNum(0),
-    vertexArray(0), arrayBuffer(0), elementBuffer(0)
+    RendererDisplayable(renderer, RN_DISPLAYABLE_WAVEFRONT),
+    sharedData(NULL), vertexArray(0), arrayBuffer(0), elementBuffer(0),
+    properties(0)
   {
     TextureStreamer &streamer = *renderer.streamer;
+    PF_MSG_V("RendererObj: asynchronously loading textures");
 
-    if (obj.isValid()) {
-      PF_MSG_V("RendererObj: asynchronously loading textures");
+    // Map each material group to the texture name. Since we also remove the
+    // possibly unused materials, we remap their IDs
+    uint32 *matRemap = PF_NEW_ARRAY(uint32, obj.matNum);
+    this->mat.resize(obj.grpNum);
+    const uint32 matNum = obj.grpNum;
+    for (size_t i = 0; i < matNum; ++i) {
+      const int32 matID = obj.grp[i].m;
+      PF_ASSERT(matID >= 0); // We ensure that in the loader
+      matRemap[matID] = i;
+      Material &material = this->mat[i];
+      material.map_Kd = renderer.defaultTex;
+      material.name_Kd = obj.mat[matID].map_Kd;
+    }
 
-      // Map each material group to the texture name. Since we also remove the
-      // possibly unused materials, we remap their IDs
-      uint32 *matRemap = PF_NEW_ARRAY(uint32, obj.matNum);
-      this->mat.resize(obj.grpNum);
-      this->matNum = obj.grpNum;
-      for (size_t i = 0; i < this->matNum; ++i) {
-        const int32 matID = obj.grp[i].m;
-        PF_ASSERT(matID >= 0); // We ensure that in the loader
-        matRemap[matID] = i;
-        Material &material = this->mat[i];
-        material.map_Kd = renderer.defaultTex;
-        material.name_Kd = obj.mat[matID].map_Kd;
+    // Start to load the textures
+    this->sharedData = PF_NEW(RendererObjSharedData);
+    this->texLoading = PF_NEW(TaskLoadObjTexture, streamer, this, obj);
+    this->texLoading->scheduled();
+
+    // Create the rendererOBJ segment
+    PF_MSG_V("RendererObj: creating geometry segments");
+    RendererObjSharedData *shared = this->sharedData.cast<RendererObjSharedData>();
+    shared->indices = RendererObjSegment(*this, obj);
+    shared->indexNum = 3*obj.triNum;
+    const uint32 segmentNum = this->segments.size();
+    for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
+      segments[segmentID].matID = matRemap[segments[segmentID].matID];
+    shared->vertices = PF_NEW_ARRAY(Obj::Vertex, obj.vertNum);
+    shared->vertNum = obj.vertNum;
+    std::memcpy(shared->vertices, obj.vert, obj.vertNum * sizeof(Obj::Vertex));
+    PF_SAFE_DELETE_ARRAY(matRemap);
+  }
+
+  void RendererObj::onCompile(void) {
+    if (this->properties & RN_OBJ_OCCLUDER) {
+      PF_MSG_V("Game: building BVH");
+      RendererObjSharedData *shared = (RendererObjSharedData*) sharedData.ptr;
+      PF_ASSERT(shared->indexNum % 3 == 0);
+      const uint32 triNum = shared->indexNum / 3;
+      RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, triNum);
+      for (size_t index = 0; index < shared->indexNum; index += 3) {
+        const uint32 index0 = shared->indices[index+0];
+        const uint32 index1 = shared->indices[index+1];
+        const uint32 index2 = shared->indices[index+2];
+        const vec3f &v0 = shared->vertices[index0].p;
+        const vec3f &v1 = shared->vertices[index1].p;
+        const vec3f &v2 = shared->vertices[index2].p;
+        tris[index / 3] = RTTriangle(v0,v1,v2);
       }
-
-      // Start to load the textures
-      PF_NEW(TaskLoadObjTexture, streamer, this, obj)->scheduled();
-
-      // Right now we only create one segments per material
-      PF_MSG_V("RendererObj: creating geometry segments");
-      GLuint *indices = RendererObjSegment(*this, obj);
-      for (size_t segmentID = 0; segmentID < segmentNum; ++segmentID)
-        segments[segmentID].matID = matRemap[segments[segmentID].matID];
-
-      // Create the OGL index buffer
-      PF_MSG_V("RendererObj: creating OGL objects");
-      const size_t indexSize = sizeof(GLuint[3]) * obj.triNum;
-      R_CALL (GenBuffers, 1, &this->elementBuffer);
-      R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, this->elementBuffer);
-      R_CALL (BufferData, GL_ELEMENT_ARRAY_BUFFER, indexSize, indices, GL_STATIC_DRAW);
-      R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
-      PF_DELETE_ARRAY(indices);
-
-      // Create the OGL vertex buffer
-      const size_t vertexSize = obj.vertNum * sizeof(Obj::Vertex);
-      R_CALL (GenBuffers, 1, &this->arrayBuffer);
-      R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
-      R_CALL (BufferData, GL_ARRAY_BUFFER, vertexSize, obj.vert, GL_STATIC_DRAW);
-      R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-
-      // Create the OGL vertex array
-      R_CALL (GenVertexArrays, 1, &this->vertexArray);
-      R_CALL (BindVertexArray, this->vertexArray);
-      R_CALL (BindBuffer, GL_ARRAY_BUFFER, this->arrayBuffer);
-      R_CALL (VertexAttribPointer, RendererDriver::ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex), NULL);
-      R_CALL (VertexAttribPointer, RendererDriver::ATTR_TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(Obj::Vertex), (void*)offsetof(Obj::Vertex, t));
-      R_CALL (BindBuffer, GL_ARRAY_BUFFER, 0);
-      R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_POSITION);
-      R_CALL (EnableVertexAttribArray, RendererDriver::ATTR_TEXCOORD);
-      R_CALL (BindVertexArray, 0);
-      PF_SAFE_DELETE_ARRAY(matRemap);
+      BVH2<RTTriangle>* bvh = PF_NEW(BVH2<RTTriangle>);
+      buildBVH2(tris, triNum, *bvh);
+      PF_DELETE_ARRAY(tris);
+      this->intersector = PF_NEW(BVH2Traverser<RTTriangle>, bvh);
     }
   }
+
+  void RendererObj::onUnreferenced(void) {
+    this->texLoading = NULL;
+    this->sharedData = NULL;
+  }
+
+#undef OGL_NAME
+#define OGL_NAME (this->renderer.driver)
 
   RendererObj::~RendererObj(void) {
     if (this->vertexArray)   R_CALL (DeleteVertexArrays, 1, &this->vertexArray);
@@ -314,8 +380,15 @@ namespace pf
     if (this->elementBuffer) R_CALL (DeleteBuffers, 1, &this->elementBuffer);
   }
 
-  void RendererObj::display(const array<uint32> &visible, uint32 visibleNum) {
-    Lock<MutexSys> lock(mutex);
+  void RendererObj::display(const array<uint32> &visible, uint32 visibleNum)
+  {
+    // Creating the OGL data if not done yet
+    if (UNLIKELY(this->sharedData)) {
+      RendererObjSharedData *shared = (RendererObjSharedData*) sharedData.ptr;
+      shared->upload(*this);
+      sharedData = NULL;
+    }
+    Lock<MutexSys> lock(mutex); // XXX remove that
     R_CALL (BindVertexArray, vertexArray);
     R_CALL (BindBuffer, GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     R_CALL (ActiveTexture, GL_TEXTURE0);

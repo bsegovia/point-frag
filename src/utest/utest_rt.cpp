@@ -17,6 +17,7 @@
 #include "renderer/renderer_obj.hpp"
 #include "renderer/renderer.hpp"
 #include "rt/bvh2_traverser.hpp"
+#include "rt/bvh2.hpp"
 #include "rt/rt_triangle.hpp"
 #include "rt/rt_camera.hpp"
 #include "models/obj.hpp"
@@ -38,7 +39,7 @@
 
 namespace pf
 {
-  Ref<Intersector> intersector  = NULL;
+  static Ref<Intersector> intersector  = NULL;
   static const int CAMW = 1024, CAMH = 1024;
 
   static const FileName objName("f000.obj");

@@ -14,41 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_RENDERER_HPP__
-#define __PF_RENDERER_HPP__
-
-#include "renderer/texture.hpp"
-#include "sys/tasking_utility.hpp"
+#include "renderer_display_list.hpp"
+#include "renderer_obj.hpp"
 
 namespace pf
 {
-  class RendererObj;
-  class RendererDriver;
-  class TextureStreamer;
-
-  /*! Renderer. This is the real interface for all other game component. It
-   *  contains all the graphics objects, performs the culling, manage the
-   *  occlusion queuries ...
-   */
-  class Renderer : public NonCopyable, public RefCount
-  {
-  public:
-    Renderer(void);
-    ~Renderer(void);
-
-    /*! Get the texture or possibly a task loading it */
-    INLINE TextureState getTexture(const char *name) {
-      return this->streamer->getTextureState(name);
+  RendererDisplayList::RendererDisplayList(Renderer &renderer) :
+    RendererObject(renderer) {}
+  RendererDisplayList::~RendererDisplayList(void) {}
+  void RendererDisplayList::onCompile(void) {}
+  void RendererDisplayList::onUnreferenced(void) {}
+  void RendererDisplayList::add(RendererObj *obj, const float *m) {
+    PF_ASSERT(this->isCompiled() == false);
+    Elem elem;
+    if (m) {
+      elem.isIdentity = 0;
+      elem.model = mat4x4f(m[0], m[1], m[2], m[3],
+                           m[4], m[5], m[6], m[7],
+                           m[8], m[9], m[10],m[11],
+                           m[12],m[13],m[14],m[15]);
+    } else {
+      elem.isIdentity = 1;
+      elem.model = mat4x4f(one);
     }
-    /*! Current rendering task (TODO make a pipeline) */
-    Ref<TaskInOut> renderingTask;
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-    /*! Low-level interface to the graphics API */
-    RendererDriver *driver;
-    /*! Handles and stores textures */
-    TextureStreamer *streamer;
-  };
+    elem.object = obj;
+    this->objects.push_back(elem);
+  }
 
-} /* namespace pf*/
-#endif /* __PF_RENDERER_HPP__ */
+} /* namespace pf */
+

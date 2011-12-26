@@ -189,7 +189,7 @@
 #define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
 
 /*! Branch hint */
-#define LIKELY(x)       __builtin_expect((x),1)
+#define LIKELY(x)       __builtin_expect(!!(x),1)
 #define UNLIKELY(x)     __builtin_expect((x),0)
 
 /*! Stringify macros */

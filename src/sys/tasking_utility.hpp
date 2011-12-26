@@ -42,7 +42,7 @@ namespace pf
   class TaskMain : public Task
   {
   public:
-    TaskMain(const char *name);
+    TaskMain(const char *name = NULL);
   };
 
   /*! Chained tasks form a single list. Each task schedules its successor */
@@ -100,9 +100,16 @@ namespace pf
     TaskChained *head;            //!< Ends us and triggers the dependencies
   };
 
+  /*! Task with multiple dependencies */
+  class TaskInOut : public Task, public MultiDependencyPolicy<TaskInOut>
+  {
+  public:
+    INLINE TaskInOut(const char *name = NULL) : Task(name) {}
+  };
+
   /*! Encapsulates functor (and anonymous lambda) */
-  template <typename T>
-  class TaskFunctor : public Task
+  template <typename T, typename TaskType = Task>
+  class TaskFunctor : public TaskType
   {
   public:
     INLINE TaskFunctor(const T &functor, const char *name = NULL);
@@ -112,9 +119,10 @@ namespace pf
   };
 
   /*! Spawn a task from a functor */
-  template <typename T>
-  Task *spawn(const char *name, const T &functor) {
-    return PF_NEW(TaskFunctor<T>, functor, name);
+  template <typename TaskType, typename FunctorType>
+  TaskType *spawn(const char *name, const FunctorType &functor) {
+    typedef TaskFunctor<FunctorType, TaskType> TaskClass;
+    return PF_NEW(TaskClass, functor, name);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -161,14 +169,13 @@ namespace pf
     head = newHead;
   }
 
-  template <typename T>
-  INLINE TaskFunctor<T>::TaskFunctor(const T &functor, const char *name) :
-    Task(name), functor(functor) {}
+  template <typename T, typename TaskType>
+  INLINE TaskFunctor<T, TaskType>::TaskFunctor(const T &functor, const char *name) :
+    TaskType(name), functor(functor) {}
 
-  template <typename T>
-  Task *TaskFunctor<T>::run(void) { functor(); return NULL; }
+  template <typename T, typename TaskType>
+  Task *TaskFunctor<T, TaskType>::run(void) { functor(); return NULL; }
 
 } /* namespace pf */
 
 #endif /* __PF_TASKING_UTILITY_HPP__ */
-

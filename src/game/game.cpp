@@ -18,40 +18,31 @@
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "game_frame.hpp"
-#include "renderer/renderer_obj.hpp"
-#include "renderer/renderer.hpp"
-#include "models/obj.hpp"
+
+#include "renderer/renderer_context.hpp"
+
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
 #include "sys/logging.hpp"
-#include "sys/default_path.hpp"
 
 #include <GL/freeglut.h>
 #include <cstdio>
 #include <iostream>
 
-#include "renderer/hiz.hpp" // XXX to test the HiZ
-#include "rt/bvh2.hpp"      // XXX to test the HiZ
-#include "rt/rt_triangle.hpp"// XXX to test the HiZ
-
 namespace pf
 {
-  static const int defaultWidth = 1024, defaultHeight = 1024;
-  Renderer *renderer = NULL;
-  extern Ref<RendererObj> renderObj;
+  static const int defaultWidth = 800, defaultHeight = 600;
+  //static const char *objName = "f000.obj";
+  //static const char *objName = "small.obj";
+  //static const char *objName = "Arabic_City.obj";
+  static const char *objName = "arabic_city_II.obj";
+  //static const char *objName = "conference.obj";
+  //static const char *objName = "sibenik.obj";
+  //static const char *objName = "sponza.obj";
+  RnContext renderer = NULL;
+  RnObj renderObj = NULL;
 
-  //static const FileName objName("f000.obj");
-  //static const FileName objName("small.obj");
-  //static const FileName objName("Arabic_City.obj");
-  static const FileName objName("arabic_city_II.obj");
-  //static const FileName objName("conference.obj");
-  //static const FileName objName("sibenik.obj");
-  //static const FileName objName("sponza.obj");
-
-  extern Ref<BVH2<RTTriangle>> bvh; // XXX -> HiZ
-
-  static void GameStart(int argc, char **argv)
-  {
+  static void GameStart(int argc, char **argv) {
     PF_MSG_V("GLUT: initialization");
     glutInitWindowSize(defaultWidth, defaultHeight);
     glutInitWindowPosition(64, 64);
@@ -60,45 +51,15 @@ namespace pf
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     glutCreateWindow(argv[0]);
-
-    renderer = PF_NEW(Renderer);
-
-    size_t path = 0;
-    Obj obj;
-    for (path = 0; path < defaultPathNum; ++path)
-      if (obj.load(FileName(defaultPath[path]) + objName)) {
-        PF_MSG_V("Obj: " << objName << " loaded from " << defaultPath[path]);
-        break;
-      }
-    if (path == defaultPathNum)
-      PF_WARNING_V("Obj: " << objName << " not found");
-
-    Ref<Task> bvhTask = spawn(HERE,[=, &obj]
-    {
-      PF_MSG_V("Game: building BVH");
-      RTTriangle *tris = PF_NEW_ARRAY(RTTriangle, obj.triNum);
-      for (size_t i = 0; i < obj.triNum; ++i) {
-        const vec3f &v0 = obj.vert[obj.tri[i].v[0]].p;
-        const vec3f &v1 = obj.vert[obj.tri[i].v[1]].p;
-        const vec3f &v2 = obj.vert[obj.tri[i].v[2]].p;
-        tris[i] = RTTriangle(v0,v1,v2);
-      }
-      bvh = PF_NEW(BVH2<RTTriangle>);
-      buildBVH2(tris, obj.triNum, *bvh);
-      PF_DELETE_ARRAY(tris);
-    });
-    bvhTask->scheduled();
-
-    // Build the renderer OBJ
-    renderObj = PF_NEW(RendererObj, *renderer, obj);
-    TaskingSystemWait(bvhTask);
+    renderer = rnContextNew();
+    renderObj = rnObjNew(renderer, objName);
+    rnObjProperties(renderObj, RN_OBJ_OCCLUDER);
+    rnObjCompile(renderObj);
   }
 
   static void GameEnd(void) {
-    bvh = NULL; // release the BVH
-    renderObj = NULL; // idem
-    PF_DELETE(renderer);
-    renderer = NULL;
+    rnObjDelete(renderObj);
+    rnContextDelete(renderer);
   }
 } /* namespace pf */
 

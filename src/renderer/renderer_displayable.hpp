@@ -14,41 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_RENDERER_HPP__
-#define __PF_RENDERER_HPP__
+#ifndef __PF_RENDERER_DISPLAYABLE_HPP__
+#define __PF_RENDERER_DISPLAYABLE_HPP__
 
-#include "renderer/texture.hpp"
-#include "sys/tasking_utility.hpp"
+#include "renderer_object.hpp"
 
 namespace pf
 {
-  class RendererObj;
-  class RendererDriver;
-  class TextureStreamer;
-
-  /*! Renderer. This is the real interface for all other game component. It
-   *  contains all the graphics objects, performs the culling, manage the
-   *  occlusion queuries ...
+  /*! We will just cast the object based on this enum to properly dispatch the
+   *  code
    */
-  class Renderer : public NonCopyable, public RefCount
-  {
-  public:
-    Renderer(void);
-    ~Renderer(void);
-
-    /*! Get the texture or possibly a task loading it */
-    INLINE TextureState getTexture(const char *name) {
-      return this->streamer->getTextureState(name);
-    }
-    /*! Current rendering task (TODO make a pipeline) */
-    Ref<TaskInOut> renderingTask;
-    /*! Default texture */
-    Ref<Texture2D> defaultTex;
-    /*! Low-level interface to the graphics API */
-    RendererDriver *driver;
-    /*! Handles and stores textures */
-    TextureStreamer *streamer;
+  enum RendererDisplayableType {
+    RN_DISPLAYABLE_WAVEFRONT = 0,
+    RN_DISPLAYABLE_SET       = 1
   };
 
-} /* namespace pf*/
-#endif /* __PF_RENDERER_HPP__ */
+  /*! Common interface for all objects that can be drawn on screen. We do not
+   *  really use any pure interface for that since the dispatch will be quite
+   *  hardcoded. However, it is convenient to have a common interface
+   */
+  class RendererDisplayable : public RendererObject
+  {
+  public:
+    /*! We store the object type to statically dispatch the code */
+    RendererDisplayable(Renderer &renderer, RendererDisplayableType type) :
+      RendererObject(renderer), type(type) {}
+    /*! Return the object type */
+    INLINE RendererDisplayableType getType(void) const { return this->type; }
+  private:
+    const RendererDisplayableType type;
+  };
+
+} /* namespace pf */
+
+#endif /* __PF_RENDERER_DISPLAYABLE_HPP__ */

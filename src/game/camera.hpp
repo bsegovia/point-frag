@@ -38,7 +38,7 @@ namespace pf
     void updateOrientation(float dx, float dy);
     /*! Update positions along x, y and z axis */
     void updatePosition(const vec3f &d);
-    /*! Return the GL view matrix for the given postion */
+    /*! Return the GL view matrix for the given postion XXX Remove it */
     INLINE mat4x4f getMatrix(void) {
       const mat4x4f P = pf::perspective(fov, ratio, znear, zfar);
       const mat4x4f V = pf::lookAt(org, lookAt, up);
