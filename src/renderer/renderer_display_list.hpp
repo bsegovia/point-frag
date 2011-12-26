@@ -31,6 +31,12 @@ namespace pf
   class RendererDisplayList : public RendererObject
   {
   public:
+    /*! Object to display */
+    struct Elem {
+      Ref<RendererDisplayable> object;//!< Object to render
+      mat4x4f model;                  //!< Model matrix
+      uint32 isIdentity;              //!< True of the user provides NULL
+    };
     /*! Create an emtpy display list */
     RendererDisplayList(Renderer &renderer);
     /*! Destroy the list */
@@ -39,17 +45,13 @@ namespace pf
     void add(RendererObj *obj, const float *model = NULL);
     /*! Append a set with the given model 4x4 matrix */
     void add(RendererSet *set, const float *model = NULL);
+    /*! Get the list of objects */
+    INLINE std::list<Elem> &getList(void) { return this->objects; }
   private:
     /*! Implements base class method */
     void onCompile(void);
     /*! Implements base class method */
     void onUnreferenced(void);
-    /*! Object to display */
-    struct Elem {
-      Ref<RendererDisplayable> object;//!< Object to render
-      mat4x4f model;                  //!< Model matrix
-      uint32 isIdentity;              //!< True of the user provides NULL
-    };
     /*! All the objects to render */
     std::list<Elem> objects;
   };

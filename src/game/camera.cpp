@@ -83,6 +83,11 @@ namespace pf
   TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
+  // use CVAR
+  extern uint32 key_l;
+  extern uint32 key_k;
+  extern uint32 key_p;
+
   Task *TaskCamera::run(void)
   {
     // Change mouse position
@@ -93,6 +98,9 @@ namespace pf
     if (event->getKey('d')) d.x -= float(event->dt) * cam->speed;
     if (event->getKey('r')) d.y += float(event->dt) * cam->speed;
     if (event->getKey('f')) d.y -= float(event->dt) * cam->speed;
+    key_l = event->getKey('l') ? 1 : 0;
+    key_k = event->getKey('k') ? 1 : 0;
+    key_p = event->getKey('p') ? 1 : 0;
 
     cam->updatePosition(d);
     cam->ratio = float(event->w) / float(event->h);

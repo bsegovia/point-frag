@@ -18,9 +18,7 @@
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "game_frame.hpp"
-
 #include "renderer/renderer_context.hpp"
-
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
 #include "sys/logging.hpp"

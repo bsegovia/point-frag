@@ -102,9 +102,9 @@ namespace pf
   // static double prevT0 = 0.;
   Task *TaskEvent::run(void)
   {
-    if (UNLIKELY(frameNum++ == 0)) {
+    if (UNLIKELY(frameNum++ == 0))
       t = getSeconds();
-    } else if (frameNum % 256 == 0) {
+    else if (frameNum % 256 == 0) {
       const double t0 = getSeconds();
       printf("\rfps %f frame/s", 256. / (t0 - t));
       fflush(stdout);
