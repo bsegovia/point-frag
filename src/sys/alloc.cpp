@@ -194,6 +194,7 @@ namespace pf
   void* alignedMalloc(size_t size, size_t align) {
     void* ptr = _mm_malloc(size,align);
     FATAL_IF (!ptr && size, "memory allocation failed");
+    MemDebuggerInitializeMem(ptr, size);
     return ptr;
   }
 
