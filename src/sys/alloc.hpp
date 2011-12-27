@@ -38,6 +38,7 @@ namespace pf
   void  MemDebuggerRemoveAlloc(void *ptr);
   void  MemDebuggerDumpAlloc(void);
   void  MemDebuggerInitializeMem(void *mem, size_t sz);
+  void  MemDebuggerEnableMemoryInitialization(bool enabled);
   void  MemDebuggerStart(void);
   void  MemDebuggerEnd(void);
 #else
@@ -45,6 +46,7 @@ namespace pf
   INLINE void  MemDebuggerRemoveAlloc(void *ptr) {}
   INLINE void  MemDebuggerDumpAlloc(void) {}
   INLINE void  MemDebuggerInitializeMem(void *mem, size_t sz) {}
+  INLINE void  MemDebuggerEnableMemoryInitialization(bool enabled) {}
   INLINE void  MemDebuggerStart(void) {}
   INLINE void  MemDebuggerEnd(void) {}
 #endif /* PF_DEBUG_MEMORY */

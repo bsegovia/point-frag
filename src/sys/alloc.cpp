@@ -123,6 +123,9 @@ namespace pf
               << " allocated static strings" << std::endl;
   }
 
+  /*! The user can deactivate the memory initialization */
+  static bool memoryInitializationEnabled = true;
+
   /*! Declare C like interface functions here */
   static MemDebugger *memDebugger = NULL;
   void* MemDebuggerInsertAlloc(void *ptr, const char *file, const char *function, int line) {
@@ -135,8 +138,11 @@ namespace pf
   void MemDebuggerDumpAlloc(void) {
     if (memDebugger) memDebugger->dumpAlloc();
   }
+  void MemDebuggerEnableMemoryInitialization(bool enabled) {
+    memoryInitializationEnabled = enabled;
+  }
   void MemDebuggerInitializeMem(void *mem, size_t sz) {
-    std::memset(mem, 0xcd, sz);
+    if (memoryInitializationEnabled) std::memset(mem, 0xcd, sz);
   }
   void MemDebuggerStart(void) {
     if (memDebugger) MemDebuggerEnd();
