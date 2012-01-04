@@ -14,38 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "camera.hpp"
-#include "game_render.hpp"
-#include "game_event.hpp"
-#include "sys/input_control.hpp"
-#include "renderer/renderer_context.hpp"
+#ifndef __PF_CONSOLE_HPP__
+#define __PF_CONSOLE_HPP__
+
+#include "sys/platform.hpp"
 
 namespace pf
 {
-  extern RnObj renderObj;
-  extern RnContext renderer;
+  class InputControl; // Handle input controls (keyboard/mouse...)
+  class ScriptSystem; // Run the code provided by the user
 
-  TaskGameRender::TaskGameRender(FPSCamera &cam, InputControl &event) :
-    TaskMain("TaskGameRender"), cam(&cam), event(&event)
-  {}
-
-  Task* TaskGameRender::run(void)
+  /*! Interactive command prompt with history and auto-completion */
+  class Console : public NonCopyable
   {
-    RnTask displayTask = NULL;
-    RnDisplayList list = rnDisplayListNew(renderer);
-    RnFrame frame = rnFrameNew(renderer);
-    rnDisplayListAddObj(list, renderObj);
-    rnDisplayListCompile(list);
-    rnFrameSetDisplayList(frame, list);
-    rnFrameSetCamera(frame, &cam->org.x, &cam->up.x, &cam->view.x, cam->fov, cam->ratio);
-    rnFrameSetScreenDimension(frame, event->w, event->h);
-    rnFrameCompile(frame);
-    displayTask = rnFrameDisplay(frame);
-    rnFrameDelete(frame);
-    rnDisplayListDelete(list);
-    displayTask->ends(this);
-    return displayTask;
-  }
+  public:
+    /*! The script system is responsible for running the provided commands */
+    Console(ScriptSystem &scriptSystem);
+    /*! Destructor */
+    virtual ~Console(void);
+    /*! Update the internal state and possibly running code with the scripting
+     *  system
+     */
+    virtual void update(const InputControl &input) = 0;
+    /*! Change the history size */
+    virtual void setHistorySize(uint32 size) = 0;
+    /*! Add a new completion candidate */
+    virtual void addCompletion(const std::string &str) = 0;
+  protected:
+    ScriptSystem &scriptSystem;
+  };
+
+  /*! Create a new console */
+  Console *ConsoleNew(ScriptSystem &scriptSystem);
+  /*! Delete a console */
+  void ConsoleDelete(Console *);
 
 } /* namespace pf */
+
+#endif /* __PF_CONSOLE_HPP__ */
 

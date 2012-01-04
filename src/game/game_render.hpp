@@ -20,16 +20,16 @@
 namespace pf
 {
   class FPSCamera;
-  class InputEvent;
+  class InputControl;
 
   /*! Responsible to display everything */
   class TaskGameRender : public TaskMain
   {
   public:
-    TaskGameRender(FPSCamera &cam, InputEvent &event);
+    TaskGameRender(FPSCamera &cam, InputControl &event);
     virtual Task *run(void);
     Ref<FPSCamera> cam;
-    Ref<InputEvent> event;
+    Ref<InputControl> event;
   };
 } /* namespace pf */
 

@@ -38,6 +38,8 @@ set (SRC
   sys/thread.hpp
   sys/alloc.cpp
   sys/alloc.hpp
+  sys/console.cpp
+  sys/console.hpp
   sys/tasking.cpp
   sys/tasking.hpp
   sys/tasking_utility.cpp
@@ -59,6 +61,8 @@ set (SRC
   sys/script.hpp
   sys/command.cpp
   sys/command.hpp
+  sys/input_control.cpp
+  sys/input_control.hpp
   simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image.hpp
@@ -106,6 +110,7 @@ set (SRC
 set (COMPILE_UTEST false CACHE bool "Compile or not the unit tests")
 if (COMPILE_UTEST)
   set (SRC ${SRC}
+       utest/utest_console.cpp
        utest/utest_lua.cpp
        utest/utest_rt.cpp
        utest/utest_font.cpp

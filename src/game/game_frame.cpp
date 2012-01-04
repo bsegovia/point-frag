@@ -19,17 +19,18 @@
 #include "game_render.hpp"
 #include "camera.hpp"
 #include "sys/alloc.hpp"
+#include "sys/input_control.hpp"
 
 namespace pf
 {
   GameFrame::GameFrame(GameFrame &previous) {
     this->cam = PF_NEW(FPSCamera, *previous.cam);
-    this->event = PF_NEW(InputEvent, *previous.event);
+    this->event = PF_NEW(InputControl, *previous.event);
   }
 
   GameFrame::GameFrame(int w, int h) {
     this->cam = PF_NEW(FPSCamera);
-    this->event = PF_NEW(InputEvent, w, h);
+    this->event = PF_NEW(InputControl, w, h);
   }
 
   TaskGameFrame::TaskGameFrame(GameFrame &previous_) : previous(&previous_) {}
@@ -44,7 +45,7 @@ namespace pf
 
     // Generate the current frame tasks
     GameFrame *current = PF_NEW(GameFrame, *previous);
-    Task *eventTask = PF_NEW(TaskEvent, *current->event, *previous->event);
+    Task *eventTask = PF_NEW(TaskEvent, *current->event);
     Task *cameraTask = PF_NEW(TaskCamera, *current->cam, *current->event);
     Task *renderTask = PF_NEW(TaskGameRender, *current->cam, *current->event);
     eventTask->starts(cameraTask);

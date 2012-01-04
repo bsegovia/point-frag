@@ -33,6 +33,7 @@ namespace pf
     typedef std::vector<T, Allocator<T>>       parent_type;
     typedef Allocator<T>                       allocator_type;
     typedef typename allocator_type::size_type size_type;
+    typedef typename parent_type::iterator     iterator;
 
     /*! Default constructor */
     INLINE explicit vector(const allocator_type &a = allocator_type()) :

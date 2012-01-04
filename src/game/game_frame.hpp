@@ -22,7 +22,7 @@
 namespace pf
 {
   class FPSCamera;
-  class InputEvent;
+  class InputControl;
 
   /*! Stores the data required for the frame */
   class GameFrame : public RefCount, public NonCopyable
@@ -31,9 +31,9 @@ namespace pf
     /*! Used to create the next frame */
     GameFrame(GameFrame &previous);
     GameFrame(int w, int h);
-    Ref<FPSCamera> cam;    //!< Camera for this frame
-    Ref<InputEvent> event; //!< Input as captured for this frame
-    PF_CLASS(GameFrame); // Custom new / delete operators
+    Ref<FPSCamera> cam;     //!< Camera for this frame
+    Ref<InputControl> event;//!< Input as captured for this frame
+    PF_CLASS(GameFrame);
   };
 
   /*! Responsible to handle the complete frame */
@@ -45,6 +45,7 @@ namespace pf
     /*! Will basically spawn all the other tasks */
     virtual Task *run(void);
     Ref<GameFrame> previous;
+    PF_CLASS(TaskGameFrame);
   };
 }
 

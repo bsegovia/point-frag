@@ -55,16 +55,16 @@ namespace pf
   };
 
   /*! Handle mouse, keyboard ... */
-  class InputEvent;
+  class InputControl;
 
   /*! Update the camera */
   class TaskCamera : public Task
   {
   public:
-    TaskCamera(FPSCamera &cam, InputEvent &event);
+    TaskCamera(FPSCamera &cam, InputControl &event);
     virtual Task *run(void);
-    Ref<FPSCamera> cam;    //!< Camera to update
-    Ref<InputEvent> event; //!< Current event state
+    Ref<FPSCamera> cam;      //!< Camera to update
+    Ref<InputControl> event; //!< Current event state
   };
 }
 

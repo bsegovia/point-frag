@@ -17,6 +17,7 @@
 #include "camera.hpp"
 #include "game_event.hpp"
 #include "sys/logging.hpp"
+#include "sys/input_control.hpp"
 
 namespace pf
 {
@@ -80,7 +81,7 @@ namespace pf
     org += d.z * view;
   }
 
-  TaskCamera::TaskCamera(FPSCamera &cam, InputEvent &event) :
+  TaskCamera::TaskCamera(FPSCamera &cam, InputControl &event) :
     Task("TaskCamera"), cam(&cam), event(&event) {}
 
   // use CVAR

@@ -22,68 +22,28 @@
 
 namespace pf
 {
-  /*! Contains the fields processed by the event handler */
-  class InputEvent : public RefCount, public NonCopyable
-  {
-  public:
-    InputEvent(const InputEvent &previous);
-    InputEvent(int w, int h);
-    INLINE bool getKey(int32 key) const {
-      const int entry = key / 32; // which bitfield? (int32 == 32 bits)
-      const int bit = key % 32;   // which bit in the bitfield?
-      return (this->keys[entry] & (1u << bit)) != 0;
-    }
-    INLINE void upKey(int32 key) {
-      const int entry = key / 32, bit = key % 32;
-      this->keys[entry] &= ~(1u << bit);
-    }
-    INLINE void downKey(int32 key) {
-      const int entry = key / 32, bit = key % 32;
-      this->keys[entry] |=  (1u << bit);
-    }
-    enum { MAX_KEYS = 256u };
-    enum { KEY_ARRAY_SIZE = MAX_KEYS / sizeof(int32) };
-    double time;                //!< Current time when capturing the events
-    double dt;                  //!< Delta from the previous frame
-    int mouseX, mouseY;         //!< Absolute position of the mouse
-    int mouseXRel, mouseYRel;   //!< Position of the mouse (relative to previous frame)
-    int w, h;                   //!< Dimension of the window (if changed)
-    char isResized:1;           //!< True if the user resized the window
-  private:
-    int32 keys[KEY_ARRAY_SIZE]; //!< Bitfield saying if key is pressed?
-    PF_CLASS(InputEvent); // Declare custom new / delete operators
-  };
+  class InputControl;
 
   /*! Record all events (keyboard, mouse, resizes) */
   class TaskEvent : public TaskMain
   {
   public:
     /*! Previous events are used to get delta values */
-    TaskEvent(InputEvent &current, InputEvent &previous);
+    TaskEvent(InputControl &current);
 
     /*! Register all events relatively to the previous ones (if any) */
     virtual Task *run(void);
 
-    /*! Mainly to initialize the underlying API */
-    static void init(void);
-    static void keyDown(unsigned char key, int x, int y);
-    static void keyUp(unsigned char key, int x, int y);
-    static void mouse(int button, int state, int x, int y);
-    static void reshape(int w, int h);
-    static void entry(int state);
-    static void motion(int x, int y);
-
     Task *clone(void) {
-      TaskEvent *task = PF_NEW(TaskEvent, *this->current, *this->previous);
+      TaskEvent *task = PF_NEW(TaskEvent, *this->current);
       task->cloneRoot = this->cloneRoot ? this->cloneRoot : this;
       task->ends(task->cloneRoot.ptr);
       return task;
     }
 
-    /*! Both events are needed to handle deltas */
-    Ref<InputEvent> current;
-    Ref<InputEvent> previous;
+    Ref<InputControl> current;
     Ref<Task> cloneRoot;
+    PF_CLASS(TaskEvent);
   };
 } /* namespace pf */
 

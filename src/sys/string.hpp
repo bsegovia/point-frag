@@ -30,7 +30,7 @@ namespace std
   string strlwr(const string& s);
   string strupr(const string& s);
 
-  template<typename T> INLINE string stringOf( const T& v) {
+  template<typename T> INLINE string stringOf(const T& v) {
     stringstream s; s << v; return s.str();
   }
 }

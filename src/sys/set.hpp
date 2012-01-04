@@ -14,38 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "camera.hpp"
-#include "game_render.hpp"
-#include "game_event.hpp"
-#include "sys/input_control.hpp"
-#include "renderer/renderer_context.hpp"
+#ifndef __PF_SET_HPP__
+#define __PF_SET_HPP__
+
+#include "sys/platform.hpp"
+#include <set>
 
 namespace pf
 {
-  extern RnObj renderObj;
-  extern RnContext renderer;
-
-  TaskGameRender::TaskGameRender(FPSCamera &cam, InputControl &event) :
-    TaskMain("TaskGameRender"), cam(&cam), event(&event)
-  {}
-
-  Task* TaskGameRender::run(void)
+  /*! Add our custom allocator to std::set */
+  template<class Key, class Pred = std::less<Key>>
+  class set : public std::set<Key,Pred,Allocator<Key>>
   {
-    RnTask displayTask = NULL;
-    RnDisplayList list = rnDisplayListNew(renderer);
-    RnFrame frame = rnFrameNew(renderer);
-    rnDisplayListAddObj(list, renderObj);
-    rnDisplayListCompile(list);
-    rnFrameSetDisplayList(frame, list);
-    rnFrameSetCamera(frame, &cam->org.x, &cam->up.x, &cam->view.x, cam->fov, cam->ratio);
-    rnFrameSetScreenDimension(frame, event->w, event->h);
-    rnFrameCompile(frame);
-    displayTask = rnFrameDisplay(frame);
-    rnFrameDelete(frame);
-    rnDisplayListDelete(list);
-    displayTask->ends(this);
-    return displayTask;
-  }
+  public:
+    // Typedefs
+    typedef Key value_type;
+    typedef Allocator<value_type> allocator_type;
+    typedef std::set<Key,Pred,Allocator<Key>> parent_type;
+    typedef Key key_type;
+    typedef Pred key_compare;
+
+    /*! Default constructor */
+    INLINE set(const key_compare &comp = key_compare(),
+               const allocator_type &a = allocator_type()) :
+      parent_type(comp, a) {}
+    /*! Iteration constructor */
+    template<class InputIterator>
+    INLINE set(InputIterator first,
+               InputIterator last,
+               const key_compare &comp = key_compare(),
+               const allocator_type& a = allocator_type()) :
+      parent_type(first, last, comp, a) {}
+    /*! Copy constructor */
+    INLINE set(const set& x) : parent_type(x) {}
+    PF_CLASS(set);
+  };
 
 } /* namespace pf */
+
+#endif /* __PF_SET_HPP__ */
 

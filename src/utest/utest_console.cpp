@@ -14,38 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "camera.hpp"
-#include "game_render.hpp"
-#include "game_event.hpp"
-#include "sys/input_control.hpp"
-#include "renderer/renderer_context.hpp"
+#include "utest/utest.hpp"
+#include "sys/console.hpp"
+#include "sys/logging.hpp"
+#include "sys/set.hpp"
+#include <string>
 
-namespace pf
+using namespace pf;
+
+void utest_string(void)
 {
-  extern RnObj renderObj;
-  extern RnContext renderer;
+  std::string s0 = "ll";
+  std::string s1 = "lll";
+  set<std::string> hop;
+  hop.insert("ll");
+  hop.insert("lll");
+  hop.insert("llol");
+  PF_MSG_V(((s0 < s1) ? "true" : "false"));
+  PF_MSG_V(*hop.lower_bound("llm"));
+}
 
-  TaskGameRender::TaskGameRender(FPSCamera &cam, InputControl &event) :
-    TaskMain("TaskGameRender"), cam(&cam), event(&event)
-  {}
-
-  Task* TaskGameRender::run(void)
-  {
-    RnTask displayTask = NULL;
-    RnDisplayList list = rnDisplayListNew(renderer);
-    RnFrame frame = rnFrameNew(renderer);
-    rnDisplayListAddObj(list, renderObj);
-    rnDisplayListCompile(list);
-    rnFrameSetDisplayList(frame, list);
-    rnFrameSetCamera(frame, &cam->org.x, &cam->up.x, &cam->view.x, cam->fov, cam->ratio);
-    rnFrameSetScreenDimension(frame, event->w, event->h);
-    rnFrameCompile(frame);
-    displayTask = rnFrameDisplay(frame);
-    rnFrameDelete(frame);
-    rnDisplayListDelete(list);
-    displayTask->ends(this);
-    return displayTask;
-  }
-
-} /* namespace pf */
+UTEST_REGISTER(utest_string);
 
