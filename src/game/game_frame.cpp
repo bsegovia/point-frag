@@ -19,7 +19,7 @@
 #include "game_render.hpp"
 #include "camera.hpp"
 #include "sys/alloc.hpp"
-#include "sys/input_control.hpp"
+#include "sys/windowing.hpp"
 
 namespace pf
 {

@@ -17,7 +17,7 @@
 #include "game_event.hpp"
 #include "sys/mutex.hpp"
 #include "sys/logging.hpp"
-#include "sys/input_control.hpp"
+#include "sys/windowing.hpp"
 
 namespace pf
 {

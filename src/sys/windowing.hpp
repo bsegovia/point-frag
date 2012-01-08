@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#ifndef __PF_INPUT_CONTROL_HPP__
-#define __PF_INPUT_CONTROL_HPP__
+#ifndef __PF_WINDOWING_HPP__
+#define __PF_WINDOWING_HPP__
 
 #include "platform.hpp"
 #include "fixed_array.hpp"
@@ -133,11 +133,20 @@ namespace pf
     this->keys[entry] |=  (1u << bit);
   }
 
+  /*! Call back prototype for OGL */
+  typedef void (*WinProc)();
   /*! Open a new OGL window */
-  void WindowInit(int w, int h);
+  void WinOpen(int w, int h);
   /*! Close the opened window */
-  void WindowClose(void);
+  void WinClose(void);
+  /*! Get a proc address for OGL */
+  WinProc WinGetProcAddress(const char *name);
+  /*! Tell if a OGL extension is supported or not */
+  int WinExtensionSupported(const char *ext);
+  /*! Swap the buffers */
+  void WinSwapBuffers(void);
+
 } /* namespace pf */
 
-#endif /* __PF_INPUT_CONTROL_HPP__ */
+#endif /* __PF_WINDOWING_HPP__ */
 

@@ -17,7 +17,7 @@
 #include "camera.hpp"
 #include "game_render.hpp"
 #include "game_event.hpp"
-#include "sys/input_control.hpp"
+#include "sys/windowing.hpp"
 #include "renderer/renderer_context.hpp"
 
 namespace pf

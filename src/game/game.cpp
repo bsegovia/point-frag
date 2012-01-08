@@ -21,9 +21,9 @@
 #include "renderer/renderer_context.hpp"
 #include "sys/alloc.hpp"
 #include "sys/tasking.hpp"
+#include "sys/windowing.hpp"
 #include "sys/logging.hpp"
 
-#include <GL/freeglut.h>
 #include <cstdio>
 #include <iostream>
 
@@ -41,14 +41,7 @@ namespace pf
   RnObj renderObj = NULL;
 
   static void GameStart(int argc, char **argv) {
-    PF_MSG_V("GLUT: initialization");
-    glutInitWindowSize(defaultWidth, defaultHeight);
-    glutInitWindowPosition(64, 64);
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-    PF_MSG_V("GLUT: creating window");
-    glutCreateWindow(argv[0]);
+    WinOpen(defaultWidth, defaultHeight);
     renderer = rnContextNew();
     renderObj = rnObjNew(renderer, objName);
     rnObjProperties(renderObj, RN_OBJ_OCCLUDER);
@@ -58,6 +51,7 @@ namespace pf
   static void GameEnd(void) {
     rnObjDelete(renderObj);
     rnContextDelete(renderer);
+    WinClose();
   }
 } /* namespace pf */
 

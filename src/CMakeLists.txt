@@ -61,8 +61,8 @@ set (SRC
   sys/script.hpp
   sys/command.cpp
   sys/command.hpp
-  sys/input_control.cpp
-  sys/input_control.hpp
+  sys/windowing.cpp
+  sys/windowing.hpp
   simd/ssef.cpp
   image/stb_image.cpp
   image/stb_image.hpp

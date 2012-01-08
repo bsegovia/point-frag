@@ -19,10 +19,10 @@
 #include "sys/logging.hpp"
 #include "sys/string.hpp"
 #include "sys/tasking.hpp"
+#include "sys/windowing.hpp"
 #include "math/math.hpp"
 #include "rt/ray.hpp"
 
-#include <GL/freeglut.h>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -54,18 +54,18 @@ namespace pf
   #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE) this->FIELD = (PROTOTYPE) NAME;
 #else
   #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE)                  \
-    this->FIELD = (PROTOTYPE) glutGetProcAddress(#NAME);      \
+    this->FIELD = (PROTOTYPE) WinGetProcAddress(#NAME);       \
     FATAL_IF (this->FIELD == NULL, "OpenGL 3.3 is required");
 #endif /* __WIN32__ */
 
 #include "GL/ogl100.hxx"
 #include "GL/ogl110.hxx"
 
-// Now, we load everything with glut on Windows too
+// Now, we load everything with the window manager on Windows too
 #if defined(__WIN32__)
   #undef DECL_GL_PROC
   #define DECL_GL_PROC(FIELD,NAME,PROTOTYPE)                  \
-    this->FIELD = (PROTOTYPE) glutGetProcAddress(#NAME);      \
+    this->FIELD = (PROTOTYPE) WinGetProcAddress(#NAME);       \
     FATAL_IF (this->FIELD == NULL, "OpenGL 3.3 is required");
 #endif /* __WIN32__ */
 
@@ -97,7 +97,7 @@ namespace pf
 
     // Check extensions we need
 #define CHECK_EXTENSION(EXT)                                      \
-    if (glutExtensionSupported(#EXT))                             \
+    if (WinExtensionSupported(#EXT))                              \
       PF_MSG ("OGL: " #EXT " supported");                         \
     else                                                          \
       FATAL ("OGL: " #EXT " not supported");
@@ -148,7 +148,7 @@ namespace pf
 
 #undef OGL_NAME
 
-  void OGL::swapBuffers(void) const { glutSwapBuffers(); }
+  void OGL::swapBuffers(void) const { WinSwapBuffers(); }
   bool OGL::checkError(const char *title) const
   {
     std::string errString;

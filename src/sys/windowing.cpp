@@ -14,11 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "input_control.hpp"
+#include "windowing.hpp"
 #include "mutex.hpp"
+#include "logging.hpp"
 #include <GL/freeglut.h>
 
-#include "logging.hpp"
 namespace pf
 {
   ///////////////////////////////////////////////////////////////////////////
@@ -134,5 +134,34 @@ namespace pf
     this->w = w0;
     this->h = h0;
   }
+
+  /*! Only one window is supported right now */
+  static int window = 0;
+  void WinOpen(int w, int h) {
+    int argc = 0;
+    FATAL_IF(window, "A window is already opened");
+    PF_MSG_V("GLUT: initialization");
+    glutInitWindowSize(w, h);
+    glutInitWindowPosition(64, 64);
+    glutInit(&argc, NULL);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+    PF_MSG_V("GLUT: creating window");
+    window = glutCreateWindow("point-frag");
+  }
+  void WinClose(void) {
+    glutDestroyWindow(window);
+    window = 0;
+  }
+  WinProc WinGetProcAddress(const char *name) {
+    return (WinProc) glutGetProcAddress(name);
+  }
+  int WinExtensionSupported(const char *ext) {
+    return glutExtensionSupported(ext);
+  }
+  void WinSwapBuffers(void) {
+    glutSwapBuffers();
+  }
+
 } /* namespace pf */
 
