@@ -42,7 +42,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set (VISIBILITY_FLAG "-fvisibility=hidden")
 
   if (COMPILER STREQUAL "GCC")
-    set (CMAKE_CXX_FLAGS "-Wstrict-aliasing=2 -Wno-invalid-offsetof --fstrict-aliasing -msse2 -ffast-math -fPIC -Wall -fno-rtti -fno-exceptions -std=c++0x")
+    set (CMAKE_CXX_FLAGS "-Wstrict-aliasing=2 -Wno-invalid-offsetof -fstrict-aliasing -msse2 -ffast-math -fPIC -Wall -fno-rtti -fno-exceptions -std=c++0x")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PF_DEBUG_MEMORY_FLAG}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VISIBILITY_FLAG} -Wl,-E")
     set (CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -ftree-vectorize")
