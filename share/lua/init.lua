@@ -1,4 +1,3 @@
--- we extensively use FFI for all the console stuff
 local ffi = require "ffi"
 pf = {
   cv = { },
@@ -10,7 +9,13 @@ setmetatable(pf.cv, {
     if ffi.C[str] == nil then
       error("cvar " .. key .. " unknown")
     else
-      return ffi.C[str]()
+      local check_string = "cvarIsString_" .. key
+      assert(ffi.C[check_string] ~= nil)
+      if ffi.C[check_string]() == 0 then
+        return ffi.C[str]()
+      else
+        return ffi.string(ffi.C[str]())
+      end
     end
   end,
   __newindex = function (table, key, value)
@@ -21,5 +26,4 @@ setmetatable(pf.cv, {
       return ffi.C[str](value)
     end
   end})
-
 

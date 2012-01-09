@@ -47,6 +47,7 @@ namespace pf
     this->imax = max;
     this->name = name;
     this->desc = desc;
+    this->str = NULL;
     ConVarSystem::global->var.push_back(*this);
   }
 
@@ -60,18 +61,39 @@ namespace pf
     this->fmax = max;
     this->name = name;
     this->desc = desc;
+    this->str = NULL;
     ConVarSystem::global->var.push_back(*this);
   }
 
-  ConVar::ConVar(const char *name, const std::string &str, const char *desc)
+  static void ConVarUpdateString(ConVar &var, const char *str)
+  {
+    if (var.str) delete [] var.str; // possibly pre-main: do not refcout
+    if (str == NULL) {
+      var.str = new char[1]; // possibly pre-main
+      var.str[0] = 0;
+    } else {
+      // Copy the string into the console variable
+      const size_t sz = strlen(str);
+      var.str = new char[sz + 1]; // possibly pre-main
+      std::memcpy(var.str, str, sz);
+      var.str[sz] = 0;
+    }
+  }
+
+  ConVar::ConVar(const char *name, const char *str, const char *desc)
   {
     if (ConVarSystem::global == NULL) ConVarSystem::global = new ConVarSystem;
     this->index = ConVarSystem::global->var.size();
     this->type = CVAR_STRING;
-    this->str = str;
     this->name = name;
     this->desc = desc;
+    this->str = NULL;
+    ConVarUpdateString(*this, str);
     ConVarSystem::global->var.push_back(*this);
+  }
+  ConVar::~ConVar(void) {
+    if (this->type == CVAR_STRING && this->str)
+      delete [] this->str;
   }
 
   void ConVar::set(double x)
@@ -89,7 +111,7 @@ namespace pf
   {
     PF_ASSERT(this->type == CVAR_STRING);
     TaskingSystemLock();
-    this->str = str;
+    ConVarUpdateString(*this, str);
     TaskingSystemUnlock();
   }
 
@@ -99,7 +121,7 @@ namespace pf
     name(name), argument(argument), ret(ret)
   {
     PF_ASSERT(name != NULL && argument != NULL);
-    PF_ASSERT(ret == 'i' || ret == 'f' || ret == 0);
+    PF_ASSERT(ret == 'i' || ret == 'f' || ret == 's'|| ret == 0);
     if (UNLIKELY(ConCommand::cmds == NULL))
       ConCommand::cmds = PF_NEW(std::vector<ConCommand>);
     ConCommand::cmds->push_back(*this);
@@ -119,6 +141,7 @@ namespace pf
           case  0 : ss << "void "; break;
           case 'i': ss << "int32_t "; break;
           case 'f': ss << "float  "; break;
+          case 's': ss << "const char *"; break;
           default: FATAL("Unsupported returned value type");
         }
         ss << cmd.name << "(";

@@ -47,13 +47,11 @@ namespace pf
     /*! Register a float ConVar */
     ConVar(const char *name, float min, float curr, float max, const char *desc = NULL);
     /*! Register a string ConVar */
-    ConVar(const char *name, const std::string &str, const char *desc = NULL);
-    /*! Get the index of the variable in the global variable array */
-    INLINE size_t getIndex(void) const { return index; }
-    /*! Set the value (must be a string) */
-    void set(const char *str);
-    /*! Set the value (must be a float or an integer) */
-    void set(double x);
+    ConVar(const char *name, const char *str, const char *desc = NULL);
+    /*! Release allocated strings if required */
+    ~ConVar(void);
+    void set(const char *str); //<! Set the value (must be a string)
+    void set(double x);        //<! Set the value (must be a float or an integer)
     /*! Describes the ConVar value */
     enum Type
     {
@@ -63,11 +61,11 @@ namespace pf
       CVAR_INVALID = 0xffffffff
     };
     Type type;        //!< float, int or string
-    std::string str;  //!< Empty if not a string
     size_t index;     //!< Index of the cvar in the ConVarSystem
     const char *name; //!< Name of the cvar
     const char *desc; //!< Optional string description
     union {
+      char *str;
       float f;
       int32 i;
     };
@@ -138,38 +136,48 @@ namespace pf
 #define PF_SCRIPT extern "C" PF_EXPORT_SYMBOL
 
 /*! Declare a command by its name, its arguments and returned value types */
-#define COMMAND(NAME, ARGS, RET)                              \
+#define COMMAND(NAME, ARGS, RET)                                             \
   static const ConCommand ccom_##NAME(#NAME, ARGS, RET);
 
-/*! Declare a variable (integer or float) */
-#define _VAR(NAME,MIN,CURR,MAX,DESC,TYPE,FIELD,STR,CHAR)      \
-  /* Build the ConVar here. That appends it in ConVarSystem */  \
-  static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC); \
-  /* C function used by lua when the variable is written */     \
-  PF_SCRIPT void cvarSet_##NAME(TYPE x) {                       \
-    PF_ASSERT(ConVarSystem::global);                               \
-    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
-    cvar.set(x);                                               \
-  }                                                             \
-  /* C function used by lua when the variable is read */        \
-  PF_SCRIPT TYPE cvarGet_##NAME(void) {                         \
-    PF_ASSERT(ConVarSystem::global);                               \
-    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
-    return cvar.FIELD;                                          \
-  }                                                             \
-  /* Export both functions to Lua */                            \
-  COMMAND(cvarSet_##NAME, STR, 0)                               \
-  COMMAND(cvarGet_##NAME, "", CHAR)                             \
-  /* This is our accessor (read-only) */                        \
-  static INLINE TYPE NAME(void) { return cvarGet_##NAME(); }                                                             \
+/*! Create the functions to interface with both C++ and Lua codes */
+#define _VAR(NAME,TYPE,FIELD,ARGS,RET)                                       \
+  /* C function used by lua when the variable is written */                  \
+  PF_SCRIPT void cvarSet_##NAME(TYPE x) {                                    \
+    PF_ASSERT(ConVarSystem::global);                                         \
+    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);             \
+    cvar.set(x);                                                             \
+  }                                                                          \
+  /* C function used by lua when the variable is read */                     \
+  PF_SCRIPT TYPE cvarGet_##NAME(void) {                                      \
+    PF_ASSERT(ConVarSystem::global);                                         \
+    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);             \
+    return cvar.FIELD;                                                       \
+  }                                                                          \
+  /* Indicate if this is a string */                                         \
+  PF_SCRIPT int32 cvarIsString_##NAME(void) {                                \
+    return RET == 's' ? 1 : 0;                                               \
+  }                                                                          \
+  /* Export both functions to Lua */                                         \
+  COMMAND(cvarSet_##NAME, ARGS, 0)                                           \
+  COMMAND(cvarGet_##NAME, "", RET)                                           \
+  COMMAND(cvarIsString_##NAME, "", 'i')                                      \
+  /* This is our accessor (read-only) */                                     \
+  static INLINE TYPE NAME(void) { return cvarGet_##NAME(); }                 \
 
 /*! Declare an integer variable */
-#define VARI(NAME, MIN, CURR, MAX, DESC)                      \
-  _VAR(NAME, MIN, CURR, MAX, DESC, int32, i, "i", 'i')
+#define VARI(NAME, MIN, CURR, MAX, DESC)                                     \
+  static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC);              \
+  _VAR(NAME, int32, i, "i", 'i')
 
 /*! Declare a float variable */
-#define VARF(NAME, MIN, CURR, MAX, DESC)                      \
-  _VAR(NAME, MIN, CURR, MAX, DESC, float, f, "f", 'f')
+#define VARF(NAME, MIN, CURR, MAX, DESC)                                     \
+  static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC);              \
+  _VAR(NAME, float, f, "f", 'f')
+
+/*! Declare a string variable */
+#define VARS(NAME, CURR, DESC)                                               \
+  static const ConVar cvar_##NAME(#NAME, CURR, DESC);                        \
+  _VAR(NAME, const char*, str, "s", 's');
 
 #endif /* __PF_COMMAND_HPP__ */
 

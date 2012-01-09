@@ -23,6 +23,15 @@
 using namespace pf;
 
 VARI(coucou, 0, 2, 3, "coucou");
+VARS(player0, "ben", "player name");
+
+#define _RUN_SCRIPT(STR, RUN_MODE) do {\
+  ScriptStatus status;\
+  scriptSystem->RUN_MODE(STR, status);\
+  if (!status.success) PF_ERROR(status.msg);\
+} while (0)
+#define RUN(STR) _RUN_SCRIPT(STR,run)
+#define RUN_NON_PROTECTED(STR) _RUN_SCRIPT(STR,runNonProtected)
 
 void utest_lua(void)
 {
@@ -32,10 +41,10 @@ void utest_lua(void)
   CommandSystemStart(*scriptSystem);
 
   // Run some code. This may modify console variables
-  scriptSystem->run("cv.coucou = 1", status);
-  if (!status.success) PF_ERROR(status.msg);
-  scriptSystem->runNonProtected("print(pf.cv.coucou)", status);
-  if (!status.success) PF_ERROR(status.msg);
+  RUN("cv.coucou = 1");
+  RUN_NON_PROTECTED("print(pf.cv.coucou)");
+  RUN("cv.player0 = \"hop\"");
+  RUN_NON_PROTECTED("print(pf.cv.player0)");
   if (coucou() == 1) PF_MSG("coucou is equal to 1");
 
   CommandSystemEnd();
