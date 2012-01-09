@@ -272,5 +272,5 @@ namespace pf
     return PF_NEW(ConsoleInternal, scriptSystem, display);
   }
 
-} /*! namespace pf */
+} /* namespace pf */
 

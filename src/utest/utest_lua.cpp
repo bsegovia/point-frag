@@ -29,25 +29,16 @@ void utest_lua(void)
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   ScriptStatus status;
   scriptSystem->run("local x = 0", status);
-  ConsoleSystemStart(*scriptSystem);
-
-  // This one is a copy of the cvars that we can safely use in the rest of the
-  // code
-  Ref<ConVarSystem> cvar = ConVarSystem::global->clone();
+  CommandSystemStart(*scriptSystem);
 
   // Run some code. This may modify console variables
   scriptSystem->run("cv.coucou = 1", status);
   if (!status.success) PF_ERROR(status.msg);
   scriptSystem->runNonProtected("print(pf.cv.coucou)", status);
   if (!status.success) PF_ERROR(status.msg);
+  if (coucou() == 1) PF_MSG("coucou is equal to 1");
 
-  // If a variable has been modified, copy the console variables into a new
-  // system
-  if (ConVarSystem::global->isModified())
-    cvar = ConVarSystem::global->clone();
-  if (coucou(cvar) == 1) PF_MSG("coucou is equal to 1");
-
-  ConsoleSystemEnd();
+  CommandSystemEnd();
   PF_DELETE(scriptSystem);
 }
 

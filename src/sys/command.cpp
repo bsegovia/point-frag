@@ -16,6 +16,8 @@
 
 #include "command.hpp"
 #include "script.hpp"
+#include "tasking.hpp"
+#include "math/math.hpp"
 #include <sstream>
 #include <cstring>
 
@@ -33,13 +35,6 @@ namespace pf
   const ConVar &ConVarSystem::get(size_t index) const {
     PF_ASSERT(index < var.size());
     return var[index];
-  }
-
-  ConVarSystem *ConVarSystem::clone(void) const {
-    ConVarSystem *clone = PF_NEW(ConVarSystem);
-    clone->var = this->var;
-    clone->modified = false;
-    return clone;
   }
 
   ConVar::ConVar(const char *name, int32 min, int32 curr, int32 max, const char *desc)
@@ -79,6 +74,25 @@ namespace pf
     ConVarSystem::global->var.push_back(*this);
   }
 
+  void ConVar::set(double x)
+  {
+    PF_ASSERT(this->type == CVAR_FLOAT || this->type == CVAR_INT);
+    TaskingSystemLock();
+    if (this->type == CVAR_FLOAT)
+      this->f = min(this->fmax, max(this->fmin, float(x)));
+    else
+      this->i = min(this->imax, max(this->imin, int32(x)));
+    TaskingSystemUnlock();
+  }
+
+  void ConVar::set(const char *str)
+  {
+    PF_ASSERT(this->type == CVAR_STRING);
+    TaskingSystemLock();
+    this->str = str;
+    TaskingSystemUnlock();
+  }
+
   std::vector<ConCommand> *ConCommand::cmds = NULL;
 
   ConCommand::ConCommand(const char *name, const char *argument, char ret) :
@@ -91,7 +105,7 @@ namespace pf
     ConCommand::cmds->push_back(*this);
   }
 
-  void ConsoleSystemStart(ScriptSystem &scriptSystem)
+  void CommandSystemStart(ScriptSystem &scriptSystem)
   {
     if (ConCommand::cmds == NULL)
       return;
@@ -132,7 +146,7 @@ namespace pf
     }
   }
 
-  void ConsoleSystemEnd(void)
+  void CommandSystemEnd(void)
   {
     ConVarSystem::global = NULL; //!< Free the console variable array
     delete ConCommand::cmds;     //!< Free the console commands

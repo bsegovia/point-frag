@@ -30,10 +30,10 @@
 namespace pf
 {
   static const int defaultWidth = 800, defaultHeight = 600;
+  static const char *objName = "arabic_city_II.obj";
   //static const char *objName = "f000.obj";
   //static const char *objName = "small.obj";
   //static const char *objName = "Arabic_City.obj";
-  static const char *objName = "arabic_city_II.obj";
   //static const char *objName = "conference.obj";
   //static const char *objName = "sibenik.obj";
   //static const char *objName = "sponza.obj";

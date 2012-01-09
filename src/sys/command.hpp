@@ -39,14 +39,21 @@ namespace pf
   class ScriptSystem;
 
   /*! A ConVar value either holds an integer, a float or a string value */
-  struct ConVar
+  class ConVar
   {
+  public:
     /*! Register a integer ConVar */
     ConVar(const char *name, int32 min, int32 curr, int32 max, const char *desc = NULL);
     /*! Register a float ConVar */
     ConVar(const char *name, float min, float curr, float max, const char *desc = NULL);
     /*! Register a string ConVar */
     ConVar(const char *name, const std::string &str, const char *desc = NULL);
+    /*! Get the index of the variable in the global variable array */
+    INLINE size_t getIndex(void) const { return index; }
+    /*! Set the value (must be a string) */
+    void set(const char *str);
+    /*! Set the value (must be a float or an integer) */
+    void set(double x);
     /*! Describes the ConVar value */
     enum Type
     {
@@ -55,8 +62,11 @@ namespace pf
       CVAR_STRING  = 2,
       CVAR_INVALID = 0xffffffff
     };
-    Type type;       //!< float, int or string
-    std::string str; //!< Empty if not a string
+    Type type;        //!< float, int or string
+    std::string str;  //!< Empty if not a string
+    size_t index;     //!< Index of the cvar in the ConVarSystem
+    const char *name; //!< Name of the cvar
+    const char *desc; //!< Optional string description
     union {
       float f;
       int32 i;
@@ -69,18 +79,9 @@ namespace pf
       float fmax;
       int32 imax;
     };
-    size_t index;
-    const char *name;
-    const char *desc;
   };
 
-  /*! Hold all the console variables in one place. Because we can use frame
-   *  overlapping in the game, we may have *several* values at the same time
-   *  for one variable. We could use a master mutex or something like that but
-   *  we really need the variable to stay unchanged over the frame (ie we get
-   *  the new value at the beginning of the frame and then this value remains
-   *  unchanged)
-   */
+  /*! Hold all the console variables in one place */
   class ConVarSystem : public RefCount
   {
   public:
@@ -88,18 +89,10 @@ namespace pf
     ConVarSystem(void);
     /*! Release it */
     ~ConVarSystem(void);
-    /*! Duplicate the consoble variable system */
-    ConVarSystem *clone(void) const;
     /*! Get ConVar at index "index" */
     ConVar &get(size_t index);
     /*! Get ConVar at index "index" */
     const ConVar &get(size_t index) const;
-    /*! Says if a change happened in one of the variables */
-    INLINE bool isModified(void) const { return this->modified; }
-    /*! The script will notify that one variable has been changed */
-    INLINE void setModified(void)      { this->modified = true;  }
-    /*! Once the script is processed, set the cvar system as unmodified */
-    INLINE void setUnmodified(void)    { this->modified = false; }
     /*! ConVarSystem instance built at pre-main */
     static ConVarSystem *global;
   private:
@@ -123,21 +116,19 @@ namespace pf
      *  arguments, the first is an integer and the other is a float
      */
     const char *argument;
-    /* Command returned type. ret == 0 means no value is returned */
-    char ret;
-    /*! Stores all the commands declared in the code (use std since pre-main,
-     *  the allocator is not running yet)
-     */
+    /*! Stores the commands declared in the code (use std since pre-main) */
     static std::vector<ConCommand> *cmds;
+    /*! Command returned type. ret == 0 means no value is returned */
+    char ret;
   };
 
-  /*! Initialize the console system. This includes the console variables which
+  /*! Initialize the command system. This includes the console variables which
    *  are exported to the LuaJIT state
    */
-  void ConsoleSystemStart(ScriptSystem &scriptSystem);
+  void CommandSystemStart(ScriptSystem &scriptSystem);
 
   /*! Release all the resources (including the global ConVarSystem) */
-  void ConsoleSystemEnd(void);
+  void CommandSystemEnd(void);
 
 } /* namespace pf */
 
@@ -146,38 +137,33 @@ namespace pf
  */
 #define PF_SCRIPT extern "C" PF_EXPORT_SYMBOL
 
-/* Declare a command by its name, its arguments and returned value types */
+/*! Declare a command by its name, its arguments and returned value types */
 #define COMMAND(NAME, ARGS, RET)                              \
-static const ConCommand ccom_##NAME(#NAME, ARGS, RET);
+  static const ConCommand ccom_##NAME(#NAME, ARGS, RET);
 
 /*! Declare a variable (integer or float) */
 #define _VAR(NAME,MIN,CURR,MAX,DESC,TYPE,FIELD,STR,CHAR)      \
-/* Build the ConVar here. That appends it in ConVarSystem */  \
-static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC); \
-/* This is our accessor (read-only) */                        \
-static INLINE TYPE NAME(const ConVarSystem *sys) {            \
-  PF_ASSERT(sys != ConVarSystem::global);                     \
-  return sys->get(cvar_##NAME.index).FIELD;                   \
-}                                                             \
-/* C function used by luaJIT when the variable is written */  \
-PF_SCRIPT void cvarSet_##NAME(TYPE x) {                       \
-  assert(ConVarSystem::global);                               \
-  ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
-  if (x >= cvar.FIELD##min && x <= cvar.FIELD##max)           \
-    cvar.FIELD = x;                                           \
-  ConVarSystem::global->setModified();                        \
-}                                                             \
-/* C function used by luaJIT when the variable is read */     \
-PF_SCRIPT TYPE cvarGet_##NAME() {                             \
-  assert(ConVarSystem::global);                               \
-  ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
-  return cvar.FIELD;                                          \
-}                                                             \
-/* Export both functions to LuaJIT */                         \
-COMMAND(cvarSet_##NAME, STR, 0)                               \
-COMMAND(cvarGet_##NAME, "", CHAR)
+  /* Build the ConVar here. That appends it in ConVarSystem */  \
+  static const ConVar cvar_##NAME(#NAME, MIN, CURR, MAX, DESC); \
+  /* C function used by lua when the variable is written */     \
+  PF_SCRIPT void cvarSet_##NAME(TYPE x) {                       \
+    PF_ASSERT(ConVarSystem::global);                               \
+    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
+    cvar.set(x);                                               \
+  }                                                             \
+  /* C function used by lua when the variable is read */        \
+  PF_SCRIPT TYPE cvarGet_##NAME(void) {                         \
+    PF_ASSERT(ConVarSystem::global);                               \
+    ConVar &cvar = ConVarSystem::global->get(cvar_##NAME.index);\
+    return cvar.FIELD;                                          \
+  }                                                             \
+  /* Export both functions to Lua */                            \
+  COMMAND(cvarSet_##NAME, STR, 0)                               \
+  COMMAND(cvarGet_##NAME, "", CHAR)                             \
+  /* This is our accessor (read-only) */                        \
+  static INLINE TYPE NAME(void) { return cvarGet_##NAME(); }                                                             \
 
-/*! Declare a integer variable */
+/*! Declare an integer variable */
 #define VARI(NAME, MIN, CURR, MAX, DESC)                      \
   _VAR(NAME, MIN, CURR, MAX, DESC, int32, i, "i", 'i')
 
