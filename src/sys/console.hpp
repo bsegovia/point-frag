@@ -54,6 +54,8 @@ namespace pf
     virtual void addCompletion(const std::string &str) = 0;
     /*! Add a new command in the history */
     virtual void addHistory(const std::string &cmd) = 0;
+    /*! Get the current cursor position (<= line.size) */
+    virtual uint32 cursorPosition(void) const = 0;
   protected:
     ScriptSystem &scriptSystem; //<! To execute the provided commands
     ConsoleDisplay &display;    //<! To display command line and outputs

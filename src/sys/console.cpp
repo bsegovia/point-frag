@@ -18,6 +18,7 @@
 #include "script.hpp"
 #include "set.hpp"
 #include "vector.hpp"
+#include "string.hpp"
 #include "windowing.hpp"
 #include "math/math.hpp"
 #include <string>
@@ -47,6 +48,7 @@ namespace pf
     virtual void setHistorySize(int32 size);
     virtual void addCompletion(const std::string &str);
     virtual void addHistory(const std::string &cmd);
+    virtual uint32 cursorPosition(void) const;
     /*! Process the previous command in the history (instead of the current one) */
     void previousHistory(void);
     /*! Process the next command in the history (instead of the current one) */
@@ -71,6 +73,7 @@ namespace pf
     int32 historySize; //!< Entries in the history
     int32 historyNum;  //!< Total number of command entered by the user
     int32 historyCurr; //!< Index of the history entry we are editing
+    static const char *sep; //!< Words separators for the commands
   };
 
   INLINE bool isPrintable(uint32 key) {
@@ -86,6 +89,7 @@ namespace pf
   }
   INLINE bool isInWord(uint32 key) { return isAlphaNumeric(key) || key == '_'; }
 
+  const char *ConsoleInternal::sep = "`~\n\t\r!@#$%^&*()-+={}[];\':\",.<>/?\\|";
   void ConsoleInternal::setHistorySize(int32 size) {
     size = max(size, 1);
     this->history.resize(size);
@@ -190,6 +194,8 @@ namespace pf
     historyNum++;
   }
 
+  uint32 ConsoleInternal::cursorPosition(void) const { return cursor; }
+
   void ConsoleInternal::execute(void) {
     line.push_back(0); // terminate the string
     std::string toRun = std::string((const char *) &this->line[0]);
@@ -198,6 +204,23 @@ namespace pf
     scriptSystem.run(toRun.c_str(), status);
     if (status.success == false)
       this->display.out(*this, status.msg);
+    else {
+      // we add all the words from the command line in case of success
+      const size_t sz = toRun.size();
+      char *copy = PF_NEW_ARRAY(char, sz + 1);
+      std::memcpy(copy, toRun.c_str(), sz * sizeof(char));
+      copy[sz] = 0;
+      char *state = NULL, *tok = NULL;
+      tok = tokenize(copy, sep, &state);
+      while (tok) {
+        const std::string word(tok);
+        this->addCompletion(word);
+        tok = tokenize(NULL, sep, &state);
+      }
+      PF_DELETE(copy);
+      // we print the line we just run
+      this->display.out(*this, toRun);
+    }
     line.resize(0); // start a new command
     cursor = 0;
     historyCurr = historyNum;
@@ -230,7 +253,7 @@ namespace pf
           case PF_KEY_END: cursor = line.size(); break;
           case PF_KEY_HOME: cursor = 0; break;
           case PF_KEY_LEFT: cursor = max(int32(cursor-1), 0); break;
-          case PF_KEY_RIGHT: cursor = min(cursor, int32(line.size())); break;
+          case PF_KEY_RIGHT: cursor = min(cursor+1, int32(line.size())); break;
           case PF_KEY_UP: this->previousHistory(); break;
           case PF_KEY_DOWN: this->nextHistory(); break;
           default: break;

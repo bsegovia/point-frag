@@ -74,7 +74,9 @@ namespace pf
       lineno++;
 
       // info gives data about how the font has been generated
-      if (strequal(tok, "info")) {
+      if (tok == NULL)
+        break;
+      else if (strequal(tok, "info")) {
         for (;;) {
           NEXT_TOKEN(tok);
           NEXT_TOKEN(value);

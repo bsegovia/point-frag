@@ -27,11 +27,26 @@ namespace pf
   class UTestConsoleDisplay : public ConsoleDisplay
   {
   public:
-    UTestConsoleDisplay (void) : last(getSeconds()) {}
+    UTestConsoleDisplay (void) {
+      last = lastBlink = getSeconds();
+      cursor = 0;
+    }
     virtual void line(Console &console, const std::string &line) {
       const double curr = getSeconds();
-      if (curr - last > 0.) {
-        std::cout << '\r' << "> " << line;
+      std::string patched = line;
+      if (curr - lastBlink > .5) {
+        cursor ^= 1;
+        lastBlink = curr;
+      }
+      const uint32 pos = console.cursorPosition();
+      if (cursor) {
+        if (pos >= patched.size())
+          patched.push_back('_');
+        else
+          patched[pos] = '_';
+      }
+      if (curr - last > 0.02) {
+        std::cout << '\r' << "> " << patched;
         for (int i = 0; i < 80; ++i) std::cout << ' ';
         std::cout << '\r';
         fflush(stdout);
@@ -42,6 +57,8 @@ namespace pf
       std::cout << str << std::endl;
     }
     double last;
+    double lastBlink;
+    uint32 cursor;
   };
 } /* namespace pf */
 
