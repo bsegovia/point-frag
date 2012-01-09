@@ -24,15 +24,16 @@ namespace pf
 {
   class InputControl; // Handle input controls (keyboard/mouse...)
   class ScriptSystem; // Run the code provided by the user
+  class Console;      // Console itself
 
   /*! Display interface for the console (potentially called in update) */
   class ConsoleDisplay
   {
   public:
     /*! Print the current line */
-    virtual void line(const std::string &line) = 0;
+    virtual void line(Console &console, const std::string &line) = 0;
     /*! Print the regular messages in the console */
-    virtual void out(const std::string &str) = 0;
+    virtual void out(Console &console, const std::string &str) = 0;
   };
 
   /*! Interactive command prompt with history and auto-completion */
@@ -48,9 +49,11 @@ namespace pf
      */
     virtual void update(const InputControl &input) = 0;
     /*! Change the history size */
-    virtual void setHistorySize(uint32 size) = 0;
+    virtual void setHistorySize(int32 size) = 0;
     /*! Add a new completion candidate */
     virtual void addCompletion(const std::string &str) = 0;
+    /*! Add a new command in the history */
+    virtual void addHistory(const std::string &cmd) = 0;
   protected:
     ScriptSystem &scriptSystem; //<! To execute the provided commands
     ConsoleDisplay &display;    //<! To display command line and outputs

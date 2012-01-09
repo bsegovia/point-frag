@@ -23,12 +23,26 @@
 
 namespace pf
 {
+  /*! Output everything in the terminal */
   class UTestConsoleDisplay : public ConsoleDisplay
   {
-    virtual void line(const std::string &line) { std::cout << '\r' << line; }
-    virtual void out(const std::string &str) { std::cout << str << std::endl; }
+  public:
+    UTestConsoleDisplay (void) : last(getSeconds()) {}
+    virtual void line(Console &console, const std::string &line) {
+      const double curr = getSeconds();
+      if (curr - last > 0.) {
+        std::cout << '\r' << "> " << line;
+        for (int i = 0; i < 80; ++i) std::cout << ' ';
+        std::cout << '\r';
+        fflush(stdout);
+        last = curr;
+      }
+    }
+    virtual void out(Console &console, const std::string &str) {
+      std::cout << str << std::endl;
+    }
+    double last;
   };
-
 } /* namespace pf */
 
 void utest_console(void)
@@ -38,7 +52,16 @@ void utest_console(void)
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
   UTestConsoleDisplay *display = PF_NEW(UTestConsoleDisplay);
   Console *console = ConsoleNew(*scriptSystem, *display);
-
+  console->addCompletion("while");
+  console->addCompletion("whilewhile");
+  for (;;) {
+    Ref<InputControl> input = PF_NEW(InputControl);
+    input->processEvents();
+    if (input->getKey(PF_KEY_ASCII_ESC))
+      break;
+    console->update(*input);
+    WinSwapBuffers();
+  }
   PF_DELETE(console);
   PF_DELETE(scriptSystem);
   PF_DELETE(display);
