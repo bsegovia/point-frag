@@ -17,22 +17,33 @@
 #include "utest/utest.hpp"
 #include "sys/console.hpp"
 #include "sys/logging.hpp"
-#include "sys/set.hpp"
+#include "sys/windowing.hpp"
+#include "sys/script.hpp"
 #include <string>
 
-using namespace pf;
-
-void utest_string(void)
+namespace pf
 {
-  std::string s0 = "ll";
-  std::string s1 = "lll";
-  set<std::string> hop;
-  hop.insert("ll");
-  hop.insert("lll");
-  hop.insert("llol");
-  PF_MSG_V(((s0 < s1) ? "true" : "false"));
-  PF_MSG_V(*hop.lower_bound("llm"));
+  class UTestConsoleDisplay : public ConsoleDisplay
+  {
+    virtual void line(const std::string &line) { std::cout << '\r' << line; }
+    virtual void out(const std::string &str) { std::cout << str << std::endl; }
+  };
+
+} /* namespace pf */
+
+void utest_console(void)
+{
+  using namespace pf;
+  WinOpen(640, 480);
+  ScriptSystem *scriptSystem = LuaScriptSystemCreate();
+  UTestConsoleDisplay *display = PF_NEW(UTestConsoleDisplay);
+  Console *console = ConsoleNew(*scriptSystem, *display);
+
+  PF_DELETE(console);
+  PF_DELETE(scriptSystem);
+  PF_DELETE(display);
+  WinClose();
 }
 
-UTEST_REGISTER(utest_string);
+UTEST_REGISTER(utest_console);
 

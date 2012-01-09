@@ -92,8 +92,8 @@ namespace pf
   class InputControl : public RefCount, public NonCopyable
   {
   public:
-    InputControl(const InputControl &previous);
-    InputControl(int w, int h);
+    /*! Create an input control from the current control state */
+    InputControl(void);
     /*! Get the current state for key */
     INLINE bool getKey(uint32 key) const;
     /*! Indicates that a key is not pressed */

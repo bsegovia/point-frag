@@ -94,24 +94,24 @@ namespace pf
   STATIC_ASSERT(PF_KEY_END == GLUT_KEY_END + 0x80);
   STATIC_ASSERT(PF_KEY_INSERT == GLUT_KEY_INSERT + 0x80);
 
-  InputControl::InputControl(int w_, int h_) {
-    this->mouseXRel = this->mouseYRel = 0;
-    this->time = this->dt = 0.;
-    this->w = w_;
-    this->h = h_;
-    this->isResized = 0;
-    for (uint32 i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
-  }
+  /*! We use the previous input state to generate the next one */
+  static Ref<InputControl> previousInput = NULL;
 
-  InputControl::InputControl(const InputControl &previous) {
+  InputControl::InputControl(void) {
     this->mouseXRel = this->mouseYRel = 0;
     this->isResized = 0;
-    this->time = getSeconds();
     this->dt = 0.;
-    this->w = previous.w;
-    this->h = previous.h;
-    for (uint32 i = 0; i < KEY_ARRAY_SIZE; ++i)
-      this->keys[i] = previous.keys[i];
+    if (previousInput == false) {
+      this->time = 0.;
+      this->w = this->h = 0;
+      for (uint32 i = 0; i < KEY_ARRAY_SIZE; ++i) this->keys[i] = 0;
+    } else {
+      this->time = getSeconds();
+      this->w = previousInput->w;
+      this->h = previousInput->h;
+      for (uint32 i = 0; i < KEY_ARRAY_SIZE; ++i)
+        this->keys[i] = previousInput->keys[i];
+    }
   }
 
   void InputControl::processEvents(void) {
@@ -133,6 +133,7 @@ namespace pf
     if (w0 != this->w || h0 != this->h) this->isResized = 1;
     this->w = w0;
     this->h = h0;
+    previousInput = this;
   }
 
   /*! Only one window is supported right now */
@@ -148,8 +149,11 @@ namespace pf
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
     PF_MSG_V("GLUT: creating window");
     window = glutCreateWindow("point-frag");
+    previousInput = PF_NEW(InputControl);
+    previousInput->processEvents();
   }
   void WinClose(void) {
+    previousInput = NULL;
     glutDestroyWindow(window);
     window = 0;
   }

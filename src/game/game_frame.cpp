@@ -25,12 +25,12 @@ namespace pf
 {
   GameFrame::GameFrame(GameFrame &previous) {
     this->cam = PF_NEW(FPSCamera, *previous.cam);
-    this->event = PF_NEW(InputControl, *previous.event);
+    this->event = PF_NEW(InputControl);
   }
 
   GameFrame::GameFrame(int w, int h) {
     this->cam = PF_NEW(FPSCamera);
-    this->event = PF_NEW(InputControl, w, h);
+    this->event = PF_NEW(InputControl);
   }
 
   TaskGameFrame::TaskGameFrame(GameFrame &previous_) : previous(&previous_) {}

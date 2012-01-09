@@ -25,14 +25,17 @@
 
 namespace pf
 {
-  Console::Console(ScriptSystem &scriptSystem) :scriptSystem(scriptSystem) {}
+  Console::Console(ScriptSystem &scriptSystem, ConsoleDisplay &display) :
+    scriptSystem(scriptSystem), display(display) {}
   Console::~Console(void) {}
 
   /*! Actual implementation of the console */
   class ConsoleInternal : public Console
   {
   public:
-    ConsoleInternal(ScriptSystem &scriptSystem) : Console(scriptSystem) {
+    ConsoleInternal(ScriptSystem &scriptSystem, ConsoleDisplay &display) :
+      Console(scriptSystem, display)
+    {
       this->setHistorySize(64);
       this->cursor = 0;
     }
@@ -165,10 +168,9 @@ namespace pf
     }
   }
 
-  Console *ConsoleNew(ScriptSystem &scriptSystem) {
-    return PF_NEW(ConsoleInternal, scriptSystem);
+  Console *ConsoleNew(ScriptSystem &scriptSystem, ConsoleDisplay &display) {
+    return PF_NEW(ConsoleInternal, scriptSystem, display);
   }
-  void ConsoleDelete(Console *console) { PF_DELETE(console); }
 
 } /*! namespace pf */
 
