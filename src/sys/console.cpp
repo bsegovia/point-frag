@@ -74,6 +74,7 @@ namespace pf
     int32 historyNum;  //!< Total number of command entered by the user
     int32 historyCurr; //!< Index of the history entry we are editing
     static const char *sep; //!< Words separators for the commands
+    PF_CLASS(ConsoleInternal);
   };
 
   INLINE bool isPrintable(uint32 key) {
@@ -217,7 +218,7 @@ namespace pf
         this->addCompletion(word);
         tok = tokenize(NULL, sep, &state);
       }
-      PF_DELETE(copy);
+      PF_DELETE_ARRAY(copy);
       // we print the line we just run
       this->display.out(*this, toRun);
     }
