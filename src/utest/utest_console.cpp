@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "utest/utest.hpp"
+#include "sys/command.hpp"
 #include "sys/console.hpp"
 #include "sys/logging.hpp"
 #include "sys/windowing.hpp"
@@ -67,6 +68,7 @@ void utest_console(void)
   using namespace pf;
   WinOpen(640, 480);
   ScriptSystem *scriptSystem = LuaScriptSystemCreate();
+  CommandSystemStart(*scriptSystem);
   UTestConsoleDisplay *display = PF_NEW(UTestConsoleDisplay);
   Console *console = ConsoleNew(*scriptSystem, *display);
   console->addCompletion("while");
@@ -79,6 +81,7 @@ void utest_console(void)
     console->update(*input);
     WinSwapBuffers();
   }
+  CommandSystemEnd();
   PF_DELETE(console);
   PF_DELETE(scriptSystem);
   PF_DELETE(display);

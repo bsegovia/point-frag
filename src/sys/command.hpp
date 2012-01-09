@@ -22,6 +22,7 @@
 #include "ref.hpp"
 
 #include <string>
+#include <functional>
 
 /*! This file implement a command / console variable system for point frag.
  *  With LuaJIT, this task is rather easy. LuaJIT with its FFI is indeed able
@@ -42,16 +43,26 @@ namespace pf
   class ConVar
   {
   public:
-    /*! Register a integer ConVar */
+    /*! Optional call back to call when the variable is set */
+    typedef std::function<void(void)> Callback;
+    /*! Integer console variable */
     ConVar(const char *name, int32 min, int32 curr, int32 max, const char *desc = NULL);
-    /*! Register a float ConVar */
+    /*! Integer console variable (with a call back to run) */
+    ConVar(const char *name, int32 min, int32 curr, int32 max, const Callback &cb, const char *desc = NULL);
+    /*! Float console variable */
     ConVar(const char *name, float min, float curr, float max, const char *desc = NULL);
-    /*! Register a string ConVar */
+    /*! Float console variable (with a call back to run) */
+    ConVar(const char *name, float min, float curr, float max, const Callback &cb, const char *desc = NULL);
+    /*! String console variable */
     ConVar(const char *name, const char *str, const char *desc = NULL);
-    /*! Release allocated strings if required */
+    /*! String console variable (with a call back to run) */
+    ConVar(const char *name, const char *str, const Callback &cb, const char *desc = NULL);
+    /*! Free the string if string variable */
     ~ConVar(void);
-    void set(const char *str); //<! Set the value (must be a string)
-    void set(double x);        //<! Set the value (must be a float or an integer)
+    /*! Set the value (must be a string) */
+    void set(const char *str);
+    /*! Set the value (must be a float or an integer) */
+    void set(double x);
     /*! Describes the ConVar value */
     enum Type
     {
@@ -64,6 +75,7 @@ namespace pf
     size_t index;     //!< Index of the cvar in the ConVarSystem
     const char *name; //!< Name of the cvar
     const char *desc; //!< Optional string description
+    Callback cb;      //!< Optional call back to run when a new value is set
     union {
       char *str;
       float f;

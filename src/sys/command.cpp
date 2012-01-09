@@ -91,6 +91,7 @@ namespace pf
     ConVarUpdateString(*this, str);
     ConVarSystem::global->var.push_back(*this);
   }
+
   ConVar::~ConVar(void) {
     if (this->type == CVAR_STRING && this->str)
       delete [] this->str;
@@ -123,7 +124,7 @@ namespace pf
     PF_ASSERT(name != NULL && argument != NULL);
     PF_ASSERT(ret == 'i' || ret == 'f' || ret == 's'|| ret == 0);
     if (UNLIKELY(ConCommand::cmds == NULL))
-      ConCommand::cmds = PF_NEW(std::vector<ConCommand>);
+      ConCommand::cmds = new std::vector<ConCommand>;
     ConCommand::cmds->push_back(*this);
   }
 

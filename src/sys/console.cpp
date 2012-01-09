@@ -49,9 +49,9 @@ namespace pf
     virtual void addCompletion(const std::string &str);
     virtual void addHistory(const std::string &cmd);
     virtual uint32 cursorPosition(void) const;
-    /*! Process the previous command in the history (instead of the current one) */
+    /*! Process the previous command in the history */
     void previousHistory(void);
-    /*! Process the next command in the history (instead of the current one) */
+    /*! Process the next command in the history */
     void nextHistory(void);
     /*! Append a new command in the history */
     void addHistory(const Line &cmd);
