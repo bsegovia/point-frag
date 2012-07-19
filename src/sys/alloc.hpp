@@ -62,25 +62,25 @@ namespace pf
 /*! Declare a structure with custom allocators */
 #define PF_STRUCT(TYPE)                                      \
   void* operator new(size_t size)   {                        \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+    if (AlignOf<TYPE>::value > sizeof(void*))                \
       return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
     else                                                     \
       return pf::malloc(size);                               \
   }                                                          \
   void* operator new[](size_t size)   {                      \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+    if (AlignOf<TYPE>::value > sizeof(void*))                \
       return pf::alignedMalloc(size, AlignOf<TYPE>::value);  \
     else                                                     \
       return pf::malloc(size);                               \
   }                                                          \
   void  operator delete(void* ptr) {                         \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+    if (AlignOf<TYPE>::value > sizeof(void*))                \
       return pf::alignedFree(ptr);                           \
     else                                                     \
       return pf::free(ptr);                                  \
   }                                                          \
   void  operator delete[](void* ptr) {                       \
-    if (AlignOf<TYPE>::value > sizeof(uintptr_t))            \
+    if (AlignOf<TYPE>::value > sizeof(void*))                \
       return pf::alignedFree(ptr);                           \
     else                                                     \
       return pf::free(ptr);                                  \
@@ -161,13 +161,13 @@ namespace pf
     INLINE pointer address(reference r) { return &r; }
     INLINE const_pointer address(const_reference r) { return &r; }
     INLINE pointer allocate(size_type n, void_allocator_ptr = 0) {
-      if (AlignOf<T>::value > sizeof(uintptr_t))
+      if (AlignOf<T>::value > sizeof(void*))
         return (pointer) PF_ALIGNED_MALLOC(n*sizeof(T), AlignOf<T>::value);
       else
         return (pointer) PF_MALLOC(n * sizeof(T));
     }
     INLINE void deallocate(pointer p, size_type) {
-      if (AlignOf<T>::value > sizeof(uintptr_t))
+      if (AlignOf<T>::value > sizeof(void*))
         PF_ALIGNED_FREE(p);
       else
         PF_FREE(p);
